@@ -1,0 +1,3 @@
+[submodule "src/plugins/thirdParty/PythonQt/PythonQt"]
+	path = src/plugins/thirdParty/PythonQt/PythonQt
+	url = git@github.com:dbrnz/PythonQt
