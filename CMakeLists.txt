@@ -257,6 +257,7 @@ SET(PLUGINS
     # Selectable plugins
 
     dataStore/CSVDataStore
+    datastore/PythonStore
 
     editing/CellMLAnnotationView
     editing/PrettyCellMLView
