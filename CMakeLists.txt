@@ -225,6 +225,7 @@ SET(PLUGINS
     dataStore/CoreDataStore
 
     miscellaneous/Core
+    miscellaneous/PythonWindow
 
     solver/CoreSolver
 
