@@ -22,10 +22,6 @@ add_custom_target(generator)
 add_dependencies(generator pythonqt_generator)
 
 ### Find Python
-## With non-system Pythons under OS/X
-## ~/Library/Frameworks must contain a symbolic
-## link to the installed Python framework.
-
 find_package(PythonLibs)
 
 
