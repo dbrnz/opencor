@@ -37,7 +37,7 @@ PythonWindow::PythonWindow(QWidget *pParent)
   this->setObjectName("Python");
   this->setWindowTitle("Python Interpreter");
 
-  PythonQt::init(PythonQt::IgnoreSiteModule | PythonQt::RedirectStdOut) ;
+  PythonQt::init(PythonQt::RedirectStdOut) ;   // | PythonQt::IgnoreSiteModule
   mContext = PythonQt::self()->getMainModule() ;
 
   mConsole = new PythonQtScriptingConsole(this, mContext) ;
