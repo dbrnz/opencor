@@ -24,7 +24,7 @@ class PythonStorePlugin : public QObject
 {
     Q_OBJECT
 
-    Q_PLUGIN_METADATA(IID "OpenCOR.PythonStorePlugin" FILE "coredatastoreplugin.json")
+    Q_PLUGIN_METADATA(IID "OpenCOR.PythonStorePlugin" FILE "pythonstoreplugin.json")
 };
 
 //==============================================================================
