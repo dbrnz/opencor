@@ -1,4 +1,4 @@
-PROJECT(PythonQtPlugin)
+PROJECT(PythonQtAPIPlugin)
 
 SET(PythonQt_VERSION 2.2.0)
 
@@ -27,14 +27,14 @@ find_package(PythonLibs)
 
 # Add the plugin
 
-ADD_PLUGIN(PythonQt
+ADD_PLUGIN(PythonQtAPI
 
     THIRD_PARTY         # Disable wraning as error
 
     SOURCES
         ../../plugininfo.cpp
 
-        src/PythonQtPlugin.cpp
+        src/PythonQtAPIPlugin.cpp
 
 	      PythonQt/src/PythonQtClassInfo.cpp
 	      PythonQt/src/PythonQtClassWrapper.cpp
@@ -62,7 +62,7 @@ ADD_PLUGIN(PythonQt
 	      PythonQt/generated_cpp${generated_cpp_suffix}/com_trolltech_qt_gui_builtin/com_trolltech_qt_gui_builtin_init.cpp
 
     HEADERS_MOC
-        src/PythonQtPlugin.h
+        src/PythonQtAPIPlugin.h
 
 	      PythonQt/src/PythonQt.h
 	      PythonQt/src/PythonQtSignalReceiver.h

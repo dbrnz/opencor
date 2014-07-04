@@ -233,7 +233,7 @@ SET(PLUGINS
     thirdParty/QScintilla
     thirdParty/Qwt
     thirdParty/SUNDIALS
-    thirdParty/PythonQt
+    thirdParty/PythonQtAPI
 
     # Plugins that build on top of some third-party libraries
 

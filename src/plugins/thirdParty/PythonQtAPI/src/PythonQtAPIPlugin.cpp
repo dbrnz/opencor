@@ -1,17 +1,17 @@
 //==============================================================================
-// CoreStore plugin
+// Python Qt plugin
 //==============================================================================
 
-#include "PythonQtPlugin.h"
+#include "PythonQtAPIPlugin.h"
 
 //==============================================================================
 
 namespace OpenCOR {
-namespace PythonQt {
+namespace PythonQtAPI {
 
 //==============================================================================
 
-PLUGININFO_FUNC PythonQtPluginInfo()
+PLUGININFO_FUNC PythonQtAPIPluginInfo()
 {
     Descriptions descriptions;
 
@@ -25,7 +25,7 @@ PLUGININFO_FUNC PythonQtPluginInfo()
 
 //==============================================================================
 
-}   // namespace PythonQt
+}   // namespace PythonQtAPI
 }   // namespace OpenCOR
 
 //==============================================================================

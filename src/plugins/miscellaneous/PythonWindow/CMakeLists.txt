@@ -20,7 +20,7 @@ ADD_PLUGIN(PythonWindow
         ${PYTHON_INCLUDE_DIRS}
     PLUGINS
         Core
-        PythonQt
+        PythonQtAPI
     QT_MODULES
         Widgets
     QT_LIBRARIES

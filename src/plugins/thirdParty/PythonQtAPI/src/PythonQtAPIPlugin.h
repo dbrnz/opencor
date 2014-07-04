@@ -2,8 +2,8 @@
 // PythonQt plugin
 //==============================================================================
 
-#ifndef PYTHONQTPLUGIN_H
-#define PYTHONQTPLUGIN_H
+#ifndef PYTHONQTAPIPLUGIN_H
+#define PYTHONQTAPIPLUGIN_H
 
 //==============================================================================
 
@@ -12,24 +12,24 @@
 //==============================================================================
 
 namespace OpenCOR {
-namespace PythonQt {
+namespace PythonQtAPI {
 
 //==============================================================================
 
-PLUGININFO_FUNC PythonQtPluginInfo();
+PLUGININFO_FUNC PythonQtAPIPluginInfo();
 
 //==============================================================================
 
-class PythonQtPlugin : public QObject
+class PythonQtAPIPlugin : public QObject
 {
     Q_OBJECT
 
-    Q_PLUGIN_METADATA(IID "OpenCOR.PythonQtPlugin" FILE "PythonQtPlugin.json")
+    Q_PLUGIN_METADATA(IID "OpenCOR.PythonQtAPIPlugin" FILE "PythonQtAPIPlugin.json")
 };
 
 //==============================================================================
 
-}   // namespace PythonQt
+}   // namespace PythonQtAPI
 }   // namespace OpenCOR
 
 //==============================================================================

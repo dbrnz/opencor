@@ -28,7 +28,7 @@ PLUGININFO_FUNC PythonWindowPluginInfo()
     descriptions.insert("fr", QString::fromUtf8("the Python window plugin."));
 
     return new PluginInfo(PluginInfo::Miscellaneous, true, false,
-                          QStringList() << "Core" << "PythonQt",
+                          QStringList() << "Core" << "PythonQtAPI",
                           descriptions);
 }
 
