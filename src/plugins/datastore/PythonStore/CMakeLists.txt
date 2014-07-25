@@ -1,6 +1,12 @@
 PROJECT(PythonStorePlugin)
 
-# Add the plugin
+
+find_package(PythonLibs REQUIRED)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+                      ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+find_package(NumPy REQUIRED)
+
 
 ADD_PLUGIN(PythonStore
     SOURCES
@@ -13,6 +19,8 @@ ADD_PLUGIN(PythonStore
         src/pythonstore.h
     INCLUDE_DIRS
         src
+        ${PYTHON_INCLUDE_DIRS}
+        ${NUMPY_INCLUDE_DIR}
     PLUGINS
         CoreDatastore
     QT_MODULES
