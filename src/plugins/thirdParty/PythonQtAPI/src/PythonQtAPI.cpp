@@ -16,17 +16,18 @@ specific language governing permissions and limitations under the License.
 *******************************************************************************/
 
 //==============================================================================
-// PythonQt plugin
+// Python Qt plugin
 //==============================================================================
 
-#ifndef PYTHONQTAPIPLUGIN_H
-#define PYTHONQTAPIPLUGIN_H
+#include "PythonQtAPI.h"
 
 //==============================================================================
 
-#include "plugininfo.h"
-#include "i18ninterface.h"
-#include "plugininterface.h"
+#include "cliutils.h"
+
+//==============================================================================
+
+#include <QtDebug>
 
 //==============================================================================
 
@@ -35,34 +36,32 @@ namespace PythonQtAPI {
 
 //==============================================================================
 
-PLUGININFO_FUNC PythonQtAPIPluginInfo();
-
-//==============================================================================
-
-class PythonQtAPIPlugin : public QObject, public I18nInterface,
-                          public PluginInterface
+PythonQtAPI *PythonQtAPI::instance()
 {
-    Q_OBJECT
+    // Return the 'global' instance of our Python Qt API class
 
-    Q_PLUGIN_METADATA(IID "OpenCOR.PythonQtAPIPlugin" FILE "PythonQtAPIPlugin.json")
+    static PythonQtAPI instance;
 
-    Q_INTERFACES(OpenCOR::I18nInterface)
-    Q_INTERFACES(OpenCOR::PluginInterface)
+    return static_cast<PythonQtAPI *>(Core::globalInstance("OpenCOR::PythonQtAPI::PythonQtAPI",
+                                                           &instance));
+}
 
-public:
-#include "i18ninterface.inl"
-#include "plugininterface.inl"
 
-};
+void PythonQtAPI::setPythonInstance(PythonQt *pPythonInstance)
+{
+    PythonQtAPI::instance()->mPythonInstance = pPythonInstance ;
+}
+
+
+PythonQt *PythonQtAPI::getPythonInstance(void)
+{
+    return PythonQtAPI::instance()->mPythonInstance ;
+}
 
 //==============================================================================
 
 }   // namespace PythonQtAPI
 }   // namespace OpenCOR
-
-//==============================================================================
-
-#endif
 
 //==============================================================================
 // End of file

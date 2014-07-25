@@ -16,17 +16,16 @@ specific language governing permissions and limitations under the License.
 *******************************************************************************/
 
 //==============================================================================
-// PythonQt plugin
+// PythonQt interface
 //==============================================================================
 
-#ifndef PYTHONQTAPIPLUGIN_H
-#define PYTHONQTAPIPLUGIN_H
+#ifndef PYTHONQTAPI_H
+#define PYTHONQTAPI_H
 
 //==============================================================================
 
-#include "plugininfo.h"
-#include "i18ninterface.h"
-#include "plugininterface.h"
+#include "PythonQt.h"
+#include "PythonQtAPIGlobal.h"
 
 //==============================================================================
 
@@ -35,23 +34,17 @@ namespace PythonQtAPI {
 
 //==============================================================================
 
-PLUGININFO_FUNC PythonQtAPIPluginInfo();
-
-//==============================================================================
-
-class PythonQtAPIPlugin : public QObject, public I18nInterface,
-                          public PluginInterface
+class PYTHONQTAPI_EXPORT PythonQtAPI : public QObject
 {
     Q_OBJECT
 
-    Q_PLUGIN_METADATA(IID "OpenCOR.PythonQtAPIPlugin" FILE "PythonQtAPIPlugin.json")
-
-    Q_INTERFACES(OpenCOR::I18nInterface)
-    Q_INTERFACES(OpenCOR::PluginInterface)
-
 public:
-#include "i18ninterface.inl"
-#include "plugininterface.inl"
+    static PythonQtAPI * instance();
+    static void setPythonInstance(PythonQt *pPythonInstance) ;
+    static PythonQt *getPythonInstance(void) ;
+
+private:
+    PythonQt * mPythonInstance;
 
 };
 

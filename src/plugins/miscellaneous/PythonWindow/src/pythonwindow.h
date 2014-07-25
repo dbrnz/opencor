@@ -48,7 +48,6 @@ public:
   ~PythonWindow();
  
 private:
-  PythonQtObjectPtr mContext;
   PythonQtScriptingConsole *mConsole;
   };
 

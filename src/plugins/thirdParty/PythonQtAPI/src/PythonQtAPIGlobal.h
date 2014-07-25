@@ -16,50 +16,23 @@ specific language governing permissions and limitations under the License.
 *******************************************************************************/
 
 //==============================================================================
-// An dockable Python window
+// PythonQtAPI global
 //==============================================================================
 
-#include "pythonwindow.h"
+#ifndef PYTHONQTAPIGLOBAL_H
+#define PYTHONQTAPIGLOBAL_H
 
-#include "PythonQtAPI.h"
+#ifdef _WIN32
+    #ifdef PythonQtAPI_PLUGIN
+        #define PYTHONQTAPI_EXPORT __declspec(dllexport)
+    #else
+        #define PYTHONQTAPI_EXPORT __declspec(dllimport)
+    #endif
+#else
+    #define PYTHONQTAPI_EXPORT
+#endif
 
-//==============================================================================
-
-#include <QHBoxLayout>
-
-//==============================================================================
-
-namespace OpenCOR {
-namespace PythonWindow {
-
-//==============================================================================
-
-PythonWindow::PythonWindow(QWidget *pParent)
-/*----------------------------------------*/
-: Core::DockWidget(pParent)
-{
-  this->setObjectName("Python");
-  this->setWindowTitle("Python Interpreter");
-
-  PythonQt *python = PythonQtAPI::PythonQtAPI::getPythonInstance() ;
-  PythonQtObjectPtr context = python->getMainModule() ;
-
-  mConsole = new PythonQtScriptingConsole(this, context) ;
-  mConsole->appendCommandPrompt() ;
-
-  this->setWidget(mConsole) ;
-  }
-
-PythonWindow::~PythonWindow()
-/*-------------------------*/
-{
-  delete mConsole ;
-  }
-
-//==============================================================================
-
-}   // namespace PythonWindow
-}   // namespace OpenCOR
+#endif
 
 //==============================================================================
 // End of file

@@ -34,6 +34,7 @@ ADD_PLUGIN(PythonQtAPI
     SOURCES
         ../../plugininfo.cpp
 
+        src/PythonQtAPI.cpp
         src/PythonQtAPIPlugin.cpp
 
 	      PythonQt/src/PythonQtClassInfo.cpp
@@ -62,6 +63,7 @@ ADD_PLUGIN(PythonQtAPI
 	      PythonQt/generated_cpp${generated_cpp_suffix}/com_trolltech_qt_gui_builtin/com_trolltech_qt_gui_builtin_init.cpp
 
     HEADERS_MOC
+        src/PythonQtAPI.h
         src/PythonQtAPIPlugin.h
 
 	      PythonQt/src/PythonQt.h
