@@ -34,8 +34,6 @@ class PythonWindowPlugin : public QObject, public I18nInterface,
 
     Q_PLUGIN_METADATA(IID "OpenCOR.PythonWindowPlugin" FILE "pythonwindowplugin.json")
 
-    Q_INTERFACES(OpenCOR::PluginInterface)
-    Q_INTERFACES(OpenCOR::WindowInterface)
     Q_INTERFACES(OpenCOR::I18nInterface)
     Q_INTERFACES(OpenCOR::PluginInterface)
     Q_INTERFACES(OpenCOR::WindowInterface)

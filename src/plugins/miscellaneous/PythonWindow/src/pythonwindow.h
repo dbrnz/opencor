@@ -24,8 +24,8 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
-#include <PythonQt.h>
-#include <gui/PythonQtScriptingConsole.h>
+#include "PythonQt.h"
+#include "gui/PythonQtScriptingConsole.h"
 
 //==============================================================================
 
