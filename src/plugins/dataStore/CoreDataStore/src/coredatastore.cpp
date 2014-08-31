@@ -23,6 +23,10 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
+#include <Qt>
+
+//==============================================================================
+
 namespace OpenCOR {
 namespace CoreDataStore {
 
@@ -60,7 +64,7 @@ qulonglong CoreDataStore::size() const
 
 //==============================================================================
 
-CoreDataStoreVariable * CoreDataStore::voi() const
+DataStoreVariable * CoreDataStore::voi() const
 {
     // Return our variable of integration
 
@@ -69,46 +73,65 @@ CoreDataStoreVariable * CoreDataStore::voi() const
 
 //==============================================================================
 
-CoreDataStoreVariables CoreDataStore::variables() const
+DataStoreVariable * CoreDataStore::addVoi()
 {
-    // Return all our variables
+    // Add a (new) variable of integration to our data store
+
+    delete mVoi;
+
+    mVoi = new DataStoreVariable(mSize);
+
+    return mVoi;
+}
+
+//==============================================================================
+
+bool sortVariables(DataStoreVariable *pVariable1, DataStoreVariable *pVariable2)
+{
+    // Determine which of the two variables should be first based on their URI
+    // Note: the comparison is case insensitive, so that it's easier for people
+    //       to find a variable...
+
+    return pVariable1->uri().compare(pVariable2->uri(), Qt::CaseInsensitive) < 0;
+}
+
+//==============================================================================
+
+DataStoreVariables CoreDataStore::variables()
+{
+    // Return all our variables, after making sure that they are sorted
+
+    std::sort(mVariables.begin(), mVariables.end(), sortVariables);
 
     return mVariables;
 }
 
 //==============================================================================
 
-CoreDataStoreVariable * CoreDataStore::holdPoint(const double *pPoint,
-                                                 const bool &pVoi)
+DataStoreVariable * CoreDataStore::addVariable(double *pValue)
 {
-    if (pVoi)
-        delete mVoi;
+    // Add a variable to our data store
 
-    CoreDataStoreVariable *variable = new CoreDataStoreVariable(mSize, pPoint);
+    DataStoreVariable *variable = new DataStoreVariable(mSize, pValue);
 
-    if (pVoi)
-        mVoi = variable;
-    else
-        mVariables << variable;
+    mVariables << variable;
 
     return variable;
 }
 
 //==============================================================================
 
-CoreDataStoreVariables CoreDataStore::holdPoints(const int &pCount,
-                                                 const double *pPoints)
+DataStoreVariables CoreDataStore::addVariables(const int &pCount,
+                                               double *pValues)
 {
-    const double *points = pPoints;
+    // Add some variables to our data store
 
-    CoreDataStoreVariables variables(pCount);
+    DataStoreVariables variables(pCount);
 
-    for (int i = 0;  i < pCount;  ++i, ++points) {
-        CoreDataStoreVariable *variable = new CoreDataStoreVariable(mSize, points);
+    for (int i = 0; i < pCount; ++i, ++pValues) {
+        variables[i] = new DataStoreVariable(mSize, pValues);
 
-        mVariables << variable;
-
-        variables[i] = variable;
+        mVariables << variables[i];
     }
 
     return variables;
@@ -116,11 +139,17 @@ CoreDataStoreVariables CoreDataStore::holdPoints(const int &pCount,
 
 //==============================================================================
 
-void CoreDataStore::savePoints(const qulonglong &pPosition)
+void CoreDataStore::setValues(const qulonglong &pPosition, const double &pValue)
 {
+    // Set the value at the given position of all our variables including our
+    // variable of integration, which value is directly given to us
+
+    if (mVoi)
+        mVoi->setValue(pPosition, pValue);
+
     for (auto variable = mVariables.begin(), variableEnd = mVariables.end();
          variable != variableEnd; ++variable) {
-        (*variable)->savePoint(pPosition);
+        (*variable)->setValue(pPosition);
     }
 }
 

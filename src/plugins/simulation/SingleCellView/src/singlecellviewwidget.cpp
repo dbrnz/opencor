@@ -47,6 +47,7 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
+#include <QApplication>
 #include <QBrush>
 #include <QDesktopWidget>
 #include <QDir>
@@ -66,6 +67,7 @@ specific language governing permissions and limitations under the License.
 #include <QTimer>
 #include <QToolButton>
 #include <QVariant>
+#include <QVBoxLayout>
 
 //==============================================================================
 
@@ -1791,8 +1793,8 @@ bool SingleCellViewWidget::updatePlot(SingleCellViewGraphPanelPlotWidget *pPlot,
 
 //==============================================================================
 
-const double * SingleCellViewWidget::dataPoints(SingleCellViewSimulation *pSimulation,
-                                                CellMLSupport::CellmlFileRuntimeParameter *pParameter) const
+double * SingleCellViewWidget::dataPoints(SingleCellViewSimulation *pSimulation,
+                                          CellMLSupport::CellmlFileRuntimeParameter *pParameter) const
 {
     // Return the array of data points associated with the given simulation and
     // parameter
@@ -1812,6 +1814,7 @@ const double * SingleCellViewWidget::dataPoints(SingleCellViewSimulation *pSimul
         return pSimulation->results()->algebraic(pParameter->index());
     default:
         // CellMLSupport::CellmlFileRuntimeParameter::Voi
+
         return pSimulation->results()->points();
     }
 }

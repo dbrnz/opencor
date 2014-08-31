@@ -24,15 +24,14 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
-#include "coredatastorevariable.h"
 #include "coresolver.h"
+#include "datastorevariable.h"
 #include "singlecellviewsimulationworker.h"
 #include "solverinterface.h"
 
 //==============================================================================
 
 #include <QObject>
-#include <QVector>
 
 //==============================================================================
 
@@ -164,34 +163,40 @@ public:
                                              SingleCellViewSimulation *pSimulation);
     ~SingleCellViewSimulationResults();
 
-    bool reset(const bool &pCreateArrays = true);
+    bool reset(const bool &pCreateDataStore = true);
 
     void addPoint(const double &pPoint);
 
     qulonglong size() const;
 
-    const double *points();
-    const double *constants(size_t pIndex);
-    const double *rates(size_t pIndex);
-    const double *states(size_t pIndex);
-    const double *algebraic(size_t pIndex);
+    double * points() const;
+
+    double * constants(const int &pIndex) const;
+    double * rates(const int &pIndex) const;
+    double * states(const int &pIndex) const;
+    double * algebraic(const int &pIndex) const;
 
     bool exportToCsv(const QString &pFileName) const;
 
 private:
     CellMLSupport::CellmlFileRuntime *mRuntime;
+
     SingleCellViewSimulation *mSimulation;
+
     qulonglong mSize;
 
-    CoreDataStore::CoreDataStore *mDataset;
-    CoreDataStore::CoreDataStoreVariable *mPoints;
-    CoreDataStore::CoreDataStoreVariables mConstants;
-    CoreDataStore::CoreDataStoreVariables mRates;
-    CoreDataStore::CoreDataStoreVariables mStates;
-    CoreDataStore::CoreDataStoreVariables mAlgebraic;
+    CoreDataStore::CoreDataStore *mDataStore;
 
-    bool createArrays();
-    void deleteArrays();
+    CoreDataStore::DataStoreVariable *mPoints;
+    CoreDataStore::DataStoreVariables mConstants;
+    CoreDataStore::DataStoreVariables mRates;
+    CoreDataStore::DataStoreVariables mStates;
+    CoreDataStore::DataStoreVariables mAlgebraic;
+
+    bool createDataStore();
+    void deleteDataStore();
+
+    QString uri(const QStringList &pComponentHierarchy, const QString &pName);
 };
 
 //==============================================================================

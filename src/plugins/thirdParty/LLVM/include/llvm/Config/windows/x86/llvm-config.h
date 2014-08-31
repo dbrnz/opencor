@@ -107,7 +107,7 @@
 /* #undef LLVM_PATH_XDOT_PY */
 
 /* Installation prefix directory */
-#define LLVM_PREFIX "C:/Program Files/LLVM"
+#define LLVM_PREFIX "C:/Program Files (x86)/LLVM"
 
 /* Define if we have the Intel JIT API runtime support library */
 /* #undef LLVM_USE_INTEL_JITEVENTS */

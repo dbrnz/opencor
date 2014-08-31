@@ -16,74 +16,34 @@ specific language governing permissions and limitations under the License.
 *******************************************************************************/
 
 //==============================================================================
-// Core data store variable class
+// Spinner plugin
 //==============================================================================
 
-#ifndef COREDATASTOREVARIABLE_H
-#define COREDATASTOREVARIABLE_H
-
-//==============================================================================
-
-#include "coredatastoreglobal.h"
-
-//==============================================================================
-
-#include <QtGlobal>
-
-//==============================================================================
-
-#include <QString>
+#include "spinnerplugin.h"
 
 //==============================================================================
 
 namespace OpenCOR {
-namespace CoreDataStore {
+namespace Spinner {
 
 //==============================================================================
 
-class COREDATASTORE_EXPORT CoreDataStoreVariable
+PLUGININFO_FUNC SpinnerPluginInfo()
 {
-public:
-    explicit CoreDataStoreVariable(const qulonglong &pSize,
-                                   const double *pValue = 0);
-    virtual ~CoreDataStoreVariable();
+    Descriptions descriptions;
 
-    void setUri(const QString &pUri);
-    void setUnits(const QString &pUnits);
-    void setLabel(const QString &pLabel);
+    descriptions.insert("en", QString::fromUtf8("a plugin to show that something is going on."));
+    descriptions.insert("fr", QString::fromUtf8("une extension pour montrer qu'il y a quelque chose qui se passe."));
 
-    QString getUri() const;
-    QString getLabel() const;
-    QString getUnits() const;
-
-    void savePoint(const qulonglong &pPosition);
-    void savePoint(const qulonglong &pPosition, const double &pValue);
-
-    double getPoint(const qulonglong &pPosition) const;
-    const double *getData() const;
-    qulonglong getSize() const;
-
-private:
-    QString mUri;
-    QString mUnits;
-    QString mLabel;
-    const double *mValue;
-    double *mData;
-    qulonglong mSize;
-};
+    return new PluginInfo(PluginInfo::Widget, false, false,
+                          QStringList(),
+                          descriptions);
+}
 
 //==============================================================================
 
-typedef QVector<CoreDataStoreVariable *> CoreDataStoreVariables;
-
-//==============================================================================
-
-}   // namespace CoreDataStore
+}   // namespace Spinner
 }   // namespace OpenCOR
-
-//==============================================================================
-
-#endif
 
 //==============================================================================
 // End of file

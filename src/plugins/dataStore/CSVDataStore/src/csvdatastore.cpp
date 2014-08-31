@@ -20,8 +20,8 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include "coredatastore.h"
-#include "coredatastorevariable.h"
 #include "csvdatastore.h"
+#include "datastorevariable.h"
 
 //==============================================================================
 
@@ -35,7 +35,7 @@ namespace CSVDataStore {
 
 //==============================================================================
 
-bool exportDataStore(const CoreDataStore::CoreDataStore *pDataStore,
+bool exportDataStore(CoreDataStore::CoreDataStore *pDataStore,
                      const QString &pFileName)
 {
     // Export the given data store to a CSV file with the given file name
@@ -58,28 +58,28 @@ bool exportDataStore(const CoreDataStore::CoreDataStore *pDataStore,
 
     static const QString Header = "%1 (%2)";
 
-    CoreDataStore::CoreDataStoreVariable *voi = pDataStore->voi();
-    CoreDataStore::CoreDataStoreVariables variables = pDataStore->variables();
+    CoreDataStore::DataStoreVariable *voi = pDataStore->voi();
+    CoreDataStore::DataStoreVariables variables = pDataStore->variables();
 
-    out << Header.arg(voi->getUri().replace("/prime", "'").replace("/", " | "),
-                      voi->getUnits());
+    out << Header.arg(voi->uri().replace("/prime", "'").replace("/", " | "),
+                      voi->unit());
 
     auto variableBegin = variables.begin();
     auto variableEnd = variables.end();
 
     for (auto variable = variableBegin; variable != variableEnd; ++variable)
-        out << "," << Header.arg((*variable)->getUri().replace("/prime", "'").replace("/", " | "),
-                                 (*variable)->getUnits());
+        out << "," << Header.arg((*variable)->uri().replace("/prime", "'").replace("/", " | "),
+                                 (*variable)->unit());
 
     out << "\n";
 
     // Data itself
 
-   for (qulonglong i = 0;  i < pDataStore->size(); ++i) {
-       out << voi->getPoint(i);
+   for (qulonglong i = 0; i < pDataStore->size(); ++i) {
+       out << voi->value(i);
 
        for (auto variable = variableBegin; variable != variableEnd; ++variable)
-           out << "," << (*variable)->getPoint(i);
+           out << "," << (*variable)->value(i);
 
        out << "\n";
    }
