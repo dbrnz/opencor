@@ -224,7 +224,6 @@ SET(PLUGINS
     dataStore/CoreDataStore
 
     miscellaneous/Core
-    miscellaneous/PythonWindow
 
     solver/CoreSolver
 
@@ -237,6 +236,7 @@ SET(PLUGINS
     # Plugins that build on top of some third-party libraries
 
     miscellaneous/Compiler
+    miscellaneous/PythonWindow
 
     # Plugins that provide support for some third-party libraries
 
