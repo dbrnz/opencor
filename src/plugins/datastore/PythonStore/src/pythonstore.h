@@ -24,7 +24,8 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
-#include "coredata.h"
+#include "coredatastore.h"
+#include "datastorevariable.h"
 
 //==============================================================================
 
@@ -42,64 +43,41 @@ namespace PythonStore {
 
 //==============================================================================
 
-class DataVariableWrapper : public QObject {
-  Q_OBJECT
+class DataStoreVariableWrapper : public QObject {
+    Q_OBJECT
 
- public:
-  DataVariableWrapper(const CoreData::DataVariable *pVariable) ;
+public:
+    DataStoreVariableWrapper(const CoreDataStore::DataStoreVariable * pVariable);
+    static PyObject * new_wrapper(const CoreDataStore::DataStoreVariable * pVariable);
 
-  static PyObject *new_wrapper(const CoreData::DataVariable *pVariable) ;
+public slots:
+    QString uri(void) const;
+    QString unit(void) const;
+    QString name(void) const;
+    double value(const qulonglong &pPos) const;
+    const PyObject * values(void) const;
+    qulonglong size(void) const;
 
- public slots:
-
-  QString getUri(void) const
-    { return mVariable->getUri() ; }
-
-  QString getUnits(void) const
-    { return mVariable->getUnits() ; }
-
-  QString getLabel(void) const
-    { return mVariable->getLabel() ; }
-
-  double getPoint(const CoreData::SizeType &pPos) const
-    { return mVariable->getPoint(pPos) ; }
-
-  const PyObject *getData(void) const ;
-
-  qulonglong getSize(void) const
-    { return mVariable->getSize() ; }
-
- private:
-  const CoreData::DataVariable *mVariable ;
-  } ;
+private:
+    const CoreDataStore::DataStoreVariable *mVariable;
+};
 
 //==============================================================================
 
-class DataSetWrapper : public QObject {
-  Q_OBJECT
+class CoreDataStoreWrapper : public QObject {
+    Q_OBJECT
 
- public:
-  DataSetWrapper(const CoreData::DataSet *pDataset)
-   : mDataset(pDataset) { }
+public:
+    CoreDataStoreWrapper(CoreDataStore::CoreDataStore * pDataStore);
 
- public slots:
-  const PyObject *getVariables(void) const ;
+public slots:
+    const PyObject * voi(void) const;
+    const PyObject * variables(void) const;
+    qulonglong size(void) const;
 
-  const PyObject *getVariable(long index) const ;
-
-  const PyObject *getVoi(void) const ;
-
-  qulonglong getSize(void) const
-    { return mDataset->getSize() ; }
-
-  long length(void) const
-    { return mDataset->length() ; }
-
-  const PyObject *py_get_attribute(const QString &name) const ;
-
- private:
-  const CoreData::DataSet *mDataset ;
-  } ;
+private:
+    CoreDataStore::CoreDataStore *mDataStore;
+};
 
 //==============================================================================
 

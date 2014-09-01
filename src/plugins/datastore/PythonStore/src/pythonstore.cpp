@@ -38,28 +38,18 @@ namespace PythonStore {
 
 //==============================================================================
 
-DataVariableWrapper::DataVariableWrapper(const CoreData::DataVariable *pVariable)
-/*-----------------------------------------------------------------------------*/
-: mVariable(pVariable)
+DataStoreVariableWrapper::DataStoreVariableWrapper(const CoreDataStore::DataStoreVariable * pVariable) :
+    mVariable(pVariable)
 {
-  if (OpenCOR_Python_Store_PyArray_API == NULL) import_array() ;
-  }
-
-const PyObject *DataVariableWrapper::getData(void) const
-/*----------------------------------------------------*/
-{
-   npy_intp dims[1] ;
-   dims[0] = mVariable->getSize() ;
-   return PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (void *)mVariable->getData()) ;
-   }
+    if (OpenCOR_Python_Store_PyArray_API == NULL) import_array();
+}
 
 //==============================================================================
 
-PyObject *DataVariableWrapper::new_wrapper(const CoreData::DataVariable *pVariable)
-/*-------------------------------------------------------------------------------*/
+PyObject * DataStoreVariableWrapper::new_wrapper(const CoreDataStore::DataStoreVariable * pVariable)
 {
   if (pVariable) {
-    return PythonQt::priv()->wrapPtr(new DataVariableWrapper(pVariable), "DataVariableWrapper");
+    return PythonQt::priv()->wrapPtr(new DataStoreVariableWrapper(pVariable), "DataStoreVariableWrapper");
     }
   else {
     Py_INCREF(Py_None);
@@ -67,36 +57,85 @@ PyObject *DataVariableWrapper::new_wrapper(const CoreData::DataVariable *pVariab
     }
   }
 
-const PyObject *DataSetWrapper::getVariables(void) const
-/*----------------------------------------------------*/
+//==============================================================================
+
+QString DataStoreVariableWrapper::uri(void) const
 {
-  const QVector<CoreData::DataVariable *> vars = mDataset->getVariables() ;
-  PyObject *varlist = PyList_New(vars.size()) ;
-  for (auto i = 0 ;  i < vars.size() ;  ++i)
-    PyList_SET_ITEM(varlist, i, DataVariableWrapper::new_wrapper(vars[i])) ;
-  return varlist ;
-  }
+    return mVariable->uri();
+}
 
-const PyObject *DataSetWrapper::getVariable(long index) const
-/*---------------------------------------------------------*/
+//==============================================================================
+
+QString DataStoreVariableWrapper::unit(void) const
 {
-  return DataVariableWrapper::new_wrapper(mDataset->getVariable(index)) ;
-  }
+    return mVariable->unit();
+}
 
-const PyObject *DataSetWrapper::getVoi(void) const
-/*----------------------------------------------*/
+//==============================================================================
+
+QString DataStoreVariableWrapper::name(void) const
 {
-  return DataVariableWrapper::new_wrapper(mDataset->getVoi()) ;
-  }
+    return mVariable->name();
+}
 
+//==============================================================================
 
-const PyObject *DataSetWrapper::py_get_attribute(const QString &name) const
-/*------------------------------------------------------------------*/
+double DataStoreVariableWrapper::value(const qulonglong &pPos) const
 {
-  Q_UNUSED(name) ;
-  return getVoi() ;
-  }
+    return mVariable->value(pPos);
+}
 
+//==============================================================================
+
+const PyObject * DataStoreVariableWrapper::values(void) const
+{
+    npy_intp dims[1];
+    dims[0] = mVariable->size();
+    return PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (void *)mVariable->values());
+}
+
+//==============================================================================
+
+qulonglong DataStoreVariableWrapper::size(void) const
+{
+    return mVariable->size();
+}
+
+//==============================================================================
+//==============================================================================
+
+CoreDataStoreWrapper::CoreDataStoreWrapper(CoreDataStore::CoreDataStore * pDataStore) :
+    mDataStore(pDataStore)
+{
+}
+
+//==============================================================================
+
+const PyObject * CoreDataStoreWrapper::voi(void) const
+{
+    return DataStoreVariableWrapper::new_wrapper(mDataStore->voi());
+}
+
+//==============================================================================
+
+const PyObject * CoreDataStoreWrapper::variables(void) const
+{
+    CoreDataStore::DataStoreVariables vars = mDataStore->variables();
+    PyObject *varlist = PyList_New(vars.size());
+    for (auto i = 0 ;  i < vars.size() ;  ++i)
+      PyList_SET_ITEM(varlist, i, DataStoreVariableWrapper::new_wrapper(vars[i]));
+    return varlist ;
+}
+
+//==============================================================================
+
+
+qulonglong CoreDataStoreWrapper::size(void) const
+{
+    return mDataStore->size();
+}
+
+//==============================================================================
 //==============================================================================
 
 }   // namespace PythonStore
