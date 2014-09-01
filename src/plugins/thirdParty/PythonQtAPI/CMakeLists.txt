@@ -16,10 +16,6 @@ include(PythonQt/cmake/PythonQt_Qt_5x.cmake)
 # All 5.x use the same for now
 set(generated_cpp_suffix "_50")
 
-add_subdirectory(PythonQt/generator_50 EXCLUDE_FROM_ALL)
-add_custom_target(generator)
-add_dependencies(generator pythonqt_generator)
-
 ### Find Python
 find_package(PythonLibs)
 
