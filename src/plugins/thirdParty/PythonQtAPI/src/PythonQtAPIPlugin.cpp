@@ -66,10 +66,7 @@ void PythonQtAPIPlugin::initializePlugin(QMainWindow * pMainWindow)
 {
     Q_UNUSED(pMainWindow);
 
-// Can we use system Python and it's site packages?
-// Maybe do a sanity check via sys.version string??
-  PythonQt::init(/*PythonQt::IgnoreSiteModule | */PythonQt::RedirectStdOut) ;
-  PythonQtAPI::setPythonInstance(PythonQt::self()) ;
+    PythonQtAPI::initialise();
 }
 
 //==============================================================================

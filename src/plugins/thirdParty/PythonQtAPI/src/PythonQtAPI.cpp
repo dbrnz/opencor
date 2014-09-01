@@ -36,6 +36,17 @@ namespace PythonQtAPI {
 
 //==============================================================================
 
+void PythonQtAPI::initialise(void)
+{
+// Can we use system Python and it's site packages?
+// Maybe do a sanity check via sys.version string??
+    PythonQt::init(/*PythonQt::IgnoreSiteModule | */PythonQt::RedirectStdOut);
+    PythonQtAPI::setPythonInstance(PythonQt::self());
+// FUTURE    PythonQt_QtAll::init();
+}
+
+//==============================================================================
+
 PythonQtAPI *PythonQtAPI::instance(void)
 {
     // Return the 'global' instance of our Python Qt API class

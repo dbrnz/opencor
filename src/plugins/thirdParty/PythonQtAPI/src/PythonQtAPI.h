@@ -29,6 +29,7 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include "PythonQt.h"
+// FUTURE #include "PythonQt_QtAll.h"
 
 //==============================================================================
 
@@ -42,6 +43,7 @@ class PYTHONQTAPI_EXPORT PythonQtAPI : public QObject
     Q_OBJECT
 
 public:
+    static void initialise(void);
     static PythonQtAPI * instance(void);
 
     static void setPythonInstance(PythonQt * pPythonInstance);
