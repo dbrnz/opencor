@@ -81,13 +81,16 @@ ADD_PLUGIN(PythonQtAPI
         PYTHONQT_USE_RELEASE_PYTHON_FALLBACK
         PYTHONQT_EXPORTS
 
+    PLUGINS
+        Core
+
     QT_MODULES
         Core
-        Gui
-        Widgets
 
     QT_LIBRARIES
         QtCore
+        QtGui
+        QtWidgets
 
     EXTERNAL_BINARIES_DIR
         /
