@@ -18,8 +18,8 @@ PLUGININFO_FUNC PythonStorePluginInfo()
     descriptions.insert("en", QString::fromUtf8("the Python data store wrapper."));
     descriptions.insert("fr", QString::fromUtf8("the Python data store wrapper."));
 
-    return new PluginInfo(PluginInfo::Datastore, true, false,
-                          QStringList() << "Core" << "CoreData" << "PythonQtAPI",
+    return new PluginInfo(PluginInfo::DataStore, true, false,
+                          QStringList() << "CoreDataStore" << "PythonQtAPI",
                           descriptions);
 }
 

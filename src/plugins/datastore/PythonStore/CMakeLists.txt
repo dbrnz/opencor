@@ -22,9 +22,11 @@ ADD_PLUGIN(PythonStore
         ${PYTHON_INCLUDE_DIRS}
         ${NUMPY_INCLUDE_DIR}
     PLUGINS
-        CoreDatastore
+        CoreDataStore
+        PythonQtAPI
     QT_MODULES
         Core
     QT_LIBRARIES
         QtCore
+        QtWidgets
 )
