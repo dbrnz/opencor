@@ -36,26 +36,27 @@ namespace PythonQtAPI {
 
 //==============================================================================
 
-PythonQtAPI *PythonQtAPI::instance()
+PythonQtAPI *PythonQtAPI::instance(void)
 {
     // Return the 'global' instance of our Python Qt API class
 
     static PythonQtAPI instance;
-
     return static_cast<PythonQtAPI *>(Core::globalInstance("OpenCOR::PythonQtAPI::PythonQtAPI",
                                                            &instance));
 }
 
+//==============================================================================
 
 void PythonQtAPI::setPythonInstance(PythonQt *pPythonInstance)
 {
-    PythonQtAPI::instance()->mPythonInstance = pPythonInstance ;
+    PythonQtAPI::instance()->mPythonInstance = pPythonInstance;
 }
 
+//==============================================================================
 
-PythonQt *PythonQtAPI::getPythonInstance(void)
+PythonQt * PythonQtAPI::PythonInstance(void)
 {
-    return PythonQtAPI::instance()->mPythonInstance ;
+    return PythonQtAPI::instance()->mPythonInstance;
 }
 
 //==============================================================================

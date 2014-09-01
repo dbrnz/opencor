@@ -55,65 +55,65 @@ PLUGININFO_FUNC PythonQtAPIPluginInfo()
 
 void PythonQtAPIPlugin::retranslateUi()
 {
-  // We don't handle this interface...
-  }
+    // We don't handle this interface...
+}
 
 //==============================================================================
 // Plugin interface
 //==============================================================================
 
-void PythonQtAPIPlugin::initializePlugin(QMainWindow *pMainWindow)
+void PythonQtAPIPlugin::initializePlugin(QMainWindow * pMainWindow)
 {
-  Q_UNUSED(pMainWindow);
+    Q_UNUSED(pMainWindow);
 
 // Can we use system Python and it's site packages?
 // Maybe do a sanity check via sys.version string??
   PythonQt::init(/*PythonQt::IgnoreSiteModule | */PythonQt::RedirectStdOut) ;
   PythonQtAPI::setPythonInstance(PythonQt::self()) ;
-  }
+}
 
 //==============================================================================
 
 void PythonQtAPIPlugin::finalizePlugin()
 {
-  // We don't handle this interface...
-  }
+    // We don't handle this interface...
+}
 
 //==============================================================================
 
 void PythonQtAPIPlugin::pluginsInitialized(const Plugins &pLoadedPlugins)
 {
-  Q_UNUSED(pLoadedPlugins);
+    Q_UNUSED(pLoadedPlugins);
 
-  // We don't handle this interface...
-  }
-
-//==============================================================================
-
-void PythonQtAPIPlugin::loadSettings(QSettings *pSettings)
-{
-  Q_UNUSED(pSettings);
-
-  // We don't handle this interface...
-  }
+    // We don't handle this interface...
+}
 
 //==============================================================================
 
-void PythonQtAPIPlugin::saveSettings(QSettings *pSettings) const
+void PythonQtAPIPlugin::loadSettings(QSettings * pSettings)
 {
-  Q_UNUSED(pSettings);
+    Q_UNUSED(pSettings);
 
-  // We don't handle this interface...
-  }
+    // We don't handle this interface...
+}
+
+//==============================================================================
+
+void PythonQtAPIPlugin::saveSettings(QSettings * pSettings) const
+{
+    Q_UNUSED(pSettings);
+
+    // We don't handle this interface...
+}
 
 //==============================================================================
 
 void PythonQtAPIPlugin::handleAction(const QUrl &pUrl)
 {
-  Q_UNUSED(pUrl);
+    Q_UNUSED(pUrl);
 
-  // We don't handle this interface...
-  }
+    // We don't handle this interface...
+}
 
 //==============================================================================
 
