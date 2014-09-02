@@ -34,26 +34,26 @@ namespace PythonWindow {
 
 //==============================================================================
 
-PythonWindow::PythonWindow(QWidget *pParent)
-/*----------------------------------------*/
-: Core::DockWidget(pParent)
+PythonWindow::PythonWindow(QWidget *pParent) :
+    Core::DockWidget(pParent),
+    mConsole(0)
 {
-  this->setObjectName("Python");
-  this->setWindowTitle("Python Interpreter");
+    this->setObjectName("Python");
+    this->setWindowTitle("Python Interpreter");
 
-  PythonQt *python = PythonQtAPI::PythonQtAPI::PythonInstance() ;
-  PythonQtObjectPtr context = python->getMainModule() ;
+    PythonQtObjectPtr context = PythonQtAPI::PythonQtAPI::mainModule();
+    mConsole = new PythonQtScriptingConsole(this, context);
+    mConsole->appendCommandPrompt();
 
-  mConsole = new PythonQtScriptingConsole(this, context) ;
-  mConsole->appendCommandPrompt() ;
+    this->setWidget(mConsole);
+}
 
-  this->setWidget(mConsole) ;
-  }
+//==============================================================================
 
 PythonWindow::~PythonWindow()
 /*-------------------------*/
 {
-  delete mConsole ;
+  delete mConsole;
   }
 
 //==============================================================================

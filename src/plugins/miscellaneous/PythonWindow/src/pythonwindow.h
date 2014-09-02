@@ -39,17 +39,16 @@ namespace PythonWindow {
 //==============================================================================
 
 class PythonWindow : public Core::DockWidget
-/*----------------------------------------*/
 {
 Q_OBJECT
  
 public:
-  explicit PythonWindow(QWidget *pParent);
-  ~PythonWindow();
+    explicit PythonWindow(QWidget *pParent);
+    ~PythonWindow();
  
 private:
-  PythonQtScriptingConsole *mConsole;
-  };
+    PythonQtScriptingConsole *mConsole;
+};
 
 //==============================================================================
 
