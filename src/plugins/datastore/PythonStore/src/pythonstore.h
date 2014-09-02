@@ -53,7 +53,7 @@ public:
 public slots:
     QString uri(void) const;
     QString unit(void) const;
-    QString name(void) const;
+    QString label(void) const;
     double value(const qulonglong &pPos) const;
     const PyObject * values(void) const;
     qulonglong size(void) const;
