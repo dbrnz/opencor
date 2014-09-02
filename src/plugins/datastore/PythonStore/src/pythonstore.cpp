@@ -48,13 +48,7 @@ DataStoreVariableWrapper::DataStoreVariableWrapper(const CoreDataStore::DataStor
 
 PyObject * DataStoreVariableWrapper::new_wrapper(const CoreDataStore::DataStoreVariable * pVariable)
 {
-  if (pVariable) {
-    return PythonQt::priv()->wrapPtr(new DataStoreVariableWrapper(pVariable), "DataStoreVariableWrapper");
-    }
-  else {
-    Py_INCREF(Py_None);
-    return Py_None;
-    }
+  return PythonQt::priv()->wrapQObject(new DataStoreVariableWrapper(pVariable));
   }
 
 //==============================================================================
