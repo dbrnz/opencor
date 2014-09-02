@@ -43,15 +43,22 @@ class PYTHONQTAPI_EXPORT PythonQtAPI : public QObject
     Q_OBJECT
 
 public:
+    PythonQtAPI(void);
+    ~PythonQtAPI(void);
     static void initialise(void);
     static PythonQtAPI * instance(void);
 
-    static void setPythonInstance(PythonQt * pPythonInstance);
-    static PythonQt * PythonInstance(void);
+    static void setPythonInstance(PythonQt *pPythonInstance);
+    static PythonQt * pythonInstance(void);
+    static PythonQtObjectPtr mainModule(void);
+    static PythonQtObjectPtr opencorModule(void);
+
+    static void addVariable(const QString &pName, QObject *pObject);
 
 private:
     PythonQt *mPythonInstance;
-
+    static PythonQtObjectPtr mMainModule;
+    static PythonQtObjectPtr mOpenCOR;
 };
 
 //==============================================================================

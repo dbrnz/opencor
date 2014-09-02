@@ -36,6 +36,25 @@ namespace PythonQtAPI {
 
 //==============================================================================
 
+PythonQtObjectPtr PythonQtAPI::mMainModule = 0;
+PythonQtObjectPtr PythonQtAPI::mOpenCOR = 0;
+
+//==============================================================================
+
+PythonQtAPI::PythonQtAPI(void) :
+    mPythonInstance(0)
+{
+}
+
+//==============================================================================
+
+PythonQtAPI::~PythonQtAPI(void)
+{
+    if (mPythonInstance) PythonQt::cleanup();
+}
+
+//==============================================================================
+
 void PythonQtAPI::initialise(void)
 {
 // Can we use system Python and it's site packages?
@@ -43,6 +62,9 @@ void PythonQtAPI::initialise(void)
     PythonQt::init(/*PythonQt::IgnoreSiteModule | */PythonQt::RedirectStdOut);
     PythonQtAPI::setPythonInstance(PythonQt::self());
 // FUTURE    PythonQt_QtAll::init();
+
+    mMainModule = pythonInstance()->getMainModule();
+    mOpenCOR = pythonInstance()->createModuleFromScript("opencor");
 }
 
 //==============================================================================
@@ -65,10 +87,36 @@ void PythonQtAPI::setPythonInstance(PythonQt *pPythonInstance)
 
 //==============================================================================
 
-PythonQt * PythonQtAPI::PythonInstance(void)
+PythonQt * PythonQtAPI::pythonInstance(void)
 {
     return PythonQtAPI::instance()->mPythonInstance;
 }
+
+//==============================================================================
+
+PythonQtObjectPtr PythonQtAPI::mainModule()
+{
+    return PythonQtAPI::mMainModule;
+}
+
+//==============================================================================
+
+PythonQtObjectPtr PythonQtAPI::opencorModule()
+{
+    return PythonQtAPI::mOpenCOR;
+}
+
+
+//==============================================================================
+
+void PythonQtAPI::addVariable(const QString &pName, QObject *pObject)
+{
+    PythonQtObjectPtr opencor = PythonQtAPI::opencorModule();
+
+    if (opencor.getVariable(pName).isValid()) opencor.removeVariable(pName) ;
+    opencor.addObject(pName, pObject);
+}
+
 
 //==============================================================================
 
