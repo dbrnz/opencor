@@ -28,5 +28,8 @@ ADD_PLUGIN(PythonStore
         Core
     QT_LIBRARIES
         QtCore
+        QtGui
         QtWidgets
+        QtNetwork
+        QtXmlPatterns
 )

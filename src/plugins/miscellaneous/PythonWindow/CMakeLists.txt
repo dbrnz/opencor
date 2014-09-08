@@ -27,4 +27,6 @@ ADD_PLUGIN(PythonWindow
         QtCore
         QtGui
         QtWidgets
+        QtNetwork
+        QtXmlPatterns
 )

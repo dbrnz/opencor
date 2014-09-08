@@ -16,8 +16,6 @@ include(PythonQt/cmake/PythonQt_Qt_5x.cmake)
 # All 5.x use the same for now
 set(generated_cpp_suffix "_50")
 
-### Find Python
-find_package(PythonLibs)
 
 # Add the plugin
 
@@ -87,6 +85,8 @@ ADD_PLUGIN(PythonQtAPI
         QtCore
         QtGui
         QtWidgets
+        QtNetwork
+        QtXmlPatterns
 
     EXTERNAL_BINARIES_DIR
         /
