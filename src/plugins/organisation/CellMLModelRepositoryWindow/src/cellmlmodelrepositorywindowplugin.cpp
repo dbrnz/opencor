@@ -25,6 +25,10 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
+#include <Qt>
+
+//==============================================================================
+
 #include <QMainWindow>
 #include <QSettings>
 
@@ -43,7 +47,7 @@ PLUGININFO_FUNC CellMLModelRepositoryWindowPluginInfo()
     descriptions.insert("fr", QString::fromUtf8("une extension pour accéder au <a href=\"http://models.physiomeproject.org/cellml/\">Répertoire de Modèles CellML</a>."));
 
     return new PluginInfo(PluginInfo::Organisation, true, false,
-                          QStringList() << "Core" << "Spinner",
+                          QStringList() << "Core",
                           descriptions);
 }
 

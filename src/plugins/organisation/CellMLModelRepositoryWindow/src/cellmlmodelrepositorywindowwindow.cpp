@@ -23,7 +23,6 @@ specific language governing permissions and limitations under the License.
 #include "cellmlmodelrepositorywindowwidget.h"
 #include "cliutils.h"
 #include "guiutils.h"
-#include "spinnerwidget.h"
 
 //==============================================================================
 
@@ -76,10 +75,6 @@ CellmlModelRepositoryWindowWindow::CellmlModelRepositoryWindowWindow(QWidget *pP
     mCellmlModelRepositoryWidget = new CellmlModelRepositoryWindowWidget(this);
 
     mGui->dockWidgetContents->layout()->addWidget(mCellmlModelRepositoryWidget);
-
-    // Create our spinner widget
-
-    mSpinnerWidget = new Spinner::SpinnerWidget(mCellmlModelRepositoryWidget);
 
     // Create and populate our context menu
 
@@ -146,20 +141,6 @@ void CellmlModelRepositoryWindowWindow::retranslateUi()
 
 //==============================================================================
 
-void CellmlModelRepositoryWindowWindow::resizeEvent(QResizeEvent *pEvent)
-{
-    // Default handling of the event
-
-    Core::OrganisationWidget::resizeEvent(pEvent);
-
-    // (Re-)center our spinner widget
-
-    mSpinnerWidget->move(0.5*(mCellmlModelRepositoryWidget->width()-mSpinnerWidget->width()),
-                         0.5*(mCellmlModelRepositoryWidget->height()-mSpinnerWidget->height()));
-}
-
-//==============================================================================
-
 void CellmlModelRepositoryWindowWindow::outputModelList(const QStringList &pModelList)
 {
     // Output a given list of models
@@ -197,7 +178,10 @@ void CellmlModelRepositoryWindowWindow::outputModelList(const QStringList &pMode
 
     // Show/hide our spinner widget
 
-    mSpinnerWidget->setVisible(mModelListRequested);
+    if (mModelListRequested)
+        showSpinnerWidget(mCellmlModelRepositoryWidget);
+    else
+        hideSpinnerWidget();
 
     // Output the list matching the search criteria, or a message telling the
     // user what went wrong, if anything and if needed

@@ -29,8 +29,22 @@ namespace Core {
 //==============================================================================
 
 ViewWidget::ViewWidget(QWidget *pParent) :
-    Widget(pParent)
+    Widget(pParent),
+    SpinnerSupportWidget()
 {
+}
+
+//==============================================================================
+
+void ViewWidget::resizeEvent(QResizeEvent *pEvent)
+{
+    // Default handling of the event
+
+    Widget::resizeEvent(pEvent);
+
+    // (Re)center our spinner widget
+
+    centerSpinnerWidget();
 }
 
 //==============================================================================

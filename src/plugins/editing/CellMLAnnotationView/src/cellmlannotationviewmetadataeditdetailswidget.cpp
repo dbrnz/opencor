@@ -23,6 +23,7 @@ specific language governing permissions and limitations under the License.
 #include "cellmlannotationviewcellmllistwidget.h"
 #include "cellmlannotationvieweditingwidget.h"
 #include "cellmlannotationviewmetadataeditdetailswidget.h"
+#include "cellmlannotationviewwidget.h"
 #include "cellmlfilerdftriple.h"
 #include "cliutils.h"
 #include "filemanager.h"
@@ -221,9 +222,16 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateGui(iface::cellml_api:
         mAddTermButton->setEnabled(false);
     }
 
-    // Reset our items' GUI, if needed
+    // Reset our items' GUI, if needed and if our spinner widget is not already
+    // visible
+    // Note: the reason for checking whether our spinner widget is visible is
+    //       that we come here every time the user modifies the term to lookup.
+    //       So, we don't want to call updateItemsGui() for no reasons. Indeed,
+    //       if we were then our spinner widget would get 'reset' every time,
+    //       which doesn't look nice...
 
-    if (pResetItemsGui || mTermIsDirect)
+    if (   (pResetItemsGui && !mParent->parent()->isSpinnerWidgetVisible())
+        || mTermIsDirect)
         updateItemsGui(Items(), QString(), !mTermIsDirect);
 
     // Enable or disable the add buttons for our retrieved terms, depending on
@@ -264,7 +272,7 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateGui(const Items &pItem
 
     setUpdatesEnabled(false);
 
-    // Create a widget which will contain our GUI
+    // Create a widget that will contain our GUI
 
     QWidget *newMainWidget = new QWidget(this);
     QVBoxLayout *newMainLayout = new QVBoxLayout(newMainWidget);
@@ -273,14 +281,14 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateGui(const Items &pItem
 
     newMainWidget->setLayout(newMainLayout);
 
-    // Create a form widget which will contain our qualifier and term fields
+    // Create a form widget that will contain our qualifier and term fields
 
     QWidget *newFormWidget = new QWidget(newMainWidget);
     QFormLayout *newFormLayout = new QFormLayout(newFormWidget);
 
     newFormWidget->setLayout(newFormLayout);
 
-    // Create a widget which will contain both our qualifier value widget and a
+    // Create a widget that will contain both our qualifier value widget and a
     // button to look up the qualifier
 
     QWidget *qualifierWidget = new QWidget(newFormWidget);
@@ -335,7 +343,7 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateGui(const Items &pItem
 
     // Add our term field
 
-    // Create a widget which will contain both our qualifier value widget and a
+    // Create a widget that will contain both our qualifier value widget and a
     // button to look up the qualifier
 
     QWidget *termWidget = new QWidget(newFormWidget);
@@ -515,12 +523,19 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateItemsGui(const Items &
 
     // Create a new widget and layout
 
-    QWidget *newGridWidget = new QWidget(mItemsScrollArea);
+    QWidget *newGridWidget = new Core::Widget(mItemsScrollArea);
     QGridLayout *newGridLayout = new QGridLayout(newGridWidget);
 
     newGridWidget->setLayout(newGridLayout);
 
+    connect(newGridWidget, SIGNAL(resized(const QSize &, const QSize &)),
+            this, SLOT(recenterSpinnerWidget()));
+
     // Populate our new layout, but only if there is at least one item
+
+    bool showSpinnerWidget = false;
+
+    mParent->parent()->hideSpinnerWidget();
 
     if (pItems.count()) {
         // Create labels to act as headers
@@ -644,7 +659,9 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateItemsGui(const Items &
         } else if (mTerm.isEmpty()) {
             labelText = tr("Please enter a term to search above...");
         } else if (pLookupTerm) {
-            labelText = tr("Please wait while we are retrieving possible terms for <strong>%1</strong>...").arg(mTerm);
+            labelText = QString();
+
+            showSpinnerWidget = true;
         } else if (pErrorMessage.isEmpty()) {
             if (mTermIsDirect) {
                 if (mAddTermButton->isEnabled())
@@ -658,11 +675,12 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateItemsGui(const Items &
             labelText = tr("<strong>Error:</strong> ")+Core::formatErrorMessage(pErrorMessage);
         }
 
-        newGridLayout->addWidget(Core::newLabel(labelText,
-                                                1.25, false, false,
-                                                Qt::AlignCenter,
-                                                newGridWidget),
-                                 0, 0);
+        if (!labelText.isEmpty())
+            newGridLayout->addWidget(Core::newLabel(labelText,
+                                                    1.25, false, false,
+                                                    Qt::AlignCenter,
+                                                    newGridWidget),
+                                     0, 0);
 
         // Pretend that we want to look nothing up, if needed
         // Note: this is in case a resource or id used to be looked up, in which
@@ -676,6 +694,11 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateItemsGui(const Items &
     // Note: this will automatically delete the old grid widget...
 
     mItemsScrollArea->setWidget(newGridWidget);
+
+    // Show our spinner widget, if needed
+
+    if (showSpinnerWidget)
+        mParent->parent()->showSpinnerWidget(newGridWidget);
 
     // Keep track of our new grid widgets and layouts
 
@@ -975,8 +998,7 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::termLookedUp(QNetworkReply *
         errorMessage = pNetworkReply->errorString();
     }
 
-    // Update our GUI with the results of the lookup after having sorted
-    // them
+    // Update our GUI with the results of the lookup after having sorted them
 
     std::sort(items.begin(), items.end());
 
@@ -1100,6 +1122,15 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::fileReloaded()
     mLookupQualifierButton->setChecked(false);
 
     mTermValue->setText(QString());
+}
+
+//==============================================================================
+
+void CellmlAnnotationViewMetadataEditDetailsWidget::recenterSpinnerWidget()
+{
+    // Recenter our spinner widget
+
+    mParent->parent()->centerSpinnerWidget();
 }
 
 //==============================================================================

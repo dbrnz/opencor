@@ -33,18 +33,20 @@ ADD_PLUGIN(Core
         src/collapsiblewidget.cpp
         src/commonwidget.cpp
         src/coreplugin.cpp
-        src/dockwidget.cpp
         src/file.cpp
         src/filemanager.cpp
         src/guiutils.cpp
         src/organisationwidget.cpp
         src/progressbarwidget.cpp
         src/propertyeditorwidget.cpp
+        src/spinnersupportwidget.cpp
+        src/spinnerwidget.cpp
         src/toolbarwidget.cpp
         src/treeviewwidget.cpp
         src/usermessagewidget.cpp
         src/viewwidget.cpp
         src/widget.cpp
+        src/windowwidget.cpp
         src/xsltransformer.cpp
     HEADERS_MOC
         ../../../3rdparty/QtSingleApplication/src/qtlocalpeer.h
@@ -58,16 +60,17 @@ ADD_PLUGIN(Core
         src/cliutils.h
         src/collapsiblewidget.h
         src/coreplugin.h
-        src/dockwidget.h
         src/filemanager.h
         src/organisationwidget.h
         src/progressbarwidget.h
         src/propertyeditorwidget.h
+        src/spinnerwidget.h
         src/toolbarwidget.h
         src/treeviewwidget.h
         src/usermessagewidget.h
         src/viewwidget.h
         src/widget.h
+        src/windowwidget.h
         src/xsltransformer.h
     UIS
         src/centralwidget.ui

@@ -27,6 +27,7 @@ specific language governing permissions and limitations under the License.
 #include "file.h"
 #include "filetypeinterface.h"
 #include "guiinterface.h"
+#include "spinnersupportwidget.h"
 #include "widget.h"
 #include "viewinterface.h"
 
@@ -94,7 +95,7 @@ private:
 
 //==============================================================================
 
-class CentralWidget : public Widget
+class CentralWidget : public Widget, public SpinnerSupportWidget
 {
     Q_OBJECT
 
@@ -132,6 +133,7 @@ protected:
     virtual void dragEnterEvent(QDragEnterEvent *pEvent);
     virtual void dragMoveEvent(QDragMoveEvent *pEvent);
     virtual void dropEvent(QDropEvent *pEvent);
+    virtual void resizeEvent(QResizeEvent *pEvent);
 
 private:
     enum State {
@@ -178,6 +180,8 @@ private:
 
     QMap<QString, QString> mRemoteLocalFileNames;
 
+    QMap<QString, QWidget *> mViews;
+
     Plugin * viewPlugin(const int &pIndex) const;
     Plugin * viewPlugin(const QString &pFileName) const;
 
@@ -190,6 +194,9 @@ private:
     void updateFileTab(const int &pIndex);
 
     void updateStatusBarWidgets(QList<QWidget *> pWidgets);
+
+    QString viewKey(const int &pMode, const int &pView,
+                    const QString &pFileName);
 
 Q_SIGNALS:
     void guiUpdated(Plugin *pViewPlugin, const QString &pFileName);

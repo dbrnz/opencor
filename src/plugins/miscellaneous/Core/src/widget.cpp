@@ -23,17 +23,12 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
-namespace OpenCOR {
-namespace Core {
+#include <QResizeEvent>
 
 //==============================================================================
 
-Widget::Widget(const QSize &pSizeHint, QWidget *pParent) :
-    QWidget(pParent),
-    CommonWidget(pParent),
-    mSizeHint(pSizeHint)
-{
-}
+namespace OpenCOR {
+namespace Core {
 
 //==============================================================================
 
@@ -41,6 +36,15 @@ Widget::Widget(QWidget *pParent) :
     QWidget(pParent),
     CommonWidget(pParent),
     mSizeHint(defaultSize(0.15))
+{
+}
+
+//==============================================================================
+
+Widget::Widget(const QSize &pSizeHint, QWidget *pParent) :
+    QWidget(pParent),
+    CommonWidget(pParent),
+    mSizeHint(pSizeHint)
 {
 }
 
@@ -54,6 +58,19 @@ QSize Widget::sizeHint() const
         return mSizeHint;
     else
         return QWidget::sizeHint();
+}
+
+//==============================================================================
+
+void Widget::resizeEvent(QResizeEvent *pEvent)
+{
+    // Default handling of the event
+
+    QWidget::resizeEvent(pEvent);
+
+    // Let people know that we have been resized
+
+    emit resized(pEvent->size(), pEvent->oldSize());
 }
 
 //==============================================================================

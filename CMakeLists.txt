@@ -247,7 +247,6 @@ SET(PLUGINS
 
     widget/Editor
     widget/EditorList
-    widget/Spinner
     widget/Viewer
 
     # Plugins that have dependencies on others
@@ -444,10 +443,35 @@ ELSE()
         COPY_FILE_TO_BUILD_DIR(${WINDOWS_CLI_PROJECT_NAME} ${PROJECT_BUILD_DIR} bin
                                ${WINDOWS_CLI_PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX} ${PROJECT_NAME}.com)
 
-        # Redistributable files required by OpenCOR
+        # Additional files required by OpenCOR
         # Note: these files may or not be needed in order to test OpenCOR
-        #       locally. It all depends on whether they are present on the
-        #       user's computer...
+        #       locally. It all depends on the way the user's computer is set
+        #       up. So, by copying them over, we are sure that the 32-bit/64-bit
+        #       release/debug version of OpenCOR will work fine...
+
+        SET(MSVC_DIRNAME "C:/Program Files (x86)/Microsoft Visual Studio 12.0/VC/redist")
+
+        IF(NOT RELEASE_MODE)
+            SET(MSVC_DIRNAME "${MSVC_DIRNAME}/Debug_NonRedist")
+        ENDIF()
+
+        IF(${ARCHITECTURE} EQUAL 32)
+            SET(MSVC_DIRNAME "${MSVC_DIRNAME}/x86")
+        ELSE()
+            SET(MSVC_DIRNAME "${MSVC_DIRNAME}/x64")
+        ENDIF()
+
+        IF(RELEASE_MODE)
+            SET(ADDITIONAL_FILES
+                ${MSVC_DIRNAME}/Microsoft.VC120.CRT/msvcp120.dll
+                ${MSVC_DIRNAME}/Microsoft.VC120.CRT/msvcr120.dll
+            )
+        ELSE()
+            SET(ADDITIONAL_FILES
+                ${MSVC_DIRNAME}/Microsoft.VC120.DebugCRT/msvcp120d.dll
+                ${MSVC_DIRNAME}/Microsoft.VC120.DebugCRT/msvcr120d.dll
+            )
+        ENDIF()
 
         IF(${ARCHITECTURE} EQUAL 32)
             RETRIEVE_BINARY_FILE(distrib/${DISTRIB_DIR} libeay32.dll 824d314e6f24c490ec0329d20762ae8a3263af92)
@@ -457,11 +481,17 @@ ELSE()
             RETRIEVE_BINARY_FILE(distrib/${DISTRIB_DIR} ssleay32.dll 597653fd6b869f37a865b84fa5b59fd0905a1ed5)
         ENDIF()
 
-        FOREACH(REDISTRIBUTABLE_FILE libeay32 ssleay32)
-            COPY_FILE_TO_BUILD_DIR(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/distrib/${DISTRIB_DIR} .
-                                   ${REDISTRIBUTABLE_FILE}${CMAKE_SHARED_LIBRARY_SUFFIX})
-            COPY_FILE_TO_BUILD_DIR(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/distrib/${DISTRIB_DIR} bin
-                                   ${REDISTRIBUTABLE_FILE}${CMAKE_SHARED_LIBRARY_SUFFIX})
+        LIST(APPEND ADDITIONAL_FILES
+            ${CMAKE_SOURCE_DIR}/distrib/${DISTRIB_DIR}/libeay32.dll
+            ${CMAKE_SOURCE_DIR}/distrib/${DISTRIB_DIR}/ssleay32.dll
+        )
+
+        FOREACH(ADDITIONAL_FILE ${ADDITIONAL_FILES})
+            GET_FILENAME_COMPONENT(DIRNAME ${ADDITIONAL_FILE} DIRECTORY)
+            GET_FILENAME_COMPONENT(FILENAME ${ADDITIONAL_FILE} NAME)
+
+            COPY_FILE_TO_BUILD_DIR(DIRECT_COPY ${DIRNAME} . ${FILENAME})
+            COPY_FILE_TO_BUILD_DIR(DIRECT_COPY ${DIRNAME} bin ${FILENAME})
         ENDFOREACH()
     ENDIF()
 ENDIF()
@@ -490,26 +520,19 @@ IF(WIN32)
     INSTALL(FILES ${PROJECT_BUILD_DIR}/bin/${PROJECT_NAME}.com
             DESTINATION bin)
 
-    # Redistributable files required by OpenCOR
-    # Note: libeay32 and ssleay32 have already been retrieved earlier...
+    # Additional files required by OpenCOR
 
-    IF(${ARCHITECTURE} EQUAL 32)
-        RETRIEVE_BINARY_FILE(distrib/${DISTRIB_DIR} msvcp120.dll efd1e306c1092c17f6944cc6bf9a1bfad4d14613)
-        RETRIEVE_BINARY_FILE(distrib/${DISTRIB_DIR} msvcr120.dll f19e9d8317161edc7d3e963cc0fc46bd5e4a55a1)
-    ELSE()
-        RETRIEVE_BINARY_FILE(distrib/${DISTRIB_DIR} msvcp120.dll d0164c041707f297a73abb9ea854111953e99cf1)
-        RETRIEVE_BINARY_FILE(distrib/${DISTRIB_DIR} msvcr120.dll 62cb65a1d79e2c5ada0c7bfc04c18693567c90d0)
-    ENDIF()
-
-    FOREACH(REDISTRIBUTABLE_FILE libeay32 msvcp120 msvcr120 ssleay32)
-        INSTALL(FILES ${CMAKE_SOURCE_DIR}/distrib/${DISTRIB_DIR}/${REDISTRIBUTABLE_FILE}${CMAKE_SHARED_LIBRARY_SUFFIX}
-                DESTINATION bin)
-    ENDFOREACH()
+    INSTALL(FILES ${ADDITIONAL_FILES}
+            DESTINATION bin)
 
     # Qt libraries required by OpenCOR
 
     WINDOWS_DEPLOY_QT_LIBRARIES(Qt5CLucene Qt5Core Qt5Gui Qt5Help Qt5Multimedia Qt5MultimediaWidgets Qt5Network Qt5OpenGL Qt5Positioning Qt5PrintSupport Qt5Qml Qt5Quick Qt5Sensors Qt5Sql Qt5Svg Qt5WebKit Qt5WebKitWidgets Qt5Widgets Qt5Xml Qt5XmlPatterns)
     WINDOWS_DEPLOY_QT_LIBRARIES(icudt52 icuin52 icuuc52)
+
+    IF(ENABLE_TESTS)
+        WINDOWS_DEPLOY_QT_LIBRARIES(Qt5Test)
+    ENDIF()
 
     # Qt plugins required by OpenCOR
 
