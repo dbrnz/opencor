@@ -19,7 +19,6 @@ specific language governing permissions and limitations under the License.
 // CellML annotation view metadata edit details widget
 //==============================================================================
 
-#include "borderedwidget.h"
 #include "cellmlannotationviewcellmllistwidget.h"
 #include "cellmlannotationvieweditingwidget.h"
 #include "cellmlannotationviewmetadataeditdetailswidget.h"
@@ -55,6 +54,7 @@ specific language governing permissions and limitations under the License.
 #include <QRegularExpression>
 #include <QScrollBar>
 #include <QStackedWidget>
+#include <QTimer>
 #include <QVariant>
 #include <QVBoxLayout>
 
@@ -109,7 +109,6 @@ CellmlAnnotationViewMetadataEditDetailsWidget::CellmlAnnotationViewMetadataEditD
     mFormWidget(0),
     mFormLayout(0),
     mItemsScrollArea(0),
-    mGridWidget(0),
     mGridLayout(0),
     mQualifierValue(0),
     mLookupQualifierButton(0),
@@ -118,6 +117,7 @@ CellmlAnnotationViewMetadataEditDetailsWidget::CellmlAnnotationViewMetadataEditD
     mTermValue(0),
     mAddTermButton(0),
     mTerm(QString()),
+    mTerms(QStringList()),
     mTermIsDirect(false),
     mItems(Items()),
     mErrorMessage(QString()),
@@ -136,7 +136,7 @@ CellmlAnnotationViewMetadataEditDetailsWidget::CellmlAnnotationViewMetadataEditD
 
     mGui->setupUi(this);
 
-    // Create a stacked widget which will contain our GUI
+    // Create a stacked widget that will contain our GUI
 
     mWidget = new QStackedWidget(this);
 
@@ -222,15 +222,15 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateGui(iface::cellml_api:
         mAddTermButton->setEnabled(false);
     }
 
-    // Reset our items' GUI, if needed and if our spinner widget is not already
+    // Reset our items' GUI, if needed and if our busy widget is not already
     // visible
-    // Note: the reason for checking whether our spinner widget is visible is
-    //       that we come here every time the user modifies the term to lookup.
-    //       So, we don't want to call updateItemsGui() for no reasons. Indeed,
-    //       if we were then our spinner widget would get 'reset' every time,
-    //       which doesn't look nice...
+    // Note: the reason for checking whether our busy widget is visible is that
+    //       we come here every time the user modifies the term to lookup. So,
+    //       we don't want to call updateItemsGui() for no reasons. Indeed, if
+    //       we were then our busy widget would get 'reset' every time, which
+    //       doesn't look nice...
 
-    if (   (pResetItemsGui && !mParent->parent()->isSpinnerWidgetVisible())
+    if (   (pResetItemsGui && !mParent->parent()->isBusyWidgetVisible())
         || mTermIsDirect)
         updateItemsGui(Items(), QString(), !mTermIsDirect);
 
@@ -363,7 +363,7 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateGui(const Items &pItem
     //       this before tracking changes to the term since we don't want to
     //       trigger a call to termChanged(). Indeed, we might come here as a
     //       result of a retranslation so we shouldn't look up for the term and,
-    //       instead, we should call updateItemsGui() which we do at the end of
+    //       instead, we should call updateItemsGui(), which we do at the end of
     //       this procedure...
 
     connect(mTermValue, SIGNAL(textChanged(const QString &)),
@@ -405,8 +405,8 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateGui(const Items &pItem
     setTabOrder(mTermValue, mAddTermButton);
 
     // Create a stacked widget (within a scroll area, so that only the items get
-    // scrolled, not the whole metadata edit details widget) which will contain
-    // a grid with the results of our terms lookup
+    // scrolled, not the whole metadata edit details widget) that will contain a
+    // grid with the results of our terms lookup
 
     QScrollArea *newItemsScrollArea = new QScrollArea(newMainWidget);
 
@@ -416,8 +416,8 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateGui(const Items &pItem
     // Add our 'internal' widgets to our new main widget
 
     newMainLayout->addWidget(newFormWidget);
-    newMainLayout->addWidget(new Core::BorderedWidget(newItemsScrollArea,
-                                                      true, false, false, false));
+    newMainLayout->addWidget(Core::newLineWidget(newMainWidget));
+    newMainLayout->addWidget(newItemsScrollArea);
 
     // Keep track of the position of our items vertical scroll bar
     // Note: this is required to make sure that the position doesn't get reset
@@ -476,8 +476,8 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateGui(const Items &pItem
 
     mItemsScrollArea = newItemsScrollArea;
 
-    mGridWidget = 0;   // Note: this will be set by our
-    mGridLayout = 0;   //       other updateGui() function...
+    mGridLayout = 0;
+    // Note: this will be set by our other updateGui() function...
 
     // Update the enabled state of our various add buttons
 
@@ -529,13 +529,11 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateItemsGui(const Items &
     newGridWidget->setLayout(newGridLayout);
 
     connect(newGridWidget, SIGNAL(resized(const QSize &, const QSize &)),
-            this, SLOT(recenterSpinnerWidget()));
+            this, SLOT(recenterBusyWidget()));
 
     // Populate our new layout, but only if there is at least one item
 
-    bool showSpinnerWidget = false;
-
-    mParent->parent()->hideSpinnerWidget();
+    bool showBusyWidget = false;
 
     if (pItems.count()) {
         // Create labels to act as headers
@@ -661,7 +659,7 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateItemsGui(const Items &
         } else if (pLookupTerm) {
             labelText = QString();
 
-            showSpinnerWidget = true;
+            showBusyWidget = true;
         } else if (pErrorMessage.isEmpty()) {
             if (mTermIsDirect) {
                 if (mAddTermButton->isEnabled())
@@ -690,19 +688,20 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateItemsGui(const Items &
             genericLookup();
     }
 
+    mParent->parent()->hideBusyWidget();
+
     // Set our new grid widget as the widget for our scroll area
     // Note: this will automatically delete the old grid widget...
 
     mItemsScrollArea->setWidget(newGridWidget);
 
-    // Show our spinner widget, if needed
+    // Show our busy widget, if needed
 
-    if (showSpinnerWidget)
-        mParent->parent()->showSpinnerWidget(newGridWidget);
+    if (showBusyWidget)
+        mParent->parent()->showBusyWidget(newGridWidget);
 
-    // Keep track of our new grid widgets and layouts
+    // Keep track of our new grid layout
 
-    mGridWidget = newGridWidget;
     mGridLayout = newGridLayout;
 
     // Allow ourselves to be updated again
@@ -902,10 +901,6 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::lookupId(const QString &pIte
 
 //==============================================================================
 
-static const auto Pmr2RicordoUrl = QStringLiteral("https://models.physiomeproject.org/pmr2_ricordo/miriam_terms/");
-
-//==============================================================================
-
 void CellmlAnnotationViewMetadataEditDetailsWidget::termChanged(const QString &pTerm)
 {
     // Keep track of the term to look up
@@ -915,28 +910,54 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::termChanged(const QString &p
     // Check whether the term could be directly added, resulting in the add term
     // button being enabled/disabled, depending on the case
 
-    mTermIsDirect = QRegularExpression("^"+CellMLSupport::ResourceRegExp+"/"+CellMLSupport::IdRegExp+"$").match(pTerm).hasMatch();
+    mTermIsDirect =    QRegularExpression("^"+CellMLSupport::ResourceRegExp+"/"+CellMLSupport::IdRegExp+"$").match(pTerm).hasMatch()
+                    && (pTerm.count("/") == 1);
 
     // Update the enabled state of our various add buttons
 
     updateGui(mElement, true);
 
-    // Retrieve some possible terms based on the given term, but only if the
-    // term cannot be added directly
+    // Retrieve some possible ontological terms based on the given term, but
+    // only if the term cannot be added directly and if it is not empty
 
-    if (!mTermIsDirect) {
-        // We are not dealing with a direct term, so cancel the previous
-        // request, if any
+    if (!mTermIsDirect && !mTerm.isEmpty()) {
+        // Add the term to our list of terms to look up
 
-        if (mNetworkReply)
-            mNetworkReply->close();
+        mTerms << mTerm;
 
-        // Now, retrieve some possible terms
+        // Retrieve some possible ontological terms, but after a short delay
+        // Note: the delay is in case the term gets changed in between. Indeed,
+        //       we can't cancel a request sent to PMR2, so we should try to
+        //       send as few of them as possible...
 
-        QString termUrl = Pmr2RicordoUrl+pTerm;
-
-        mNetworkReply = mNetworkAccessManager->get(QNetworkRequest(termUrl));
+        QTimer::singleShot(500, this, SLOT(lookupTerm()));
     }
+}
+
+//==============================================================================
+
+static const auto Pmr2RicordoUrl = QStringLiteral("https://models.physiomeproject.org/pmr2_ricordo/miriam_terms/");
+
+//==============================================================================
+
+void CellmlAnnotationViewMetadataEditDetailsWidget::lookupTerm()
+{
+    // 'Cancel' the previous request, if any
+
+    if (mNetworkReply) {
+        mNetworkReply->close();
+
+        mNetworkReply = 0;
+    }
+
+    // Now, retrieve some possible ontological terms
+
+    QString term = mTerms.first();
+
+    mTerms.removeFirst();
+
+    if (mTerms.isEmpty())
+        mNetworkReply = mNetworkAccessManager->get(QNetworkRequest(Pmr2RicordoUrl+term));
 }
 
 //==============================================================================
@@ -953,7 +974,8 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::termLookedUp(QNetworkReply *
         mNetworkReply = 0;
     }
 
-    // Retrieve the list of terms, should we have retrieved it without any problem
+    // Retrieve the list of terms, should we have retrieved it without any
+    // problem
 
     Items items = Items();
     QString errorMessage = QString();
@@ -1126,11 +1148,11 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::fileReloaded()
 
 //==============================================================================
 
-void CellmlAnnotationViewMetadataEditDetailsWidget::recenterSpinnerWidget()
+void CellmlAnnotationViewMetadataEditDetailsWidget::recenterBusyWidget()
 {
-    // Recenter our spinner widget
+    // Recenter our busy widget
 
-    mParent->parent()->centerSpinnerWidget();
+    mParent->parent()->centerBusyWidget();
 }
 
 //==============================================================================

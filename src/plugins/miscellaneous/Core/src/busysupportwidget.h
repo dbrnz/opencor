@@ -16,11 +16,11 @@ specific language governing permissions and limitations under the License.
 *******************************************************************************/
 
 //==============================================================================
-// Spinner support widget
+// Busy support widget
 //==============================================================================
 
-#ifndef SPINNERSUPPORTWIDGET_H
-#define SPINNERSUPPORTWIDGET_H
+#ifndef BUSYSUPPORTWIDGET_H
+#define BUSYSUPPORTWIDGET_H
 
 //==============================================================================
 
@@ -38,24 +38,26 @@ namespace Core {
 
 //==============================================================================
 
-class SpinnerWidget;
+class BusyWidget;
 
 //==============================================================================
 
-class CORE_EXPORT SpinnerSupportWidget
+class CORE_EXPORT BusySupportWidget
 {
 public:
-    explicit SpinnerSupportWidget();
+    explicit BusySupportWidget();
 
-    bool isSpinnerWidgetVisible() const;
+    bool isBusyWidgetVisible() const;
 
-    void showSpinnerWidget(QWidget *pParent);
-    void hideSpinnerWidget();
+    void showBusyWidget(QWidget *pParent, const double &pProgress = -1.0);
+    void hideBusyWidget();
 
-    void centerSpinnerWidget();
+    void centerBusyWidget();
+
+    void setBusyWidgetProgress(const double &pProgress);
 
 private:
-    SpinnerWidget *mSpinnerWidget;
+    BusyWidget *mBusyWidget;
 };
 
 //==============================================================================

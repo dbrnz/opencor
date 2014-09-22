@@ -148,46 +148,53 @@ void CellmlModelRepositoryWindowWindow::outputModelList(const QStringList &pMode
     mModelList = pModelList;
 
     QString contents = QString();
-    static const QString leadingSpaces = "        ";
+    static const QString indent = "    ";
 
     if (mModelList.count()) {
-        // We have models to list, so...
+        // We have models to list
+
+        contents += indent+indent+"<p>\n";
 
         if (mModelList.count() == 1)
-            contents = tr("<strong>1</strong> CellML model was found:")+"\n";
+            contents += indent+indent+indent+tr("<strong>1</strong> CellML model was found:")+"\n";
         else
-            contents = tr("<strong>%1</strong> CellML models were found:").arg(mModelList.count())+"\n";
+            contents += indent+indent+indent+tr("<strong>%1</strong> CellML models were found:").arg(mModelList.count())+"\n";
 
-        contents += leadingSpaces+"<ul>\n";
+        contents += indent+indent+"</p>\n";
+        contents += "\n";
+        contents += indent+indent+"<ul>\n";
 
         foreach (const QString &model, mModelList)
-            contents += leadingSpaces+"<li><a href=\""+mModelUrls[mModelNames.indexOf(model)]+"\">"+model+"</a></li>\n";
+            contents += indent+indent+indent+"<li><a href=\""+mModelUrls[mModelNames.indexOf(model)]+"\">"+model+"</a></li>\n";
 
-        contents += leadingSpaces+"</ul>";
+        contents += indent+indent+"</ul>";
     } else if (mModelNames.empty()) {
-        if (mErrorMessage.count())
-            // Something went wrong while trying to retrieve the list of models,
-            // so...
+        if (mErrorMessage.count()) {
+            // Something went wrong while trying to retrieve the list of models
 
-            contents = leadingSpaces+tr("<strong>Error:</strong> ")+Core::formatErrorMessage(mErrorMessage);
+            contents += indent+indent+"<p>\n";
+            contents += indent+indent+indent+tr("<strong>Error:</strong> ")+Core::formatErrorMessage(mErrorMessage);
+            contents += indent+indent+"</p>\n";
+        }
     } else {
-        // No model could be found, so...
+        // No model could be found
 
-        contents = leadingSpaces+tr("No CellML model matches your criteria");
+        contents += indent+indent+"<p>\n";
+        contents += indent+indent+indent+tr("No CellML model matches your criteria");
+        contents += indent+indent+"</p>\n";
     }
 
-    // Show/hide our spinner widget
+    // Show/hide our busy widget and output the list matching the search
+    // criteria, or a message telling the user what went wrong, if anything and
+    // if needed
 
-    if (mModelListRequested)
-        showSpinnerWidget(mCellmlModelRepositoryWidget);
-    else
-        hideSpinnerWidget();
+    if (mModelListRequested) {
+        showBusyWidget(mCellmlModelRepositoryWidget);
+    } else {
+        hideBusyWidget();
 
-    // Output the list matching the search criteria, or a message telling the
-    // user what went wrong, if anything and if needed
-
-    if (!mModelListRequested)
         mCellmlModelRepositoryWidget->output(contents);
+    }
 }
 
 //==============================================================================

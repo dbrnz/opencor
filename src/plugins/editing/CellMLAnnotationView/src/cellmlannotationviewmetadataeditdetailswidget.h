@@ -110,7 +110,6 @@ private:
 
     QScrollArea *mItemsScrollArea;
 
-    QWidget *mGridWidget;
     QGridLayout *mGridLayout;
 
     QNetworkAccessManager *mNetworkAccessManager;
@@ -125,6 +124,7 @@ private:
     QPushButton *mAddTermButton;
 
     QString mTerm;
+    QStringList mTerms;
     bool mTermIsDirect;
 
     Items mItems;
@@ -191,6 +191,8 @@ private Q_SLOTS:
     void lookupResource(const QString &pItemInformation);
     void lookupId(const QString &pItemInformation);
 
+    void lookupTerm();
+
     void termChanged(const QString &pTerm);
     void termLookedUp(QNetworkReply *pNetworkReply);
 
@@ -201,7 +203,7 @@ private Q_SLOTS:
 
     void showCustomContextMenu(const QPoint &pPosition);
 
-    void recenterSpinnerWidget();
+    void recenterBusyWidget();
 };
 
 //==============================================================================
