@@ -35,10 +35,26 @@ namespace PythonStore {
 
 //==============================================================================
 
+static
+#if PY_VERSION_HEX >= 0x03000000
+    int
+#else
+    void
+#endif
+init_numpy()
+{
+    import_array();  // This is a define with a possible return statement...
+#if PY_VERSION_HEX >= 0x03000000
+    return 0;
+#endif
+}
+
+//==============================================================================
+
 DataStoreVariableWrapper::DataStoreVariableWrapper(const CoreDataStore::DataStoreVariable * pVariable) :
     mVariable(pVariable)
 {
-    if (OpenCOR_Python_Store_PyArray_API == NULL) import_array();
+    if (OpenCOR_Python_Store_PyArray_API == NULL) init_numpy();
 }
 
 //==============================================================================
