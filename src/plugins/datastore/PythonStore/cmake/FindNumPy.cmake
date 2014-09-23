@@ -23,10 +23,13 @@ endif()
 
 EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c
     "import numpy; print(numpy.get_include())"
-    OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
+    OUTPUT_VARIABLE INCLUDE_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-if (NUMPY_INCLUDE_DIR)
+if (INCLUDE_DIR)
+message (STATUS "Numpy directory: ${INCLUDE_DIR}")
+  string(REGEX REPLACE "\\\\" "/" NUMPY_INCLUDE_DIR ${INCLUDE_DIR})
+message (STATUS "Numpy directory: ${NUMPY_INCLUDE_DIR}")
   if(EXISTS ${NUMPY_INCLUDE_DIR}/numpy/arrayobject.h)
     # successful
     set (NUMPY_FOUND TRUE)
@@ -34,14 +37,14 @@ if (NUMPY_INCLUDE_DIR)
   else()
     set(NUMPY_FOUND FALSE)
   endif()
-else (NUMPY_INCLUDE_DIR)
+else (INCLUDE_DIR)
   # Did not successfully include numpy
   set(NUMPY_FOUND FALSE)
-endif (NUMPY_INCLUDE_DIR)
+endif (INCLUDE_DIR)
 
 if (NUMPY_FOUND)
   if (NOT NumPy_FIND_QUIETLY)
-    message (STATUS "Numpy headers found")
+    message (STATUS "Numpy headers found at ${NUMPY_INCLUDE_DIR}")
   endif (NOT NumPy_FIND_QUIETLY)
 else (NUMPY_FOUND)
   if (NumPy_FIND_REQUIRED)
