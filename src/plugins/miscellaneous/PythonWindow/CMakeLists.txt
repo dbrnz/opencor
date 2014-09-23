@@ -1,12 +1,10 @@
 PROJECT(PythonWindowPlugin)
 
-# Shouldn't this come via PythonQt plugin?
-find_package(PythonLibs)
-
 # Add the plugin
 
 ADD_PLUGIN(PythonWindow
     SOURCES
+        ../../i18ninterface.cpp
         ../../plugininfo.cpp
 
         src/pythonwindowplugin.cpp
@@ -16,8 +14,6 @@ ADD_PLUGIN(PythonWindow
         src/pythonwindow.h
     INCLUDE_DIRS
         src
-# Shouldn't this come via PythonQt plugin?
-        ${PYTHON_INCLUDE_DIRS}
     PLUGINS
         Core
         PythonQtAPI
