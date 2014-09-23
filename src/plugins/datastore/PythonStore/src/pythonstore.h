@@ -24,6 +24,7 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
+#include "pythonstoreglobal.h"
 #include "coredatastore.h"
 #include "datastorevariable.h"
 
@@ -43,7 +44,7 @@ namespace PythonStore {
 
 //==============================================================================
 
-class DataStoreVariableWrapper : public QObject {
+class PYTHONSTORE_EXPORT DataStoreVariableWrapper : public QObject {
     Q_OBJECT
 
 public:
@@ -64,7 +65,7 @@ private:
 
 //==============================================================================
 
-class CoreDataStoreWrapper : public QObject {
+class  PYTHONSTORE_EXPORT CoreDataStoreWrapper : public QObject {
     Q_OBJECT
 
 public:
