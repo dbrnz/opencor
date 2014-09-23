@@ -20,7 +20,7 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
-#include "dockwidget.h"
+#include "windowwidget.h"
 
 //==============================================================================
 
@@ -38,7 +38,7 @@ namespace PythonWindow {
 
 //==============================================================================
 
-class PythonWindow : public Core::DockWidget
+class PythonWindow : public Core::WindowWidget
 {
 Q_OBJECT
  

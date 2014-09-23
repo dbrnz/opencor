@@ -35,7 +35,7 @@ namespace PythonWindow {
 //==============================================================================
 
 PythonWindow::PythonWindow(QWidget *pParent) :
-    Core::DockWidget(pParent),
+    Core::WindowWidget(pParent),
     mConsole(0)
 {
     this->setObjectName("Python");
