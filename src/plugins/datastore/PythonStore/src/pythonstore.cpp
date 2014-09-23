@@ -66,7 +66,7 @@ QString DataStoreVariableWrapper::unit(void) const
 
 QString DataStoreVariableWrapper::label(void) const
 {
-    return mVariable->name();
+    return mVariable->label();
 }
 
 //==============================================================================
