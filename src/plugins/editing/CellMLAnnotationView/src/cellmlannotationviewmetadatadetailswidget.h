@@ -72,14 +72,12 @@ public:
 
     virtual void retranslateUi();
 
-    void addRdfTriple(CellMLSupport::CellmlFileRdfTriple *pRdfTriple);
-
     QSplitter * splitter() const;
 
     CellmlAnnotationViewMetadataEditDetailsWidget * metadataEditDetails() const;
     CellmlAnnotationViewMetadataViewDetailsWidget * metadataViewDetails() const;
 
-    void fileReloaded();
+    void filePermissionsChanged();
 
 private:
     CellmlAnnotationViewEditingWidget *mParent;
@@ -106,6 +104,8 @@ private:
 
     ObjRef<iface::cellml_api::CellMLElement> mElement;
 
+    void retranslateUnsupportedMetadataMessage();
+
 Q_SIGNALS:
     void splitterMoved(const QIntList &pSizes);
 
@@ -115,11 +115,10 @@ public Q_SLOTS:
 private Q_SLOTS:
     void emitSplitterMoved();
 
-    void lookupQualifier(const QString &pQualifier, const bool &pRetranslate);
-    void lookupResource(const QString &pResource, const bool &pRetranslate);
-    void lookupId(const QString &pResource, const QString &pId,
-                  const bool &pRetranslate);
-    void lookupNothing();
+    void lookUpQualifier(const QString &pQualifier);
+    void lookUpResource(const QString &pResource);
+    void lookUpId(const QString &pResource, const QString &pId);
+    void lookUpNothing();
 
     void removeAllMetadata();
 

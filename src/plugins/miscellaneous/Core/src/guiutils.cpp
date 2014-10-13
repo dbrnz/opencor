@@ -33,12 +33,14 @@ specific language governing permissions and limitations under the License.
 
 #include <QAction>
 #include <QApplication>
+#include <QBuffer>
 #include <QColor>
 #include <QDate>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFont>
 #include <QFrame>
+#include <QIODevice>
 #include <QLabel>
 #include <QMenu>
 #include <QMessageBox>
@@ -163,8 +165,6 @@ QString getSaveFileName(const QString &pCaption, const QString &pFileName,
                                       QObject::tr("<strong>%1</strong> already exists. Do you want to overwrite it?").arg(res),
                                       QMessageBox::Yes|QMessageBox::No,
                                       QMessageBox::Yes) == QMessageBox::No )
-                // We don't want to overwrite the save file, so...
-
                 return QString();
     }
 
@@ -393,74 +393,27 @@ QFrame * newLineWidget(QWidget *pParent)
 
 //==============================================================================
 
-QLabel * newLabel(const QString &pText, const double &pFontPercentage,
-                  const bool &pBold, const bool &pItalic,
-                  const Qt::Alignment &pAlignment, QWidget *pParent)
+QString iconDataUri(const QString &pIcon, const int &pWidth, const int &pHeight,
+                    const QIcon::Mode &pMode)
 {
-    // Create and return a label, after having set some of its properties
+    // Convert an icon, which resource name is given, to a data URI, after
+    // having resized it, if requested
 
-    QLabel *res = new QLabel(pText, pParent);
+    QIcon icon(pIcon);
 
-    QFont font = res->font();
+    if (icon.isNull())
+        return QString();
 
-    font.setBold(pBold);
-    font.setItalic(pItalic);
-    font.setPointSize(pFontPercentage*font.pointSize());
+    QByteArray data;
+    QBuffer buffer(&data);
+    QSize iconSize = icon.availableSizes().first();
 
-    res->setAlignment(pAlignment);
-    res->setFont(font);
+    buffer.open(QIODevice::WriteOnly);
+    icon.pixmap((pWidth == -1)?iconSize.width():pWidth,
+                (pHeight == -1)?iconSize.height():pHeight,
+                pMode).save(&buffer, "PNG");
 
-    // Prevent Qt from associating a context menu with the label (something
-    // which it does automatically when a label is a link...)
-
-    res->setContextMenuPolicy(Qt::NoContextMenu);
-
-    // Return our link
-
-    return res;
-}
-
-//==============================================================================
-
-QLabel * newLabel(const QString &pText, const double &pFontPercentage,
-                  const bool &pBold, const bool &pItalic, QWidget *pParent)
-{
-    // Create and return a label
-
-    return newLabel(pText, pFontPercentage, pBold, pItalic,
-                    Qt::AlignLeft|Qt::AlignVCenter, pParent);
-}
-
-//==============================================================================
-
-QLabel * newLabel(const QString &pText, const double &pFontPercentage,
-                  const bool &pBold, QWidget *pParent)
-{
-    // Create and return a label
-
-    return newLabel(pText, pFontPercentage, pBold, false,
-                    Qt::AlignLeft|Qt::AlignVCenter, pParent);
-}
-
-//==============================================================================
-
-QLabel * newLabel(const QString &pText, const double &pFontPercentage,
-                  QWidget *pParent)
-{
-    // Create and return a label
-
-    return newLabel(pText, pFontPercentage, false, false,
-                    Qt::AlignLeft|Qt::AlignVCenter, pParent);
-}
-
-//==============================================================================
-
-QLabel * newLabel(const QString &pText, QWidget *pParent)
-{
-    // Create and return a label
-
-    return newLabel(pText, 1.0, false, false, Qt::AlignLeft|Qt::AlignVCenter,
-                    pParent);
+    return QString("data:image/png;base64,%1").arg(QString(data.toBase64()));
 }
 
 //==============================================================================
@@ -533,6 +486,7 @@ void updateColors()
     settings.beginGroup(SettingsGlobal);
         settings.setValue(SettingsBaseColor, qApp->palette().color(QPalette::Base));
         settings.setValue(SettingsHighlightColor, qApp->palette().color(QPalette::Highlight));
+        settings.setValue(SettingsLinkColor, qApp->palette().color(QPalette::Link));
         settings.setValue(SettingsShadowColor, qApp->palette().color(QPalette::Shadow));
         settings.setValue(SettingsWindowColor, qApp->palette().color(QPalette::Window));
     settings.endGroup();
@@ -585,6 +539,17 @@ QColor highlightColor()
     //       itself (see CorePlugin::changeEvent())...
 
     return specificColor(SettingsHighlightColor);
+}
+
+//==============================================================================
+
+QColor linkColor()
+{
+    // Return the link colour
+    // Note: we retrieve it from our settings, which is updated by our plugin
+    //       itself (see CorePlugin::changeEvent())...
+
+    return specificColor(SettingsLinkColor);
 }
 
 //==============================================================================

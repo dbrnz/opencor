@@ -32,12 +32,17 @@ specific language governing permissions and limitations under the License.
 #include <QModelIndex>
 #include <QStandardItem>
 #include <QStyledItemDelegate>
+#include <QStyleOptionViewItem>
 
 //==============================================================================
 
 namespace Ui {
     class CellmlAnnotationViewCellmlListWidget;
 }
+
+//==============================================================================
+
+class QPainter;
 
 //==============================================================================
 
@@ -133,16 +138,14 @@ public:
 
     CellmlAnnotationViewCellmlElementItem * currentCellmlElementItem() const;
 
-    void fileReloaded();
-
 private:
     CellMLSupport::CellmlFile *mCellmlFile;
 
     Ui::CellmlAnnotationViewCellmlListWidget *mGui;
 
     Core::TreeViewWidget *mTreeViewWidget;
-    QStandardItemModel *mModel;
-    CellmlAnnotationViewCellmlElementItemDelegate *mItemDelegate;
+    QStandardItemModel *mTreeViewModel;
+    CellmlAnnotationViewCellmlElementItemDelegate *mTreeViewItemDelegate;
 
     QList<QModelIndex> mIndexes;
 

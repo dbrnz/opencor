@@ -63,10 +63,10 @@ public:
 
     void updateGui(iface::cellml_api::CellMLElement *pElement);
 
-    void addRdfTriple(CellMLSupport::CellmlFileRdfTriple *pRdfTriple);
-
     CellmlAnnotationViewMetadataRawViewDetailsWidget *rawView() const;
     CellmlAnnotationViewMetadataNormalViewDetailsWidget *normalView() const;
+
+    void filePermissionsChanged();
 
 private:
     CellmlAnnotationViewMetadataRawViewDetailsWidget *mRawView;

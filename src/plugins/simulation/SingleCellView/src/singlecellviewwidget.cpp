@@ -133,10 +133,6 @@ SingleCellViewWidget::SingleCellViewWidget(SingleCellViewPlugin *pPluginParent,
 
     mDelayWidget->setValue(0.0);
 
-    updateDelayValue(mDelayWidget->value());
-    // Note: our call to updateDelayValue() is because the connection is not yet
-    //       effective when we set the value of the delay widget...
-
     // Create a tool bar widget with different buttons
 
     mToolBarWidget = new Core::ToolBarWidget(this);
@@ -343,6 +339,10 @@ void SingleCellViewWidget::retranslateUi()
 
     // Retranslate our delay and delay value widgets
 
+    updateDelayValue(mDelayWidget->value());
+    // Note: we do this because we want to display the delay using digit
+    //       grouping, this respecting the current locale...
+
     mDelayWidget->setToolTip(tr("Simulation Delay"));
     mDelayValueWidget->setToolTip(mDelayWidget->toolTip());
 
@@ -501,17 +501,10 @@ void SingleCellViewWidget::updateInvalidModelMessageWidget()
 {
     // Update our invalid model message
 
-    mInvalidModelMessageWidget->setMessage("<div align=center>"
-                                           "    <p>"
-                                          +((mErrorType == InvalidCellmlFile)?
-                                                "        "+tr("Sorry, but the <strong>%1</strong> view requires a valid CellML file to work...").arg(mPluginParent->viewName()):
-                                                "        "+tr("Sorry, but the <strong>%1</strong> view requires a valid simulation environment to work...").arg(mPluginParent->viewName())
-                                           )
-                                          +"    </p>"
-                                           "    <p>"
-                                           "        <small><em>("+tr("See below for more information.")+")</em></small>"
-                                           "    </p>"
-                                           "</div>");
+    mInvalidModelMessageWidget->setMessage((mErrorType == InvalidCellmlFile)?
+                                               tr("The <strong>%1</strong> view requires a valid CellML file to work...").arg(mPluginParent->viewName()):
+                                               tr("The <strong>%1</strong> view requires a valid simulation environment to work...").arg(mPluginParent->viewName()),
+                                           tr("See below for more information."));
 }
 
 //==============================================================================
@@ -622,7 +615,7 @@ void SingleCellViewWidget::initialize(const QString &pFileName,
     mDelayWidget->setValue(mDelays.value(pFileName));
 
     // Reset our file tab icon and update our progress bar
-    // Note: they may not both be necessary, but we never know, so...
+    // Note: they may not both be necessary, but we never know...
 
     resetFileTabIcon(pFileName);
 
@@ -751,8 +744,6 @@ void SingleCellViewWidget::initialize(const QString &pFileName,
                     simulationError(tr("the model needs both a DAE and an NLA solver, but no DAE solver is available"),
                                     InvalidSimulationEnvironment);
             } else {
-                // We have the solvers we need, so...
-
                 validSimulationEnvironment = true;
             }
         } else if (   cellmlFileRuntime->needOdeSolver()
@@ -764,8 +755,6 @@ void SingleCellViewWidget::initialize(const QString &pFileName,
             simulationError(tr("the model needs a DAE solver, but none is available"),
                             InvalidSimulationEnvironment);
         } else {
-            // We have the solver we need, so...
-
             validSimulationEnvironment = true;
         }
     }
@@ -965,7 +954,8 @@ QIcon SingleCellViewWidget::fileTabIcon(const QString &pFileName) const
 
         return QIcon(tabBarPixmap);
     } else {
-        // No simulation object currently exists for the model, so...
+        // No simulation object currently exists for the model, so return a null
+        // icon
 
         return QIcon();
     }
@@ -1059,7 +1049,7 @@ QVariant SingleCellViewWidget::value(Core::Property *pProperty) const
     case Core::Property::Boolean:
         return pProperty->booleanValue();
     default:
-        // Not a property type we are interested in, so...
+        // Not a property type in which we are interested
 
         return QVariant();
     }
@@ -1120,7 +1110,7 @@ void SingleCellViewWidget::on_actionRunPauseResumeSimulation_triggered()
 
             if (requiredMemory > freeMemory) {
                 QMessageBox::warning(qApp->activeWindow(), tr("Run Simulation"),
-                                     tr("Sorry, but the simulation requires %1 of memory and you have only %2 left.").arg(Core::sizeAsString(requiredMemory), Core::sizeAsString(freeMemory)));
+                                     tr("The simulation requires %1 of memory and you have only %2 left.").arg(Core::sizeAsString(requiredMemory), Core::sizeAsString(freeMemory)));
             } else {
                 // Theoretically speaking, we have enough memory to run the
                 // simulation, so try to allocate all the memory we need for the
@@ -1140,10 +1130,8 @@ void SingleCellViewWidget::on_actionRunPauseResumeSimulation_triggered()
                     mSimulation->run();
                 else
                     QMessageBox::warning(qApp->activeWindow(), tr("Run Simulation"),
-                                         tr("Sorry, but we could not allocate the %1 of memory required for the simulation.").arg(Core::sizeAsString(requiredMemory)));
+                                         tr("We could not allocate the %1 of memory required for the simulation.").arg(Core::sizeAsString(requiredMemory)));
             }
-
-            // We are done handling the action, so...
 
             handlingAction = false;
         }

@@ -46,7 +46,7 @@ PLUGININFO_FUNC CellMLAnnotationViewPluginInfo()
     descriptions.insert("fr", QString::fromUtf8("une extension pour annoter des fichiers CellML."));
 
     return new PluginInfo(PluginInfo::Editing, true, false,
-                          QStringList() << "CoreCellMLEditing",
+                          QStringList() << "CellMLSupport",
                           descriptions);
 }
 
@@ -77,14 +77,9 @@ void CellMLAnnotationViewPlugin::fileOpened(const QString &pFileName)
 
 void CellMLAnnotationViewPlugin::filePermissionsChanged(const QString &pFileName)
 {
-    // The given file has been un/locked, so retranslate ourselves (since some
-    // messages may be locked-dependent)
-    // Note: our plugin is such that retranslating it will update the GUI (since
-    //       it was easier/faster to do it that way), so all we had to do was to
-    //       make those updateGui() methods locked-dependent...
+    // The given file has been un/locked, so let our view widget know about it
 
-    if (mViewWidget->contains(pFileName))
-        retranslateUi();
+    mViewWidget->filePermissionsChanged(pFileName);
 }
 
 //==============================================================================
@@ -238,7 +233,7 @@ QWidget * CellMLAnnotationViewPlugin::viewWidget(const QString &pFileName)
     //       same view) with the status bar visible and the mouse pointer over a
     //       button-like widget within the current view (see
     //       https://github.com/opencor/opencor/issues/405). It's not neat, but
-    //       it seems like it might be an issue with Qt itself, so...
+    //       it seems like it might be an issue with Qt itself...
 
     bool statusBarVisible = mMainWindow->statusBar()->isVisible();
 

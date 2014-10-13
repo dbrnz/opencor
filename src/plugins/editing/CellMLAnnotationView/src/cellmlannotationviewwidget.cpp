@@ -19,6 +19,7 @@ specific language governing permissions and limitations under the License.
 // CellML annotation view widget
 //==============================================================================
 
+#include "cellmlannotationviewcellmllistwidget.h"
 #include "cellmlannotationvieweditingwidget.h"
 #include "cellmlannotationviewmetadatadetailswidget.h"
 #include "cellmlannotationviewplugin.h"
@@ -171,9 +172,10 @@ void CellmlAnnotationViewWidget::initialize(const QString &pFileName)
 
     // Set our focus proxy to our 'new' editing widget and make sure that the
     // latter immediately gets the focus
-    // Note: if we were not to immediately give our 'new' editing widget the
-    //       focus, then the central widget would give the focus to our 'old'
-    //       editing widget (see CentralWidget::updateGui()), so...
+    // Note: if we were not to immediately give the focus to our 'new' editor,
+    //       then the central widget would give the focus to our 'old' editor
+    //       (see CentralWidget::updateGui()), which is clearly not what we
+    //       want...
 
     setFocusProxy(mEditingWidget);
 
@@ -201,6 +203,19 @@ void CellmlAnnotationViewWidget::finalize(const QString &pFileName)
         if (editingWidget == mEditingWidget)
             mEditingWidget = 0;
     }
+}
+
+//==============================================================================
+
+void CellmlAnnotationViewWidget::filePermissionsChanged(const QString &pFileName)
+{
+    // The given file has been un/locked, so enable/disable parts of our GUI,
+    // should the given file be managed
+
+    CellmlAnnotationViewEditingWidget *editingWidget = mEditingWidgets.value(pFileName);
+
+    if (editingWidget)
+        editingWidget->filePermissionsChanged();
 }
 
 //==============================================================================

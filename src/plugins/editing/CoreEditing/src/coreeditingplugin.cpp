@@ -125,8 +125,8 @@ void CoreEditingPlugin::fileReloaded(const QString &pFileName)
     //       know at this stage whether a new editor will have been assigned to
     //       the given file. Indeed, upon reloading a file, a 'proper' editing
     //       plugin may decide to 'close' and 'reopen' the file, meaning that
-    //       its original editor will be discarded and a new one assigned to it,
-    //       so...
+    //       its original editor will be discarded and a new one assigned to
+    //       it, hence we need to reset things...
 
     if (!pFileName.compare(mFileName)) {
         mEditor = 0;
@@ -362,31 +362,31 @@ void CoreEditingPlugin::initializePlugin(QMainWindow *pMainWindow)
 
     // Some connections to handle our different editing actions
 
-    connect(mFileNewFileAction, SIGNAL(triggered()),
+    connect(mFileNewFileAction, SIGNAL(triggered(bool)),
             this, SLOT(newFile()));
 
-    connect(mEditUndoAction, SIGNAL(triggered()),
+    connect(mEditUndoAction, SIGNAL(triggered(bool)),
             this, SLOT(doUndo()));
-    connect(mEditRedoAction, SIGNAL(triggered()),
+    connect(mEditRedoAction, SIGNAL(triggered(bool)),
             this, SLOT(doRedo()));
 
-    connect(mEditCutAction, SIGNAL(triggered()),
+    connect(mEditCutAction, SIGNAL(triggered(bool)),
             this, SLOT(doCut()));
-    connect(mEditCopyAction, SIGNAL(triggered()),
+    connect(mEditCopyAction, SIGNAL(triggered(bool)),
             this, SLOT(doCopy()));
-    connect(mEditPasteAction, SIGNAL(triggered()),
+    connect(mEditPasteAction, SIGNAL(triggered(bool)),
             this, SLOT(doPaste()));
-    connect(mEditDeleteAction, SIGNAL(triggered()),
+    connect(mEditDeleteAction, SIGNAL(triggered(bool)),
             this, SLOT(doDelete()));
 
-    connect(mEditFindReplaceAction, SIGNAL(triggered()),
+    connect(mEditFindReplaceAction, SIGNAL(triggered(bool)),
             this, SLOT(doFindReplace()));
-    connect(mEditFindNextAction, SIGNAL(triggered()),
+    connect(mEditFindNextAction, SIGNAL(triggered(bool)),
             this, SLOT(doFindNext()));
-    connect(mEditFindPreviousAction, SIGNAL(triggered()),
+    connect(mEditFindPreviousAction, SIGNAL(triggered(bool)),
             this, SLOT(doFindPrevious()));
 
-    connect(mEditSelectAllAction, SIGNAL(triggered()),
+    connect(mEditSelectAllAction, SIGNAL(triggered(bool)),
             this, SLOT(doSelectAll()));
 }
 

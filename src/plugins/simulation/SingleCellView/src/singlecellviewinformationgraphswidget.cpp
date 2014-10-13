@@ -664,7 +664,7 @@ void SingleCellViewInformationGraphsWidget::populateContextMenu(QMenu *pContextM
         }
 
         // Make sure that we have a 'current' component menu
-        // Note: this should never happen, but we never know, so...
+        // Note: this should never happen, but we never know...
 
         if (!componentMenu)
             continue;
@@ -676,7 +676,7 @@ void SingleCellViewInformationGraphsWidget::populateContextMenu(QMenu *pContextM
 
         // Create a connection to handle the parameter value update
 
-        connect(parameterAction, SIGNAL(triggered()),
+        connect(parameterAction, SIGNAL(triggered(bool)),
                 this, SLOT(updateParameterValue()));
 
         // Keep track of the parameter associated with our model parameter

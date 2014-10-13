@@ -43,8 +43,8 @@ CellmlAnnotationViewMetadataViewDetailsWidget::CellmlAnnotationViewMetadataViewD
 
     // Make our raw view the default widget
     // Note: for the GUI to be properly initialised, we must add and immediately
-    //       remove the views which we don't yet need. Not to do that may mess
-    //       things up in our parent, so...
+    //       remove the views that we don't yet need. Not to do that may mess
+    //       things up in our parent...
 
     addWidget(mRawView);
 
@@ -81,25 +81,13 @@ void CellmlAnnotationViewMetadataViewDetailsWidget::updateGui(iface::cellml_api:
 
         break;
     default:
-        // Unknown type, so...
+        // Unknown type
 
         removeWidget(mNormalView);
         addWidget(mRawView);
 
         mRawView->updateGui(pElement);
     }
-}
-
-//==============================================================================
-
-void CellmlAnnotationViewMetadataViewDetailsWidget::addRdfTriple(CellMLSupport::CellmlFileRdfTriple *pRdfTriple)
-{
-    if (!pRdfTriple)
-        return;
-
-    // Add the given RDF triple to our normal view
-
-    mNormalView->addRdfTriple(pRdfTriple);
 }
 
 //==============================================================================
@@ -118,6 +106,17 @@ CellmlAnnotationViewMetadataNormalViewDetailsWidget * CellmlAnnotationViewMetada
     // Return our normal view
 
     return mNormalView;
+}
+
+//==============================================================================
+
+void CellmlAnnotationViewMetadataViewDetailsWidget::filePermissionsChanged()
+{
+    // Let our normal view widget know that the file has been un/locked
+    // Note: we don't need to let our raw view widget know about it since it
+    //       only presents information to the user...
+
+    mNormalView->filePermissionsChanged();
 }
 
 //==============================================================================

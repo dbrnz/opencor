@@ -29,6 +29,7 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include <QColor>
+#include <QIcon>
 #include <QKeySequence>
 #include <QString>
 
@@ -85,21 +86,9 @@ QFrame CORE_EXPORT * newLineWidget(const bool &pHorizontal, QWidget *pParent);
 QFrame CORE_EXPORT * newLineWidget(const QColor &pColor, QWidget *pParent);
 QFrame CORE_EXPORT * newLineWidget(QWidget *pParent);
 
-QLabel CORE_EXPORT * newLabel(const QString &pText,
-                              const double &pFontPercentage,
-                              const bool &pBold, const bool &pItalic,
-                              const Qt::Alignment &pAlignment,
-                              QWidget *pParent);
-QLabel CORE_EXPORT * newLabel(const QString &pText,
-                              const double &pFontPercentage,
-                              const bool &pBold, const bool &pItalic,
-                              QWidget *pParent);
-QLabel CORE_EXPORT * newLabel(const QString &pText,
-                              const double &pFontPercentage,
-                              const bool &pBold, QWidget *pParent);
-QLabel CORE_EXPORT * newLabel(const QString &pText,
-                              const double &pFontPercentage, QWidget *pParent);
-QLabel CORE_EXPORT * newLabel(const QString &pText, QWidget *pParent);
+QString CORE_EXPORT iconDataUri(const QString &pIcon, const int &pWidth = -1,
+                                const int &pHeight = -1,
+                                const QIcon::Mode &pMode = QIcon::Normal);
 
 void CORE_EXPORT showEnableAction(QAction *pAction, const bool &pVisible,
                                   const bool &pEnabled = true);
@@ -111,6 +100,7 @@ void CORE_EXPORT updateColors();
 QColor CORE_EXPORT baseColor();
 QColor CORE_EXPORT borderColor();
 QColor CORE_EXPORT highlightColor();
+QColor CORE_EXPORT linkColor();
 QColor CORE_EXPORT shadowColor();
 QColor CORE_EXPORT windowColor();
 

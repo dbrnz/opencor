@@ -38,6 +38,7 @@ specific language governing permissions and limitations under the License.
 #include <QDesktopServices>
 #include <QDialogButtonBox>
 #include <QMessageBox>
+#include <QModelIndex>
 #include <QPushButton>
 #include <QSettings>
 #include <QStandardItemModel>
@@ -122,7 +123,7 @@ PluginsWindow::PluginsWindow(PluginManager *pPluginManager,
     // cannot decide whether they should be loaded)
 
     mModel = new QStandardItemModel(mGui->pluginsTreeView);
-    mPluginItemDelegate = new PluginItemDelegate();
+    mItemDelegate = new PluginItemDelegate();
 
 #ifdef Q_OS_MAC
     mGui->pluginsTreeView->setAttribute(Qt::WA_MacShowFocusRect, false);
@@ -130,7 +131,7 @@ PluginsWindow::PluginsWindow(PluginManager *pPluginManager,
     //       our plugins tree view widget...
 #endif
     mGui->pluginsTreeView->setModel(mModel);
-    mGui->pluginsTreeView->setItemDelegate(mPluginItemDelegate);
+    mGui->pluginsTreeView->setItemDelegate(mItemDelegate);
 
     // Populate the data model with our different categories of plugins, making
     // sure that they are in alphabetical order, no matter the locale
@@ -305,16 +306,12 @@ void PluginsWindow::selectFirstVisibleCategory()
     foreach (QStandardItem *categoryItem, mPluginCategories)
         if (!mGui->pluginsTreeView->isRowHidden(categoryItem->row(),
                                                 mModel->invisibleRootItem()->index())) {
-            // We have found the first visible category, so...
-
             mGui->pluginsTreeView->setCurrentIndex(categoryItem->index());
-
-            // We are done, so...
 
             return;
         }
 
-    // No visible category could be found, so...
+    // No visible category could be found
 
     mGui->pluginsTreeView->setCurrentIndex(QModelIndex());
 }
@@ -359,7 +356,7 @@ QString PluginsWindow::statusDescription(Plugin *pPlugin) const
     case Plugin::NotNeeded:
         return tr("the plugin is not needed.");
     case Plugin::NotLoaded:
-        return tr("the plugin could not be loaded due to the following problem: %1.").arg(Core::formatErrorMessage(pPlugin->statusErrors(), false));
+        return tr("the plugin could not be loaded due to the following problem: %1.").arg(Core::formatErrorMessage(pPlugin->statusErrors()));
     case Plugin::NotPlugin:
         return tr("this is not a plugin.");
     case Plugin::NotCorePlugin:
@@ -392,7 +389,7 @@ void PluginsWindow::updateInformation(const QModelIndex &pNewIndex,
     // Make sure that we have a valid index
     // Note: it may happen (e.g. there are only non-selectable plugins and we
     //       only want to see selectable plugins) that no categories/plugins are
-    //       shown, so...
+    //       shown...
 
     bool atLeastOneItem = pNewIndex.isValid();
     bool pluginItem = false;
@@ -521,7 +518,7 @@ void PluginsWindow::updateInformation(const QModelIndex &pNewIndex,
 
             break;
         default:
-            // Not a category we can recognise, so...
+            // Not a category we can recognise
 
             mGui->fieldTwoValue->setText("???");
         }
@@ -583,24 +580,11 @@ void PluginsWindow::updatePluginsSelectedState(QStandardItem *pItem,
         // needs our unselectable plugin
 
         foreach (QStandardItem *selectablePluginItem, mSelectablePluginItems)
-            if (selectablePluginItem->checkState() == Qt::Checked) {
-                // The selectable plugin is selected, so go through its plugin
-                // dependencies and check whether one of them is our
-                // unselectable plugin
+            if (   (selectablePluginItem->checkState() == Qt::Checked)
+                && (mPluginManager->plugin(selectablePluginItem->text())->info()->fullDependencies().contains(unselectablePluginItem->text()))) {
+                unselectablePluginItem->setCheckState(Qt::Checked);
 
-                foreach (const QString &requiredPlugin,
-                         mPluginManager->plugin(selectablePluginItem->text())->info()->fullDependencies())
-                    if (!requiredPlugin.compare(unselectablePluginItem->text())) {
-                        // The selectable plugin requires our unselectable
-                        // plugin, so...
-
-                        unselectablePluginItem->setCheckState(Qt::Checked);
-
-                        break;
-                    }
-
-                if (unselectablePluginItem->checkState() == Qt::Checked)
-                    break;
+                break;
             }
     }
 
@@ -657,8 +641,6 @@ void PluginsWindow::updatePluginsSelectedState(QStandardItem *pItem,
     foreach (QStandardItem *plugin, mSelectablePluginItems+mUnselectablePluginItems)
         if (   mInitialLoadingStates.value(plugin->text())
             != (plugin->checkState() == Qt::Checked)) {
-            // The loading state of the plugin has changed, so...
-
             buttonsEnabled = true;
 
             break;
@@ -768,8 +750,6 @@ void PluginsWindow::on_selectablePluginsCheckBox_toggled(bool pChecked)
             for (int i = 0, iMax = categoryItem->rowCount(); i < iMax; ++i)
                 if (!mGui->pluginsTreeView->isRowHidden(categoryItem->child(i)->row(),
                                                         categoryItem->index())) {
-                    // There is at least one plugin which is visible, so...
-
                     hideCategory = false;
 
                     break;

@@ -127,21 +127,22 @@ CellmlFileRdfTriple::CellmlFileRdfTriple(CellmlFile *pCellmlFile,
                 break;
             }
 
-    if (mType == BioModelsDotNetQualifier)
+    if (mType == BioModelsDotNetQualifier) {
         // We seem to be dealing with either a model or a bio(logy) qualifier,
-        // so we try to decode its object which should be either a valid MIRIAM
+        // so try to decode its object, which should be either a valid MIRIAM
         // URN or a valid identifiers.org URI
 
         if (!decodeTerm(mObject->asString(), mResource, mId)) {
             // The object is neither a valid MIRIAM URN nor a valid
-            // identifiers.org URI which means that the RDF triple is not a
-            // valid model/bio(logy) qualifier, so...
+            // identifiers.org URI, which means that the RDF triple is not a
+            // valid model/bio(logy) qualifier
 
             mType = Unknown;
 
             mModelQualifier = ModelUnknown;
             mBioQualifier   = BioUnknown;
         }
+    }
 }
 
 //==============================================================================
@@ -254,17 +255,19 @@ CellmlFileRdfTriple::Type CellmlFileRdfTriple::type() const
 
 QString CellmlFileRdfTriple::metadataId() const
 {
-    // Return the RDF triple's metadata id
+    // Return the RDF triple's metadata id, if its subject is a URI reference
 
-    if (mSubject->type() == CellmlFileRdfTripleElement::UriReference)
-        // The subject of our RDF triple is a URI reference, so we can retrieve
-        // its metadata id
+    if (mSubject->type() == CellmlFileRdfTripleElement::UriReference) {
+        QString uriReference = mSubject->uriReference();
+        int hashPosition = uriReference.lastIndexOf("#");
 
-        return mSubject->uriReference().remove(QRegularExpression("^"+QRegularExpression::escape(mCellmlFile->xmlBase())+"#?"));
-    else
-        // We don't recognise the subject of our RDF triple, so...
-
+        if (hashPosition != -1)
+            return uriReference.right(uriReference.length()-hashPosition-1);
+        else
+            return QString();
+    } else {
         return QString();
+    }
 }
 
 //==============================================================================
@@ -291,6 +294,19 @@ CellmlFileRdfTriple::ModelQualifier CellmlFileRdfTriple::modelQualifier() const
 
 //==============================================================================
 
+CellmlFileRdfTriple::ModelQualifier CellmlFileRdfTriple::modelQualifier(const QString &pModelQualifier)
+{
+    // Return the given RDF triple's model qualifier
+
+    for (int i = FirstModelQualifier; i <= LastModelQualifier; ++i)
+        if (!pModelQualifier.compare(modelQualifierAsString(ModelQualifier(i))))
+            return ModelQualifier(i);
+
+    return ModelUnknown;
+}
+
+//==============================================================================
+
 QString CellmlFileRdfTriple::modelQualifierAsString() const
 {
     // Return the RDF triple's model qualifier as a string
@@ -302,7 +318,7 @@ QString CellmlFileRdfTriple::modelQualifierAsString() const
 
 QString CellmlFileRdfTriple::modelQualifierAsString(const ModelQualifier &pModelQualifier)
 {
-    // Return the RDF triple's model qualifier as a string
+    // Return the given RDF triple's model qualifier as a string
 
     switch (pModelQualifier) {
     case ModelIs:
@@ -333,6 +349,19 @@ CellmlFileRdfTriple::BioQualifier CellmlFileRdfTriple::bioQualifier() const
 
 //==============================================================================
 
+CellmlFileRdfTriple::BioQualifier CellmlFileRdfTriple::bioQualifier(const QString &pBioQualifier)
+{
+    // Return the given RDF triple's bio(logy) qualifier
+
+    for (int i = FirstBioQualifier; i <= LastBioQualifier; ++i)
+        if (!pBioQualifier.compare(bioQualifierAsString(BioQualifier(i))))
+            return BioQualifier(i);
+
+    return BioUnknown;
+}
+
+//==============================================================================
+
 QString CellmlFileRdfTriple::bioQualifierAsString() const
 {
     // Return the RDF triple's bio(logy) qualifier as a string
@@ -344,7 +373,7 @@ QString CellmlFileRdfTriple::bioQualifierAsString() const
 
 QString CellmlFileRdfTriple::bioQualifierAsString(const BioQualifier &pBioQualifier)
 {
-    // Return the RDF triple's bio(logy) qualifier as a string
+    // Return the given RDF triple's bio(logy) qualifier as a string
 
     switch (pBioQualifier) {
     case BioEncodes:
@@ -440,8 +469,6 @@ CellmlFileRdfTriple::Type CellmlFileRdfTriples::type() const
     //       type is considered to be unknown
 
     if (isEmpty()) {
-        // There are no RDF triples, so...
-
         return CellmlFileRdfTriple::Empty;
     } else {
         // There is at least one RDF triple, so retrieve the subject and type of
@@ -460,12 +487,11 @@ CellmlFileRdfTriple::Type CellmlFileRdfTriples::type() const
             if (   rdfTriple->subject()->asString().compare(subject)
                 || (rdfTriple->type() != res)) {
                 // The subject and/or the type of the current RDF triple is
-                // different from that of the first RDF triple, so...
+                // different from that of the first RDF triple, so consider the
+                // overall type of the RDF triples to be unknown
 
                 return CellmlFileRdfTriple::Unknown;
             }
-
-        // All of the RDF triples have the same type, so...
 
         return res;
     }
@@ -503,7 +529,7 @@ bool CellmlFileRdfTriple::decodeTerm(const QString &pTerm, QString &pResource,
 
         return true;
     } else {
-        // Not a term we can recognise, so...
+        // Not a term we can recognise
 
         pResource = "???";
         pId       = "???";
@@ -514,33 +540,34 @@ bool CellmlFileRdfTriple::decodeTerm(const QString &pTerm, QString &pResource,
 
 //==============================================================================
 
-void CellmlFileRdfTriples::recursiveContains(CellmlFileRdfTriples &pRdfTriples,
-                                             CellmlFileRdfTriple *pRdfTriple) const
+void CellmlFileRdfTriples::recursiveAssociatedWith(CellmlFileRdfTriples &pRdfTriples,
+                                                   CellmlFileRdfTriple *pRdfTriple) const
 {
     // Add pRdfTriple to pRdfTriples, but only if it's not already part of
     // pRdfTriples
-    // Note: indeed, a given RDF triple may be referenced more than once, so...
+    // Note: indeed, a given RDF triple may be referenced more than once...
 
-    foreach (CellmlFileRdfTriple *rdfTriple, pRdfTriples)
-        if (pRdfTriple == rdfTriple)
-            return;
+    if (pRdfTriples.contains(pRdfTriple))
+        return;
 
     pRdfTriples << pRdfTriple;
 
-    // Recursively add all the RDF triples which subject matches pRdfTriple's
-    // object
+    // Recursively add all the RDF triples, which subject matches that of
+    // pRdfTriple's object
+
+    QString rdfTripleObject = pRdfTriple->object()->asString();
 
     foreach (CellmlFileRdfTriple *rdfTriple, *this)
-        if (!rdfTriple->subject()->asString().compare(pRdfTriple->object()->asString()))
-            recursiveContains(pRdfTriples, rdfTriple);
+        if (!rdfTriple->subject()->asString().compare(rdfTripleObject))
+            recursiveAssociatedWith(pRdfTriples, rdfTriple);
 }
 
 //==============================================================================
 
-CellmlFileRdfTriples CellmlFileRdfTriples::contains(iface::cellml_api::CellMLElement *pElement) const
+CellmlFileRdfTriples CellmlFileRdfTriples::associatedWith(iface::cellml_api::CellMLElement *pElement) const
 {
-    // Return all the RDF triples which are directly or indirectly associated
-    // with the given metadata id
+    // Return all the RDF triples that are directly or indirectly associated
+    // with the given element's metadata id
 
     CellmlFileRdfTriples res = CellmlFileRdfTriples(mCellmlFile);
     QString cmetaId = QString::fromStdWString(pElement->cmetaId());
@@ -552,7 +579,7 @@ CellmlFileRdfTriples CellmlFileRdfTriples::contains(iface::cellml_api::CellMLEle
         if (!cmetaId.compare(rdfTriple->metadataId()))
             // It's the correct metadata id, so add it to our list
 
-            recursiveContains(res, rdfTriple);
+            recursiveAssociatedWith(res, rdfTriple);
 
     return res;
 }
@@ -585,7 +612,7 @@ CellmlFileRdfTriple * CellmlFileRdfTriples::add(CellmlFileRdfTriple *pRdfTriple)
 
     pRdfTriple->setRdfTriple(rdfTriple);
 
-    // An RDF triple has been added, so...
+    // An RDF triple has been added, so set the CellML file as modified
 
     mCellmlFile->setModified(true);
 
@@ -594,7 +621,7 @@ CellmlFileRdfTriple * CellmlFileRdfTriples::add(CellmlFileRdfTriple *pRdfTriple)
 
 //==============================================================================
 
-void CellmlFileRdfTriples::removeRdfTriples(const CellmlFileRdfTriples &pRdfTriples)
+bool CellmlFileRdfTriples::removeRdfTriples(const CellmlFileRdfTriples &pRdfTriples)
 {
     // Remove all the given RDF triples
 
@@ -614,15 +641,20 @@ void CellmlFileRdfTriples::removeRdfTriples(const CellmlFileRdfTriples &pRdfTrip
             delete rdfTriple;
         }
 
-        // Some RDF triples have been removed, so...
+        // Some RDF triples have been removed, so set the CellML file as
+        // modified
 
         mCellmlFile->setModified(true);
+
+        return true;
+    } else {
+        return false;
     }
 }
 
 //==============================================================================
 
-void CellmlFileRdfTriples::remove(CellmlFileRdfTriple *pRdfTriple)
+bool CellmlFileRdfTriples::remove(CellmlFileRdfTriple *pRdfTriple)
 {
     // Call our generic remove function
 
@@ -630,27 +662,27 @@ void CellmlFileRdfTriples::remove(CellmlFileRdfTriple *pRdfTriple)
 
     rdfTriples << pRdfTriple;
 
-    removeRdfTriples(rdfTriples);
+    return removeRdfTriples(rdfTriples);
     // Note: yes, we must declare rdfTriples and add pRdfTriple to it before
     //       passing it to removeRdfTriples()...
 }
 
 //==============================================================================
 
-void CellmlFileRdfTriples::remove(iface::cellml_api::CellMLElement *pElement)
+bool CellmlFileRdfTriples::remove(iface::cellml_api::CellMLElement *pElement)
 {
     // Call our generic remove function
 
-    removeRdfTriples(contains(pElement));
+    return removeRdfTriples(associatedWith(pElement));
 }
 
 //==============================================================================
 
-void CellmlFileRdfTriples::removeAll()
+bool CellmlFileRdfTriples::removeAll()
 {
     // Call our generic remove function
 
-    removeRdfTriples(*this);
+    return removeRdfTriples(*this);
 }
 
 //==============================================================================
