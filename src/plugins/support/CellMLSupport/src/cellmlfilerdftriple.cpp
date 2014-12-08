@@ -21,7 +21,7 @@ specific language governing permissions and limitations under the License.
 
 #include "cellmlfile.h"
 #include "cellmlfilerdftriple.h"
-#include "cliutils.h"
+#include "corecliutils.h"
 
 //==============================================================================
 
@@ -456,7 +456,8 @@ QString CellmlFileRdfTriple::id() const
 //==============================================================================
 
 CellmlFileRdfTriples::CellmlFileRdfTriples(CellmlFile *pCellmlFile) :
-    mCellmlFile(pCellmlFile)
+    mCellmlFile(pCellmlFile),
+    mOriginalRdfTriples(QStringList())
 {
 }
 
@@ -612,9 +613,9 @@ CellmlFileRdfTriple * CellmlFileRdfTriples::add(CellmlFileRdfTriple *pRdfTriple)
 
     pRdfTriple->setRdfTriple(rdfTriple);
 
-    // An RDF triple has been added, so set the CellML file as modified
+    // An RDF triple has been added, so update the CellML file's modified status
 
-    mCellmlFile->setModified(true);
+    updateCellmlFileModifiedStatus();
 
     return pRdfTriple;
 }
@@ -641,10 +642,10 @@ bool CellmlFileRdfTriples::removeRdfTriples(const CellmlFileRdfTriples &pRdfTrip
             delete rdfTriple;
         }
 
-        // Some RDF triples have been removed, so set the CellML file as
-        // modified
+        // Some RDF triples have been removed, so update the CellML file's
+        // modified status
 
-        mCellmlFile->setModified(true);
+        updateCellmlFileModifiedStatus();
 
         return true;
     } else {
@@ -663,8 +664,6 @@ bool CellmlFileRdfTriples::remove(CellmlFileRdfTriple *pRdfTriple)
     rdfTriples << pRdfTriple;
 
     return removeRdfTriples(rdfTriples);
-    // Note: yes, we must declare rdfTriples and add pRdfTriple to it before
-    //       passing it to removeRdfTriples()...
 }
 
 //==============================================================================
@@ -683,6 +682,48 @@ bool CellmlFileRdfTriples::removeAll()
     // Call our generic remove function
 
     return removeRdfTriples(*this);
+}
+
+//==============================================================================
+
+QStringList CellmlFileRdfTriples::asStringList() const
+{
+    // Return the RDF triples as a list of sorted strings
+
+    QStringList res = QStringList();
+
+    foreach (CellmlFileRdfTriple *rdfTriple, *this)
+        res << QString("%1|%2|%3").arg(rdfTriple->subject()->asString(),
+                                       rdfTriple->predicate()->asString(),
+                                       rdfTriple->object()->asString());
+
+    res.sort();
+
+    return res;
+}
+
+//==============================================================================
+
+void CellmlFileRdfTriples::updateOriginalRdfTriples()
+{
+    // Keep track of our current RDF triples, which will be considered as our
+    // original RDF triples, so we can determine whether a CellML file should be
+    // considered modified (see updateCellmlFileModifiedStatus())
+
+    mOriginalRdfTriples = asStringList();
+}
+
+//==============================================================================
+
+void CellmlFileRdfTriples::updateCellmlFileModifiedStatus()
+{
+    // Determine whether our CellML file should be considered modified based on
+    // whether our current RDF triples are the same as our original ones
+
+    if (count() != mOriginalRdfTriples.count())
+        mCellmlFile->setModified(true);
+    else
+        mCellmlFile->setModified(asStringList() != mOriginalRdfTriples);
 }
 
 //==============================================================================

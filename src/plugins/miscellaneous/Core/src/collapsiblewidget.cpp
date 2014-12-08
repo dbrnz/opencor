@@ -20,7 +20,7 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include "collapsiblewidget.h"
-#include "guiutils.h"
+#include "coreguiutils.h"
 
 //==============================================================================
 
@@ -61,6 +61,7 @@ void CollapsibleHeaderTitleWidget::mouseDoubleClickEvent(QMouseEvent *pEvent)
 //==============================================================================
 
 CollapsibleHeaderWidget::CollapsibleHeaderWidget(const QColor &pSeparatorColor,
+                                                 const bool &pCollapsible,
                                                  QWidget *pParent) :
     QWidget(pParent),
     mCollapsed(false),
@@ -100,7 +101,7 @@ CollapsibleHeaderWidget::CollapsibleHeaderWidget(const QColor &pSeparatorColor,
 
     int iconSize = 0.4*mTitle->height();
 
-    mButton->setIcon(QIcon(":/oxygen/actions/arrow-down.png"));
+    mButton->setIcon(pCollapsible?QIcon(":/oxygen/actions/arrow-down.png"):QIcon());
     mButton->setIconSize(QSize(iconSize, iconSize));
     mButton->setStyleSheet("QToolButton {"
                            "    border: 0px;"
@@ -131,10 +132,12 @@ CollapsibleHeaderWidget::CollapsibleHeaderWidget(const QColor &pSeparatorColor,
 
     // Connections to toggle our collapsed state
 
-    connect(mButton, SIGNAL(clicked(bool)),
-            this, SLOT(toggleCollapsedState()));
-    connect(mTitle, SIGNAL(doubleClicked()),
-            this, SLOT(toggleCollapsedState()));
+    if (pCollapsible) {
+        connect(mButton, SIGNAL(clicked(bool)),
+                this, SLOT(toggleCollapsedState()));
+        connect(mTitle, SIGNAL(doubleClicked()),
+                this, SLOT(toggleCollapsedState()));
+    }
 }
 
 //==============================================================================
@@ -158,6 +161,15 @@ void CollapsibleHeaderWidget::setLastHeader(const bool &pLastHeader)
 
         updateBottomSeparatorVisibleStatus();
     }
+}
+
+//==============================================================================
+
+bool CollapsibleHeaderWidget::isCollapsable() const
+{
+    // Return wheter we are collapsable
+
+    return !mButton->icon().isNull();
 }
 
 //==============================================================================
@@ -287,7 +299,8 @@ void CollapsibleWidget::loadSettings(QSettings *pSettings)
     // Retrieve our collapsable state
 
     for (int i = 0, iMax = mHeaders.count(); i < iMax; ++i)
-        setCollapsed(i, pSettings->value(SettingsCollapsed.arg(i), false).toBool());
+        if (mHeaders[i]->isCollapsable())
+            setCollapsed(i, pSettings->value(SettingsCollapsed.arg(i), false).toBool());
 }
 
 //==============================================================================
@@ -340,7 +353,7 @@ void CollapsibleWidget::setHeaderTitle(const int &pIndex, const QString &pTitle)
 
 //==============================================================================
 
-void CollapsibleWidget::addWidget(QWidget *pWidget)
+void CollapsibleWidget::addWidget(QWidget *pWidget, const bool &pCollapsible)
 {
     // Make sure that there is a widget to add
 
@@ -352,7 +365,7 @@ void CollapsibleWidget::addWidget(QWidget *pWidget)
 
     int beforeIndex = 2*mHeaders.count();
 
-    CollapsibleHeaderWidget *header = new CollapsibleHeaderWidget(mSeparatorColor, this);
+    CollapsibleHeaderWidget *header = new CollapsibleHeaderWidget(mSeparatorColor, pCollapsible, this);
 
     // Let our header know whether it is the first header
 
@@ -380,8 +393,10 @@ void CollapsibleWidget::addWidget(QWidget *pWidget)
     // Create a connection to show/hide our widget depending on the collapsed
     // state of our header
 
-    connect(header, SIGNAL(widgetVisible(const bool &)),
-            pWidget, SLOT(setVisible(bool)));
+    if (pCollapsible) {
+        connect(header, SIGNAL(widgetVisible(const bool &)),
+                pWidget, SLOT(setVisible(bool)));
+    }
 }
 
 //==============================================================================

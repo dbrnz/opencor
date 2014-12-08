@@ -24,8 +24,8 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
-#include "guiutils.h"
 #include "coreglobal.h"
+#include "coreguiutils.h"
 #include "widget.h"
 
 //==============================================================================
@@ -70,10 +70,13 @@ class CollapsibleHeaderWidget : public QWidget
 
 public:
     explicit CollapsibleHeaderWidget(const QColor &pSeparatorColor,
+                                     const bool &pCollapsible,
                                      QWidget *pParent);
 
     void setFirstHeader(const bool &pFirstHeader);
     void setLastHeader(const bool &pFirstHeader);
+
+    bool isCollapsable() const;
 
     bool isCollapsed() const;
     void setCollapsed(const bool &pCollapsed);
@@ -120,7 +123,7 @@ public:
     QString headerTitle(const int &pIndex) const;
     void setHeaderTitle(const int &pIndex, const QString &pTitle);
 
-    void addWidget(QWidget *pWidget);
+    void addWidget(QWidget *pWidget, const bool &pCollapsible = true);
 
 private:
     QVBoxLayout *mLayout;

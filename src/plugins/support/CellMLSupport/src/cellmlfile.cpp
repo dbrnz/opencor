@@ -22,7 +22,7 @@ specific language governing permissions and limitations under the License.
 #include "cellmlfile.h"
 #include "cellmlfilecellml10exporter.h"
 #include "cellmlfilecellml11exporter.h"
-#include "cliutils.h"
+#include "corecliutils.h"
 #include "filemanager.h"
 
 //==============================================================================
@@ -349,7 +349,8 @@ bool CellmlFile::load()
     if (!doLoad(mFileName, QString(), &mModel, mIssues))
         return false;
 
-    // Retrieve all the RDF triples associated with the model
+    // Retrieve all the RDF triples associated with the model and initialise our
+    // list of original RDF triples
 
     ObjRef<iface::cellml_api::RDFRepresentation> rdfRepresentation = mModel->getRDFRepresentation(L"http://www.cellml.org/RDF/API");
 
@@ -364,6 +365,8 @@ bool CellmlFile::load()
             for (ObjRef<iface::rdf_api::Triple> rdfTriple = rdfTriplesEnumerator->getNextTriple();
                  rdfTriple; rdfTriple = rdfTriplesEnumerator->getNextTriple())
                 mRdfTriples << new CellmlFileRdfTriple(this, rdfTriple);
+
+            mRdfTriples.updateOriginalRdfTriples();
         }
     }
 
@@ -396,11 +399,6 @@ bool CellmlFile::save(const QString &pNewFileName)
 
     QString newFileName = pNewFileName.isEmpty()?mFileName:pNewFileName;
 
-    // Make sure that the RDF API representation is up to date by updating its
-    // data source
-
-    mRdfApiRepresentation->source(mRdfDataSource);
-
     // (Create and) open the file for writing
 
     QFile file(newFileName);
@@ -413,11 +411,57 @@ bool CellmlFile::save(const QString &pNewFileName)
         return false;
     }
 
+    // Make sure that the RDF API representation is up to date by updating its
+    // data source
+
+    mRdfApiRepresentation->source(mRdfDataSource);
+
+    // Update our list of original RDF triples
+
+    mRdfTriples.updateOriginalRdfTriples();
+
+    // Beautify the serialised version of the CellML file, after having removed
+    // the model's XML base value and its RDF child node, should there be no
+    // annotations
+    // Note: as part of good practices, a CellML file should never contain an
+    //       XML base value. Yet, upon loading a CellML file, we set one (see
+    //       doLoad()), so that we can properly import CellML files, if needed.
+    //       So, now, we need to undo what we did...
+
+    QDomDocument domDocument;
+
+    domDocument.setContent(QString::fromStdWString(mModel->serialisedText()));
+
+    for (int i = 0, iMax = domDocument.childNodes().count(); i < iMax; ++i) {
+        QDomNode domNode = domDocument.childNodes().at(i);
+
+        if (!domNode.nodeName().compare("model")) {
+            // Remove the model's XML base value
+
+            domNode.attributes().removeNamedItem("xml:base");
+
+            // Remove the model's RDF child node, should there be no annotations
+
+            for (int j = 0, jMax = domNode.childNodes().count(); j < jMax; ++j) {
+                QDomNode domChildNode = domNode.childNodes().at(j);
+
+                if (!domChildNode.nodeName().compare("rdf:RDF")) {
+                    if (!domChildNode.childNodes().count())
+                        domNode.removeChild(domChildNode);
+
+                    break;
+                }
+            }
+
+            break;
+        }
+    }
+
     // Write out the contents of the CellML file to the file
 
     QTextStream out(&file);
 
-    out << QString::fromStdWString(mModel->serialisedText());
+    out << qDomDocumentToString(domDocument);
 
     file.close();
 
@@ -805,7 +849,7 @@ QString CellmlFile::rdfTripleSubject(iface::cellml_api::CellMLElement *pElement)
         int counter = 0;
 
         while (true) {
-            cmetaId = QString("id_%1").arg(++counter, 5, 10, QChar('0'));
+            cmetaId = QString("id_%1").arg(++counter, 9, 10, QChar('0'));
 
             if (!cmetaIds.contains(cmetaId)) {
                 // We have found a unique cmeta:id, so update our CellML element

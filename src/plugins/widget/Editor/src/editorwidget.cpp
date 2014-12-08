@@ -19,10 +19,10 @@ specific language governing permissions and limitations under the License.
 // Editor widget
 //==============================================================================
 
+#include "coreguiutils.h"
 #include "editorfindreplacewidget.h"
 #include "editorwidget.h"
 #include "filemanager.h"
-#include "guiutils.h"
 #include "qscintillawidget.h"
 
 //==============================================================================
@@ -181,7 +181,7 @@ void EditorWidget::updateSettings(EditorWidget *pEditorWidget)
 {
     // Make sure that we are given another widget
 
-    if (!pEditorWidget)
+    if (!pEditorWidget || (pEditorWidget == this))
         return;
 
     // Update our zoom level

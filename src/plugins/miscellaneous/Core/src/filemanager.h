@@ -120,8 +120,6 @@ public:
     void makeNew(const QString &pFileName);
 
     void setModified(const QString &pFileName, const bool &pModified);
-    void setConsiderModified(const QString &pFileName,
-                             const bool &pConsiderModified);
 
     bool isReadable(const QString &pFileName) const;
     bool isWritable(const QString &pFileName) const;
@@ -136,6 +134,8 @@ public:
                   const QString &pContents = QString());
     Status rename(const QString &pOldFileName, const QString &pNewFileName);
     Status duplicate(const QString &pFileName);
+
+    void save(const QString &pFileName);
 
     int count() const;
 

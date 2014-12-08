@@ -21,7 +21,8 @@ specific language governing permissions and limitations under the License.
 
 #include "cellmlfilemanager.h"
 #include "cellmlsupportplugin.h"
-#include "cliutils.h"
+#include "corecliutils.h"
+#include "filemanager.h"
 #include "rawcellmlviewplugin.h"
 #include "rawcellmlviewwidget.h"
 
@@ -53,7 +54,7 @@ PLUGININFO_FUNC RawCellMLViewPluginInfo()
 // CellML editing interface
 //==============================================================================
 
-void RawCellMLViewPlugin::validate(const QString &pFileName) const
+void RawCellMLViewPlugin::validateCellml(const QString &pFileName) const
 {
     // Validate the given file
 
@@ -69,6 +70,31 @@ Editor::EditorWidget * RawCellMLViewPlugin::editor(const QString &pFileName) con
     // Return the requested editor
 
     return mViewWidget->editor(pFileName);
+}
+
+//==============================================================================
+
+bool RawCellMLViewPlugin::isEditorUseable(const QString &pFileName) const
+{
+    Q_UNUSED(pFileName);
+
+    // We don't handle this interface...
+
+    return true;
+}
+
+//==============================================================================
+
+bool RawCellMLViewPlugin::isEditorContentsModified(const QString &pFileName) const
+{
+    // Return whether the requested editor has been modified, which here is done
+    // by comparing its contents to that of the given file
+
+    Editor::EditorWidget *currentEditor = editor(pFileName);
+
+    return currentEditor?
+               Core::FileManager::instance()->isDifferent(pFileName, currentEditor->contents()):
+               false;
 }
 
 //==============================================================================
@@ -127,6 +153,22 @@ void RawCellMLViewPlugin::fileRenamed(const QString &pOldFileName,
     // The given file has been renamed, so let our view widget know about it
 
     mViewWidget->fileRenamed(pOldFileName, pNewFileName);
+}
+
+//==============================================================================
+
+void RawCellMLViewPlugin::fileSaved(const QString &pFileName)
+{
+    // The given file has been saved, but because it was done directly by
+    // manipulating the file, we need to ask our file manager to unmanage it and
+    // manage it back, so that anyone that relies on an internal representation
+    // of the file (e.g. the CellML Annotation view plugin) will get properly
+    // updated
+
+    Core::FileManager *fileManagerInstance = Core::FileManager::instance();
+
+    fileManagerInstance->unmanage(pFileName);
+    fileManagerInstance->manage(pFileName);
 }
 
 //==============================================================================

@@ -20,10 +20,10 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include "coreeditingplugin.h"
+#include "coreguiutils.h"
 #include "editinginterface.h"
 #include "editorwidget.h"
 #include "filemanager.h"
-#include "guiutils.h"
 
 //==============================================================================
 
@@ -101,7 +101,8 @@ void CoreEditingPlugin::filePermissionsChanged(const QString &pFileName)
         // Make our editor read-only or writable
 
         if (mEditor)
-            mEditor->setReadOnly(!Core::FileManager::instance()->isReadableAndWritable(pFileName));
+            mEditor->setReadOnly(   !Core::FileManager::instance()->isReadableAndWritable(pFileName)
+                                 || !mEditingInterface->isEditorUseable(pFileName));
     }
 }
 
@@ -143,6 +144,15 @@ void CoreEditingPlugin::fileRenamed(const QString &pOldFileName,
 
     if (!pOldFileName.compare(mFileName))
         mFileName = pNewFileName;
+}
+
+//==============================================================================
+
+void CoreEditingPlugin::fileSaved(const QString &pFileName)
+{
+    Q_UNUSED(pFileName);
+
+    // We don't handle this interface...
 }
 
 //==============================================================================
@@ -455,7 +465,7 @@ void CoreEditingPlugin::unpopulateEditMenu()
     mEditMenu->removeAction(mEditFindNextAction);
     mEditMenu->removeAction(mEditFindPreviousAction);
 
-    mEditMenu->addAction(mEditSelectAllAction);
+    mEditMenu->removeAction(mEditSelectAllAction);
 }
 
 //==============================================================================
@@ -507,7 +517,7 @@ void CoreEditingPlugin::updateUndoAndRedoActions()
         mEditRedoAction->setEnabled(editorAndFileReadableAndWritable && mEditor->isRedoAvailable());
 
         fileManagerInstance->setModified(mFileName,
-                                         mEditor && fileManagerInstance->isDifferent(mFileName, mEditor->contents()));
+                                         mEditor && mEditingInterface->isEditorContentsModified(mFileName));
     }
 }
 

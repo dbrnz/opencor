@@ -34,6 +34,11 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
+class QAction;
+class QMenu;
+
+//==============================================================================
+
 namespace OpenCOR {
 namespace EditorList {
 
@@ -51,6 +56,9 @@ public:
 
     void addItem(const EditorListItem::Type &pType, const int &pLine,
                  const int &pColumn, const QString &pMessage);
+    void addItem(const EditorListItem::Type &pType, const QString &pMessage);
+
+    int count() const;
 
     void selectFirstItem();
 

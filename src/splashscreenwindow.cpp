@@ -20,7 +20,6 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include "cliutils.h"
-#include "common.h"
 #include "guiutils.h"
 #include "splashscreenwindow.h"
 
@@ -68,15 +67,18 @@ SplashScreenWindow::SplashScreenWindow() :
 
     mGui->setupUi(this);
 
-    QColor borderRgb = Core::borderColor();
+    QColor borderRgb = borderColor();
     QString borderStyle = "1px solid rgb("+QString::number(borderRgb.red())+", "+QString::number(borderRgb.green())+", "+QString::number(borderRgb.blue())+");";
 
-#ifdef Q_OS_MAC
-    setStyleSheet("QWidget#infoWidget {"
-                  "    border-top: "+borderStyle+
-                  "}");
-#else
     setStyleSheet("QLabel#splashScreenImage {"
+                  "     background-color: white;"
+                  "}"
+#ifdef Q_OS_MAC
+                  "QWidget#infoWidget {"
+                  "    border-top: "+borderStyle+
+                  "}"
+#else
+                  "QLabel#splashScreenImage {"
                   "    border-top: "+borderStyle+
                   "    border-left: "+borderStyle+
                   "    border-right: "+borderStyle+
@@ -84,8 +86,9 @@ SplashScreenWindow::SplashScreenWindow() :
                   ""
                   "QWidget#infoWidget {"
                   "    border: "+borderStyle+
-                  "}");
+                  "}"
 #endif
+                 );
 
     QFont newFont = mGui->infoWidget->font();
 
@@ -102,7 +105,7 @@ SplashScreenWindow::SplashScreenWindow() :
     mGui->copyrightValue->setFont(newFont);
     mGui->versionValue->setFont(newFont);
 
-    mGui->copyrightValue->setText(Core::copyright());
+    mGui->copyrightValue->setText(copyright());
     mGui->versionValue->setText(shortVersion(qApp));
 
     // Adjust the size of our splash screen and then move it to the center of

@@ -16,19 +16,15 @@ specific language governing permissions and limitations under the License.
 *******************************************************************************/
 
 //==============================================================================
-// Some common methods between the CLI and GUI versions of OpenCOR
+// GUI utilities
 //==============================================================================
 
-#ifndef COMMON_H
-#define COMMON_H
-
-//==============================================================================
-
-#include <QString>
+#ifndef GUIUTILS_H
+#define GUIUTILS_H
 
 //==============================================================================
 
-class QCoreApplication;
+#include <QAction>
 
 //==============================================================================
 
@@ -36,16 +32,11 @@ namespace OpenCOR {
 
 //==============================================================================
 
-void initPluginsPath(const QString &pAppFileName);
+#include "coreglobal.h"
 
-void initApplication(QCoreApplication *pApp);
+//==============================================================================
 
-bool cliApplication(QCoreApplication *pApp, int *pRes);
-
-void removeGlobalInstances();
-
-QString shortVersion(QCoreApplication *pApp);
-QString version(QCoreApplication *pApp);
+#include "coreguiutils.h.inl"
 
 //==============================================================================
 

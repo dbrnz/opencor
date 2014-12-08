@@ -16,13 +16,12 @@ specific language governing permissions and limitations under the License.
 *******************************************************************************/
 
 //==============================================================================
-// Some common methods between the CLI and GUI versions of OpenCOR
+// CLI utilities
 //==============================================================================
 
 #include "cliapplication.h"
+#include "cliutils.h"
 #include "coresettings.h"
-#include "common.h"
-#include "plugin.h"
 #include "settings.h"
 
 //==============================================================================
@@ -31,14 +30,19 @@ specific language governing permissions and limitations under the License.
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QIODevice>
-#include <QRegularExpression>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QProcess>
 #include <QSettings>
-#include <QString>
 
 //==============================================================================
 
 namespace OpenCOR {
+
+//==============================================================================
+
+#include "corecliutils.cpp.inl"
 
 //==============================================================================
 
@@ -91,7 +95,7 @@ void initPluginsPath(const QString &pAppFileName)
 
 //==============================================================================
 
-void initApplication(QCoreApplication *pApp)
+void initApplication(QCoreApplication *pApp, QString *pAppDate)
 {
     // Set the name of the application
 
@@ -99,13 +103,16 @@ void initApplication(QCoreApplication *pApp)
 
     // Retrieve and set the version of the application
 
-    QFile versionFile(":app_version");
+    QFile versionDateFile(":app_versiondate");
 
-    versionFile.open(QIODevice::ReadOnly);
+    versionDateFile.open(QIODevice::ReadOnly);
 
-    pApp->setApplicationVersion(QString(versionFile.readLine()).trimmed());
+    pApp->setApplicationVersion(QString(versionDateFile.readLine()).trimmed());
 
-    versionFile.close();
+    if (pAppDate)
+        *pAppDate = QString(versionDateFile.readLine()).trimmed();
+
+    versionDateFile.close();
 }
 
 //==============================================================================

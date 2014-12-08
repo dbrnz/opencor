@@ -19,7 +19,7 @@ specific language governing permissions and limitations under the License.
 // File manager
 //==============================================================================
 
-#include "cliutils.h"
+#include "corecliutils.h"
 #include "filemanager.h"
 
 //==============================================================================
@@ -336,20 +336,6 @@ void FileManager::setModified(const QString &pFileName, const bool &pModified)
 
 //==============================================================================
 
-void FileManager::setConsiderModified(const QString &pFileName,
-                                      const bool &pConsiderModified)
-{
-    // Set the consider modified state of the given file, should it be managed
-
-    QString nativeFileName = nativeCanonicalFileName(pFileName);
-    File *file = isManaged(nativeFileName);
-
-    if (file && file->setConsiderModified(pConsiderModified))
-        emit fileModified(nativeFileName);
-}
-
-//==============================================================================
-
 bool FileManager::isReadable(const QString &pFileName) const
 {
     // Return whether the given file, if it is being managed, is readable
@@ -559,6 +545,25 @@ FileManager::Status FileManager::duplicate(const QString &pFileName)
         }
     } else {
         return NotManaged;
+    }
+}
+
+//==============================================================================
+
+void FileManager::save(const QString &pFileName)
+{
+    // Make sure that the given file is managed
+
+    QString nativeFileName = nativeCanonicalFileName(pFileName);
+    File *file = isManaged(nativeFileName);
+
+    if (file) {
+        // The file is managed, so reset its settings and let people know that
+        // it has been saved
+
+        file->reset();
+
+        emit fileSaved(nativeFileName);
     }
 }
 

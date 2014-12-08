@@ -19,9 +19,12 @@ specific language governing permissions and limitations under the License.
 // Pretty CellML view widget
 //==============================================================================
 
+#include "corecliutils.h"
 #include "corecellmleditingwidget.h"
+#include "editorlistwidget.h"
 #include "editorwidget.h"
 #include "filemanager.h"
+#include "prettycellmlviewcellmltoprettycellmlconverter.h"
 #include "prettycellmlviewwidget.h"
 #include "settings.h"
 #include "viewerwidget.h"
@@ -36,6 +39,7 @@ specific language governing permissions and limitations under the License.
 #include <QLayout>
 #include <QMetaType>
 #include <QSettings>
+#include <QTimer>
 #include <QVariant>
 
 //==============================================================================
@@ -55,7 +59,8 @@ PrettyCellmlViewWidget::PrettyCellmlViewWidget(QWidget *pParent) :
     mNeedLoadingSettings(true),
     mSettingsGroup(QString()),
     mEditingWidget(0),
-    mEditingWidgets(QMap<QString, CoreCellMLEditing::CoreCellmlEditingWidget *>())
+    mEditingWidgets(QMap<QString, CoreCellMLEditing::CoreCellmlEditingWidget *>()),
+    mSuccessfulConversions(QMap<QString, bool>())
 {
     // Set up the GUI
 
@@ -114,70 +119,100 @@ bool PrettyCellmlViewWidget::contains(const QString &pFileName) const
 
 //==============================================================================
 
-void PrettyCellmlViewWidget::initialize(const QString &pFileName)
+void PrettyCellmlViewWidget::initialize(const QString &pFileName,
+                                        const bool &pUpdate)
 {
     // Retrieve the editing widget associated with the given file, if any
 
-    CoreCellMLEditing::CoreCellmlEditingWidget *oldEditingWidget = mEditingWidget;
+    CoreCellMLEditing::CoreCellmlEditingWidget *newEditingWidget = mEditingWidgets.value(pFileName);
 
-    mEditingWidget = mEditingWidgets.value(pFileName);
+    if (!newEditingWidget) {
+        // No editing widget exists for the given file, so create one and
+        // populate it with its pretty CellML version
 
-    if (!mEditingWidget) {
-        // No editing widget exists for the given file, so create one
+        PrettyCellMLViewCellmlToPrettyCellmlConverter converter(pFileName);
+        bool successfulConversion = converter.execute();
 
-        QString fileContents;
+        newEditingWidget = new CoreCellMLEditing::CoreCellmlEditingWidget(converter.output(),
+                                                                          !Core::FileManager::instance()->isReadableAndWritable(pFileName),
+                                                                          new QsciLexerXML(this),
+                                                                          parentWidget());
 
-        Core::readTextFromFile(pFileName, fileContents);
+        if (!successfulConversion) {
+            newEditingWidget->editor()->setReadOnly(true);
+            // Note: CoreEditingPlugin::filePermissionsChanged() will do the
+            //       same as above, but this will take a wee bit of time
+            //       while we want it done straightaway...
 
-        mEditingWidget = new CoreCellMLEditing::CoreCellmlEditingWidget(fileContents,
-                                                                        !Core::FileManager::instance()->isReadableAndWritable(pFileName),
-                                                                        new QsciLexerXML(this),
-                                                                        parentWidget());
+            newEditingWidget->editorList()->addItem(EditorList::EditorListItem::Error,
+                                                    converter.errorLine(),
+                                                    converter.errorColumn(),
+                                                    Core::formatErrorMessage(converter.errorMessage(), false)+".");
 
-        // Keep track of our editing widget and add it to ourselves
+            newEditingWidget->editorList()->addItem(EditorList::EditorListItem::Hint,
+                                                    tr("The CellML file could not be parsed. You might want to use the Raw (CellML) view to edit it."));
+        }
 
-        mEditingWidgets.insert(pFileName, mEditingWidget);
+        // Keep track of our editing widget (and of whether the conversion was
+        // successful) and add it to ourselves
 
-        layout()->addWidget(mEditingWidget);
+        mEditingWidgets.insert(pFileName, newEditingWidget);
+        mSuccessfulConversions.insert(pFileName, successfulConversion);
+
+        layout()->addWidget(newEditingWidget);
     }
 
-    // Load our settings, if needed, or reset our editing widget using the old
-    // one
+    // Update our editing widget, if required
 
-    if (mNeedLoadingSettings) {
-        QSettings settings(SettingsOrganization, SettingsApplication);
+    if (pUpdate) {
+        CoreCellMLEditing::CoreCellmlEditingWidget *oldEditingWidget = mEditingWidget;
 
-        settings.beginGroup(mSettingsGroup);
-            mEditingWidget->loadSettings(&settings);
-        settings.endGroup();
+        mEditingWidget = newEditingWidget;
 
-        mNeedLoadingSettings = false;
+        // Load our settings, if needed, or reset our editing widget using the
+        // 'old' one
+
+        if (mNeedLoadingSettings) {
+            QSettings settings(SettingsOrganization, SettingsApplication);
+
+            settings.beginGroup(mSettingsGroup);
+                newEditingWidget->loadSettings(&settings);
+            settings.endGroup();
+
+            mNeedLoadingSettings = false;
+        } else {
+            newEditingWidget->updateSettings(oldEditingWidget);
+        }
+
+        // Select the first issue, if any, with the current file
+        // Note: we use a single shot to give time to the setting up of the
+        //       editing widget to complete...
+
+        if (!mSuccessfulConversions.value(pFileName))
+            QTimer::singleShot(0, this, SLOT(selectFirstItemInEditorList()));
+
+        // Show/hide our editing widgets
+
+        newEditingWidget->show();
+
+        if (oldEditingWidget && (newEditingWidget != oldEditingWidget))
+            oldEditingWidget->hide();
+
+        // Set our focus proxy to our 'new' editing widget and make sure that
+        // the latter immediately gets the focus
+        // Note: if we were not to immediately give the focus to our 'new'
+        //       editing widget, then the central widget would give the focus to
+        //       our 'old' editing widget (see CentralWidget::updateGui()),
+        //       which is clearly not what we want...
+
+        setFocusProxy(newEditingWidget->editor());
+
+        newEditingWidget->editor()->setFocus();
     } else {
-        mEditingWidget->updateSettings(oldEditingWidget);
+        // Hide our 'new' editing widget
+
+        newEditingWidget->hide();
     }
-
-    // Show/hide our editing widgets
-
-    foreach (CoreCellMLEditing::CoreCellmlEditingWidget *editingWidget, mEditingWidgets)
-        if (editingWidget == mEditingWidget)
-            // This is the editing widget we are after, so show it
-
-            editingWidget->show();
-        else
-            // Not the editing widget we are after, so hide it
-
-            editingWidget->hide();
-
-    // Set our focus proxy to our 'new' editing widget and make sure that the
-    // latter immediately gets the focus
-    // Note: if we were not to immediately give the focus to our 'new' editing
-    //       widget, then the central widget would give the focus to our 'old'
-    //       editing widget (see CentralWidget::updateGui()), which is clearly
-    //       not what we want...
-
-    setFocusProxy(mEditingWidget->editor());
-
-    mEditingWidget->editor()->setFocus();
 }
 
 //==============================================================================
@@ -186,18 +221,18 @@ void PrettyCellmlViewWidget::finalize(const QString &pFileName)
 {
     // Remove the editing widget, should there be one for the given file
 
-    CoreCellMLEditing::CoreCellmlEditingWidget *editingWidget  = mEditingWidgets.value(pFileName);
+    CoreCellMLEditing::CoreCellmlEditingWidget *editingWidget = mEditingWidgets.value(pFileName);
 
     if (editingWidget) {
         // There is an editing widget for the given file name, so save our
         // settings and reset our memory of the current editing widget, if
         // needed
 
-        if (editingWidget == mEditingWidget) {
+        if (mEditingWidget == editingWidget) {
             QSettings settings(SettingsOrganization, SettingsApplication);
 
             settings.beginGroup(mSettingsGroup);
-                mEditingWidget->saveSettings(&settings);
+                editingWidget->saveSettings(&settings);
             settings.endGroup();
 
             mNeedLoadingSettings = true;
@@ -217,10 +252,17 @@ void PrettyCellmlViewWidget::finalize(const QString &pFileName)
 void PrettyCellmlViewWidget::fileReloaded(const QString &pFileName)
 {
     // The given file has been reloaded, so reload it, should it be managed
+    // Note: if the view for the given file is not the active view, then to call
+    //       call finalize() and then initialize() would activate the contents
+    //       of the view (but the file tab would still point to the previously
+    //       active file). However, we want to the 'old' file to remain the
+    //       active one, hence the extra argument we pass to initialize()...
 
     if (contains(pFileName)) {
+        bool update = mEditingWidget == mEditingWidgets.value(pFileName);
+
         finalize(pFileName);
-        initialize(pFileName);
+        initialize(pFileName, update);
     }
 }
 
@@ -232,10 +274,14 @@ void PrettyCellmlViewWidget::fileRenamed(const QString &pOldFileName,
     // The given file has been renamed, so update our editing widgets mapping
 
     CoreCellMLEditing::CoreCellmlEditingWidget *editingWidget = mEditingWidgets.value(pOldFileName);
+    bool successfulConversion = mSuccessfulConversions.value(pOldFileName);
 
     if (editingWidget) {
         mEditingWidgets.insert(pNewFileName, editingWidget);
+        mSuccessfulConversions.insert(pNewFileName, successfulConversion);
+
         mEditingWidgets.remove(pOldFileName);
+        mSuccessfulConversions.remove(pOldFileName);
     }
 }
 
@@ -252,6 +298,15 @@ Editor::EditorWidget * PrettyCellmlViewWidget::editor(const QString &pFileName) 
 
 //==============================================================================
 
+bool PrettyCellmlViewWidget::isEditorUseable(const QString &pFileName) const
+{
+    // Return whether the requested editor is useable
+
+    return mSuccessfulConversions.value(pFileName);
+}
+
+//==============================================================================
+
 QList<QWidget *> PrettyCellmlViewWidget::statusBarWidgets() const
 {
     // Return our status bar widgets
@@ -261,6 +316,15 @@ QList<QWidget *> PrettyCellmlViewWidget::statusBarWidgets() const
                                   << mEditingWidget->editor()->editingModeWidget();
     else
         return QList<QWidget *>();
+}
+
+//==============================================================================
+
+void PrettyCellmlViewWidget::selectFirstItemInEditorList()
+{
+    // Select the first item in the current editor list
+
+    mEditingWidget->editorList()->selectFirstItem();
 }
 
 //==============================================================================

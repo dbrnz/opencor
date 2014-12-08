@@ -20,7 +20,7 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include "collapsiblewidget.h"
-#include "guiutils.h"
+#include "coreguiutils.h"
 #include "singlecellviewinformationgraphswidget.h"
 #include "singlecellviewinformationparameterswidget.h"
 #include "singlecellviewinformationsimulationwidget.h"
@@ -91,7 +91,7 @@ SingleCellViewInformationWidget::SingleCellViewInformationWidget(QWidget *pParen
     mCollapsibleWidget->addWidget(mSimulationWidget);
     mCollapsibleWidget->addWidget(mSolversWidget);
     mCollapsibleWidget->addWidget(mGraphsWidget);
-    mCollapsibleWidget->addWidget(mParametersWidget);
+    mCollapsibleWidget->addWidget(mParametersWidget, false);
 
     // Add our collapsible widget to our layout
 

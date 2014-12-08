@@ -19,12 +19,13 @@ specific language governing permissions and limitations under the License.
 // CLI utilities
 //==============================================================================
 
+#include "corecliutils.h"
 #include "coresettings.h"
-#include "cliutils.h"
 #include "settings.h"
 
 //==============================================================================
 
+#include <Qt>
 #include <QtMath>
 
 //==============================================================================
@@ -38,6 +39,7 @@ specific language governing permissions and limitations under the License.
 #include <QFile>
 #include <QIODevice>
 #include <QLocale>
+#include <QMap>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -46,6 +48,8 @@ specific language governing permissions and limitations under the License.
 #include <QSettings>
 #include <QString>
 #include <QStringList>
+#include <QSysInfo>
+#include <QTextStream>
 
 //==============================================================================
 
@@ -89,12 +93,124 @@ QVariantList qIntListToVariantList(const QIntList &pIntList)
 
 //==============================================================================
 
+bool sortSerialisedAttributes(const QString &pSerialisedAttribute1,
+                              const QString &pSerialisedAttribute2)
+{
+    // Determine which of the two serialised attributes should be first based on
+    // the attribute name, i.e. ignoring the "=<AttributeValue>" bit
+
+    return pSerialisedAttribute1.left(pSerialisedAttribute1.indexOf("=")).compare(pSerialisedAttribute2.left(pSerialisedAttribute2.indexOf("=")), Qt::CaseInsensitive) < 0;
+}
+
+//==============================================================================
+
+void cleanDomElement(QDomElement &pDomElement,
+                     QMap<QString, QString> &pElementsAttributes)
+{
+    // Serialise all the element's attributes and sort their serialised version
+    // before removing them from the element and adding a new attribute that
+    // will later on be used for string replacement
+
+    static qulonglong attributeNumber = 0;
+    static const int ULLONG_WIDTH = ceil(log(ULLONG_MAX));
+
+    if (pDomElement.hasAttributes()) {
+        QStringList serialisedAttributes = QStringList();
+        QDomNamedNodeMap domElementAttributes = pDomElement.attributes();
+        QDomNode attributeNode;
+        QString serialisedAttribute;
+        QTextStream textStream(&serialisedAttribute, QIODevice::WriteOnly);
+
+        while (domElementAttributes.count()) {
+            // Serialise the element's attribute
+
+            attributeNode = domElementAttributes.item(0);
+
+            serialisedAttribute = QString();
+
+            attributeNode.save(textStream, 4);
+
+            serialisedAttributes << serialisedAttribute;
+
+            // Remove the attribute from the element
+
+            domElementAttributes.removeNamedItem(attributeNode.nodeName());
+        }
+
+        // Sort the serialised attributes using the attributes' name
+
+        std::sort(serialisedAttributes.begin(), serialisedAttributes.end(), sortSerialisedAttributes);
+
+        // Keep track of the serialisation of the element's attribute
+
+        QString elementAttributes = QString("Element%1Attributes").arg(++attributeNumber, ULLONG_WIDTH, 10, QChar('0'));
+
+        pElementsAttributes.insert(elementAttributes, serialisedAttributes.join(" "));
+
+        // Add a new attribute to the element
+        // Note: this attribute, once serialised by QDomDocument::save(), will
+        //       be used to do a string replacement (see
+        //       qDomDocumentToString())...
+
+        domElementAttributes.setNamedItem(pDomElement.ownerDocument().createAttribute(elementAttributes));
+    }
+
+    // Recursively clean ourselves
+
+    for (QDomElement childElement = pDomElement.firstChildElement(); !childElement.isNull(); childElement = childElement.nextSiblingElement())
+        cleanDomElement(childElement, pElementsAttributes);
+}
+
+//==============================================================================
+
+QString qDomDocumentToString(const QDomDocument &pDomDocument)
+{
+    // Serialise the given DOM document
+    // Note: normally, we would simply be using QDomDocument::save(), but we
+    //       want elements' attributes to be sorted when serialised (so that it
+    //       is easier to compare two different XML documents). Unfortunately,
+    //       QDomDocument::save() doesn't provide such a functionality (since
+    //       the order of attributes doesn't matter in XML). So, we make a call
+    //       to QDomDocument::save(), but only after having removed all the
+    //       elements' attributes, which we serialise manually afterwards...
+
+    QString res = QString();
+
+    // Make a deep copy of the given DOM document and remove all the elements'
+    // attributes (but keep track of them, so that we can later on serialise
+    // them manually)
+
+    QDomDocument domDocument = pDomDocument.cloneNode().toDocument();
+    QMap<QString, QString> elementsAttributes = QMap<QString, QString>();
+
+    for (QDomElement childElement = domDocument.firstChildElement(); !childElement.isNull(); childElement = childElement.nextSiblingElement())
+        cleanDomElement(childElement, elementsAttributes);
+
+    // Serialise our 'reduced' DOM document
+
+    QTextStream textStream(&res, QIODevice::WriteOnly);
+
+    domDocument.save(textStream, 4);
+
+    // Manually serialise the elements' attributes
+
+    foreach (const QString &elementAttribute, elementsAttributes.keys())
+        res.replace(elementAttribute+"=\"\"", elementsAttributes.value(elementAttribute));
+
+    return res;
+}
+
+//==============================================================================
+
 namespace OpenCOR {
 namespace Core {
 
 //==============================================================================
 
-#ifndef OpenCOR_MAIN
+#include "corecliutils.cpp.inl"
+
+//==============================================================================
+
 void DummyMessageHandler::handleMessage(QtMsgType pType,
                                         const QString &pDescription,
                                         const QUrl &pIdentifier,
@@ -106,162 +222,6 @@ void DummyMessageHandler::handleMessage(QtMsgType pType,
     Q_UNUSED(pSourceLocation);
 
     // We ignore the message...
-}
-#endif
-
-//==============================================================================
-
-#ifndef OpenCOR_MAIN
-bool SynchronousTextFileDownloader::readTextFromUrl(const QString &pUrl,
-                                                    QString &pText,
-                                                    QString *pErrorMessage) const
-{
-    // Create a network access manager so that we can then retrieve the contents
-    // of the remote file
-
-    QNetworkAccessManager networkAccessManager;
-
-    // Make sure that we get told if there are SSL errors (which would happen if
-    // a website's certificate is invalid, e.g. it has expired)
-
-    connect(&networkAccessManager, SIGNAL(sslErrors(QNetworkReply *, const QList<QSslError> &)),
-            this, SLOT(networkAccessManagerSslErrors(QNetworkReply *, const QList<QSslError> &)) );
-
-    // Download the contents of the remote file
-
-    QNetworkReply *networkReply = networkAccessManager.get(QNetworkRequest(pUrl));
-    QEventLoop eventLoop;
-
-    connect(networkReply, SIGNAL(finished()),
-            &eventLoop, SLOT(quit()));
-
-    eventLoop.exec();
-
-    // Check whether we were able to retrieve the contents of the file
-
-    bool res = networkReply->error() == QNetworkReply::NoError;
-
-    if (res) {
-        pText = networkReply->readAll();
-
-        if (pErrorMessage)
-            *pErrorMessage = QString();
-    } else {
-        pText = QString();
-
-        if (pErrorMessage)
-            *pErrorMessage = networkReply->errorString();
-    }
-
-    // Delete (later) the network reply
-
-    networkReply->deleteLater();
-
-    return res;
-}
-#endif
-
-//==============================================================================
-
-#ifndef OpenCOR_MAIN
-void SynchronousTextFileDownloader::networkAccessManagerSslErrors(QNetworkReply *pNetworkReply,
-                                                                  const QList<QSslError> &pSslErrors)
-{
-    // Ignore the SSL errors since we assume the user knows what s/he is doing
-
-    pNetworkReply->ignoreSslErrors(pSslErrors);
-}
-#endif
-
-//==============================================================================
-
-QString exec(const QString &pProgram, const QStringList &pArgs = QStringList())
-{
-    // Execute and return the output of a program given its arguments
-
-    QProcess process;
-
-    process.start(pProgram, pArgs);
-    process.waitForFinished();
-
-    return process.readAll().trimmed();
-}
-
-//==============================================================================
-
-QString osName()
-{
-#if defined(Q_OS_WIN)
-    switch (QSysInfo::WindowsVersion) {
-    case QSysInfo::WV_NT:
-        return "Microsoft Windows NT";
-    case QSysInfo::WV_2000:
-        return "Microsoft Windows 2000";
-    case QSysInfo::WV_XP:
-        return "Microsoft Windows XP";
-    case QSysInfo::WV_2003:
-        return "Microsoft Windows 2003";
-    case QSysInfo::WV_VISTA:
-        return "Microsoft Windows Vista";
-    case QSysInfo::WV_WINDOWS7:
-        return "Microsoft Windows 7";
-    case QSysInfo::WV_WINDOWS8:
-        return "Microsoft Windows 8";
-    default:
-        return "Microsoft Windows";
-    }
-#elif defined(Q_OS_LINUX)
-    QString os = exec("uname", QStringList() << "-o");
-
-    if (os.isEmpty())
-        // We couldn't find uname or something went wrong, so simple return
-        // "Linux" as the OS name
-
-        return "Linux";
-    else
-        return os+" "+exec("uname", QStringList() << "-r");
-#elif defined(Q_OS_MAC)
-    // Note: from version 10.8, Apple officially uses OS X rather than Mac OS
-    //       X...
-
-    switch (QSysInfo::MacintoshVersion) {
-    case QSysInfo::MV_9:
-        return "Mac OS 9";
-    case QSysInfo::MV_10_0:
-        return "Mac OS X 10.0 (Cheetah)";
-    case QSysInfo::MV_10_1:
-        return "Mac OS X 10.1 (Puma)";
-    case QSysInfo::MV_10_2:
-        return "Mac OS X 10.2 (Jaguar)";
-    case QSysInfo::MV_10_3:
-        return "Mac OS X 10.3 (Panther)";
-    case QSysInfo::MV_10_4:
-        return "Mac OS X 10.4 (Tiger)";
-    case QSysInfo::MV_10_5:
-        return "Mac OS X 10.5 (Leopard)";
-    case QSysInfo::MV_10_6:
-        return "Mac OS X 10.6 (Snow Leopard)";
-    case QSysInfo::MV_10_7:
-        return "Mac OS X 10.7 (Lion)";
-    case QSysInfo::MV_10_8:
-        return "OS X 10.8 (Mountain Lion)";
-    case QSysInfo::MV_10_9:
-        return "OS X 10.9 (Mavericks)";
-    default:
-        return "Mac OS";
-        // Note: we return Mac OS rather than Mac OS X or even OS X since only
-        //       old versions are not handled...
-    }
-#else
-    #error Unsupported platform
-#endif
-}
-
-//==============================================================================
-
-QString copyright()
-{
-    return QObject::tr("Copyright")+" 2011-"+QString::number(QDate::currentDate().year());
 }
 
 //==============================================================================
@@ -541,20 +501,6 @@ bool readTextFromFile(const QString &pFileName, QString &pText)
 
 //==============================================================================
 
-#ifndef OpenCOR_MAIN
-bool readTextFromUrl(const QString &pUrl, QString &pText,
-                     QString *pErrorMessage)
-{
-    // Read the contents of the file, which URL is given, as a string
-
-    static SynchronousTextFileDownloader synchronousTextFileDownloader;
-
-    return synchronousTextFileDownloader.readTextFromUrl(pUrl, pText, pErrorMessage);
-}
-#endif
-
-//==============================================================================
-
 bool writeTextToFile(const QString &pFilename, const QString &pText)
 {
     // Write the given string to a file with the given file name
@@ -660,65 +606,6 @@ QString nativeCanonicalFileName(const QString &pFileName)
     QString res = QDir::toNativeSeparators(QFileInfo(pFileName).canonicalFilePath());
 
     return res.isEmpty()?pFileName:res;
-}
-
-//==============================================================================
-
-QString formatErrorMessage(const QString &pErrorMessage, const bool &pLowerCase,
-                           const bool &pDotDotDot)
-{
-    static const QString DotDotDot = "...";
-
-    if (pErrorMessage.isEmpty())
-        return pDotDotDot?DotDotDot:QString();
-
-    // Format and return the error message
-
-    QString errorMessage = pErrorMessage;
-
-    // Upper/lower the case of the first character, unless the message is one
-    // character long (!!) or unless its second character is in lower case
-
-    if (    (errorMessage.size() <= 1)
-        || ((errorMessage.size() > 1) && errorMessage[1].isLower())) {
-        if (pLowerCase)
-            errorMessage[0] = errorMessage[0].toLower();
-        else
-            errorMessage[0] = errorMessage[0].toUpper();
-    }
-
-    // Return the error message after making sure that its end finishes with
-    // "...", if requested
-
-    int subsize = errorMessage.size();
-
-    while (subsize && (errorMessage[subsize-1] == '.'))
-        --subsize;
-
-    return errorMessage.left(subsize)+(pDotDotDot?DotDotDot:QString());
-}
-
-//==============================================================================
-
-QString nonDiacriticString(const QString &pString)
-{
-    // Remove and return a non-accentuated version of the given string
-    // Note: this code is based on the one that can be found at
-    //       http://stackoverflow.com/questions/14009522/how-to-remove-accents-diacritic-marks-from-a-string-in-qt
-
-    static QString diacriticLetters = QString::fromUtf8("ŠŒŽšœžŸ¥µÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýÿ");
-    static QStringList nonDiacriticLetters = QStringList() << "S" << "OE" << "Z" << "s" << "oe" << "z" << "Y" << "Y" << "u" << "A" << "A" << "A" << "A" << "A" << "A" << "AE" << "C" << "E" << "E" << "E" << "E" << "I" << "I" << "I" << "I" << "D" << "N" << "O" << "O" << "O" << "O" << "O" << "O" << "U" << "U" << "U" << "U" << "Y" << "s" << "a" << "a" << "a" << "a" << "a" << "a" << "ae" << "c" << "e" << "e" << "e" << "e" << "i" << "i" << "i" << "i" << "o" << "n" << "o" << "o" << "o" << "o" << "o" << "o" << "u" << "u" << "u" << "u" << "y" << "y";
-
-    QString res = QString();
-
-    for (int i = 0, iMax = pString.length(); i < iMax; ++i) {
-        QChar letter = pString[i];
-        int dIndex = diacriticLetters.indexOf(letter);
-
-        res.append((dIndex < 0)?letter:nonDiacriticLetters[dIndex]);
-    }
-
-    return res;
 }
 
 //==============================================================================

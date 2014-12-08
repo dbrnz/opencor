@@ -22,13 +22,15 @@ specific language governing permissions and limitations under the License.
 #include "cellmleditinginterface.h"
 #include "cellmlfilemanager.h"
 #include "corecellmleditingplugin.h"
+#include "coreguiutils.h"
+#include "editinginterface.h"
 #include "filemanager.h"
-#include "guiutils.h"
 
 //==============================================================================
 
 #include <QAction>
 #include <QMainWindow>
+#include <QMenu>
 
 //==============================================================================
 
@@ -73,6 +75,29 @@ void CoreCellMLEditingPlugin::updateGui(Plugin *pViewPlugin,
     Core::showEnableAction(mFileNewCellml1_1FileAction, mCellmlEditingInterface);
 
     Core::showEnableAction(mToolsCellmlValidationAction, mCellmlEditingInterface, !pFileName.isEmpty());
+
+    // Update our editor's context menu
+    // Note: our editor's original context menu is set in
+    //       CoreEditingPlugin::updateGui()...
+
+    EditingInterface *editingInterface = pViewPlugin?qobject_cast<EditingInterface *>(pViewPlugin->instance()):0;
+
+    if (editingInterface) {
+        Editor::EditorWidget *editor = editingInterface->editor(pFileName);
+
+        if (editor) {
+            QList<QAction *> contextMenuActions = editor->contextMenu()->actions();
+
+            QAction *separatorAction = new QAction(mMainWindow);
+
+            separatorAction->setSeparator(true);
+
+            contextMenuActions.append(separatorAction);
+            contextMenuActions.append(mToolsCellmlValidationAction);
+
+            editor->setContextMenu(contextMenuActions);
+        }
+    }
 
     // Keep track of the file name
 
@@ -123,6 +148,10 @@ void CoreCellMLEditingPlugin::retranslateUi()
 
 void CoreCellMLEditingPlugin::initializePlugin(QMainWindow *pMainWindow)
 {
+    // Keep track of our main window
+
+    mMainWindow = pMainWindow;
+
     // Create our different actions
 
     mFileNewCellml1_0FileAction = new QAction(pMainWindow);
@@ -253,7 +282,7 @@ void CoreCellMLEditingPlugin::cellmlValidation()
     // Validate the current CellML file
 
     if (mCellmlEditingInterface)
-        mCellmlEditingInterface->validate(mFileName);
+        mCellmlEditingInterface->validateCellml(mFileName);
 }
 
 //==============================================================================

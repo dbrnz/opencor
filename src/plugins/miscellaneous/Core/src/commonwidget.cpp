@@ -20,8 +20,8 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include "commonwidget.h"
-#include "cliutils.h"
-#include "guiutils.h"
+#include "corecliutils.h"
+#include "coreguiutils.h"
 
 //==============================================================================
 

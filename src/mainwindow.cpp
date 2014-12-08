@@ -20,8 +20,8 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include "centralwidget.h"
+#include "checkforupdateswindow.h"
 #include "cliutils.h"
-#include "common.h"
 #include "coreinterface.h"
 #include "coresettings.h"
 #include "guiinterface.h"
@@ -64,9 +64,7 @@ specific language governing permissions and limitations under the License.
 #include <QMessageBox>
 #include <QRect>
 #include <QSettings>
-#ifdef Q_OS_MAC
-    #include <QShortcut>
-#endif
+#include <QShortcut>
 #include <QUrl>
 
 //==============================================================================
@@ -85,9 +83,11 @@ static const auto FrenchLocale  = QStringLiteral("fr");
 
 //==============================================================================
 
-MainWindow::MainWindow(SharedTools::QtSingleApplication *pApp) :
+MainWindow::MainWindow(SharedTools::QtSingleApplication *pApplication,
+                       const QString &pApplicationDate) :
     QMainWindow(),
     mGui(new Ui::MainWindow),
+    mApplicationDate(pApplicationDate),
     mShuttingDown(false),
     mLoadedPluginPlugins(Plugins()),
     mLoadedI18nPlugins(Plugins()),
@@ -107,9 +107,9 @@ MainWindow::MainWindow(SharedTools::QtSingleApplication *pApp) :
     // operating system), as well as a message sent by another instance of
     // itself
 
-    QObject::connect(pApp, SIGNAL(fileOpenRequest(const QString &)),
+    QObject::connect(pApplication, SIGNAL(fileOpenRequest(const QString &)),
                      this, SLOT(fileOpenRequest(const QString &)));
-    QObject::connect(pApp, SIGNAL(messageReceived(const QString &, QObject *)),
+    QObject::connect(pApplication, SIGNAL(messageReceived(const QString &, QObject *)),
                      this, SLOT(messageReceived(const QString &, QObject *)));
 
     // Create our settings object
@@ -146,7 +146,7 @@ MainWindow::MainWindow(SharedTools::QtSingleApplication *pApp) :
 
     mGui->setupUi(this);
 //---GRY--- DISABLED UNTIL WE ACTUALLY SUPPORT USER PREFERENCES...
-Core::showEnableAction(mGui->actionPreferences, false);
+showEnableAction(mGui->actionPreferences, false);
 
     // Set the role of some of our menu items, so that OS X can move them into
     // the application menu
@@ -154,6 +154,7 @@ Core::showEnableAction(mGui->actionPreferences, false);
     mGui->actionQuit->setMenuRole(QAction::QuitRole);
     mGui->actionPreferences->setMenuRole(QAction::PreferencesRole);
     mGui->actionAbout->setMenuRole(QAction::AboutRole);
+    mGui->actionCheckForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
 
     // Title of our main window
     // Note: we don't set it in our .ui file since this will require
@@ -162,18 +163,30 @@ Core::showEnableAction(mGui->actionPreferences, false);
     setWindowTitle(qApp->applicationName());
 
     // Customise our docked windows action and handle it through a connection
-    // Note: Ctrl+Space doesn't work on OS X, so ideally we would add the Alt
-    //       key (since it's next to it, but it doesn't work either), so in the
-    //       we add the Meta key...
+    // Note #1: the reason for having several shortcuts is because one or
+    //          several of them are bound to be already used on the target
+    //          system...
+    // Note #2: normally we would call setShortcuts() rather than setShortcut()
+    //          and then manually creating several QShortcut objects, but it
+    //          doesn't work (bug?)...
 
-#if defined(Q_OS_MAC)
-    mGui->actionDockedWindows->setShortcut(QKeySequence(Qt::CTRL|Qt::META|Qt::Key_Space));
-#else
     mGui->actionDockedWindows->setShortcut(QKeySequence(Qt::CTRL|Qt::Key_Space));
-#endif
 
     connect(mGui->actionDockedWindows, SIGNAL(triggered(bool)),
             this, SLOT(showDockedWindows(const bool &)));
+
+    new QShortcut(QKeySequence(Qt::META|Qt::Key_Space),
+                  this, SLOT(toggleDockedWindows()));
+    new QShortcut(QKeySequence(Qt::ALT|Qt::Key_Space),
+                  this, SLOT(toggleDockedWindows()));
+    new QShortcut(QKeySequence(Qt::CTRL|Qt::META|Qt::Key_Space),
+                  this, SLOT(toggleDockedWindows()));
+    new QShortcut(QKeySequence(Qt::CTRL|Qt::ALT|Qt::Key_Space),
+                  this, SLOT(toggleDockedWindows()));
+    new QShortcut(QKeySequence(Qt::META|Qt::ALT|Qt::Key_Space),
+                  this, SLOT(toggleDockedWindows()));
+    new QShortcut(QKeySequence(Qt::CTRL|Qt::META|Qt::ALT|Qt::Key_Space),
+                  this, SLOT(toggleDockedWindows()));
 
     // A connection to handle the status bar
 
@@ -210,15 +223,8 @@ Core::showEnableAction(mGui->actionPreferences, false);
     // Note: indeed, when pressing Cmd+M on OS X, the active application is
     //       expected to minimise itself, but it doesn't using Qt only...
 
-    new QShortcut(QKeySequence("Ctrl+M"),
+    new QShortcut(QKeySequence(Qt::CTRL|Qt::Key_M),
                   this, SLOT(showMinimized()));
-
-    // Note: we used to have a shortcut (the Escape key) to have OpenCOR resume
-    //       from full screen mode, but this conflicted with EditorWidget where
-    //       the Escape key is used to hide the find/replace widget. So, we
-    //       decided to remove it. This being said, we are, in the end, being
-    //       consistent with other editing tools such as Qt Creator and
-    //       TextWrangler...
 #endif
 
     mGui->actionFullScreen->setShortcut(QKeySequence::FullScreen);
@@ -261,7 +267,7 @@ Core::showEnableAction(mGui->actionPreferences, false);
     // Show/hide and enable/disable the windows action depending on whether
     // there are window widgets
 
-    Core::showEnableAction(mGui->actionDockedWindows, mLoadedWindowPlugins.count());
+    showEnableAction(mGui->actionDockedWindows, mLoadedWindowPlugins.count());
 
     // Retrieve the user settings from the previous session, if any
 
@@ -328,7 +334,7 @@ void MainWindow::changeEvent(QEvent *pEvent)
     } else if (pEvent->type() == QEvent::PaletteChange) {
         // The palette has changed, so update our colours
 
-        Core::updateColors();
+        updateColors();
     }
 }
 
@@ -1079,25 +1085,11 @@ void MainWindow::messageReceived(const QString &pMessage, QObject *pSocket)
 void MainWindow::on_actionFullScreen_triggered()
 {
     // Switch to / back from full screen mode
-    // Note: some black magic is needed for OS X. Indeed, on that platform,
-    //       OpenCOR can be switched to / back from full screen mode either
-    //       through its menu or using its full screen mode button (located in
-    //       the top right of its title bar). If we use only method, then to
-    //       simply use showFullScreen() and showNormal() is fine, but if for
-    //       some reasons the user decides to mix both methods, then our black
-    //       magic is needed...
 
-    if (isFullScreen()) {
+    if (isFullScreen())
         showNormal();
-#ifdef Q_OS_MAC
+    else
         showFullScreen();
-#endif
-    } else {
-        showFullScreen();
-#ifdef Q_OS_MAC
-        showNormal();
-#endif
-    }
 }
 
 //==============================================================================
@@ -1180,14 +1172,33 @@ void MainWindow::on_actionHomePage_triggered()
 
 //==============================================================================
 
+void MainWindow::on_actionCheckForUpdates_triggered()
+{
+    // Show the check for updates window
+
+    CheckForUpdatesWindow checkForUpdatesWindow(mApplicationDate, this);
+
+    mSettings->beginGroup(checkForUpdatesWindow.objectName());
+        checkForUpdatesWindow.loadSettings(mSettings);
+    mSettings->endGroup();
+
+    checkForUpdatesWindow.exec();
+
+    mSettings->beginGroup(checkForUpdatesWindow.objectName());
+        checkForUpdatesWindow.saveSettings(mSettings);
+    mSettings->endGroup();
+}
+
+//==============================================================================
+
 void MainWindow::on_actionAbout_triggered()
 {
     // Display some information about OpenCOR
 
     QMessageBox::about(this, tr("About"),
                         "<h1 align=center><strong>"+version(qApp)+"</strong></h1>"
-                       +"<h3 align=center><em>"+Core::osName()+"</em></h3>"
-                       +"<p align=center><em>"+Core::copyright()+"</em></p>"
+                       +"<h3 align=center><em>"+osName()+"</em></h3>"
+                       +"<p align=center><em>"+copyright()+"</em></p>"
                        +"<a href=\""+QString(OpencorHomePageUrl)+"\"><strong>"+qApp->applicationName()+"</strong></a> "+tr("is a cross-platform modelling environment, which can be used to organise, edit, simulate and analyse <a href=\"http://www.cellml.org/\">CellML</a> files."));
 }
 
@@ -1232,7 +1243,7 @@ void MainWindow::showEnableActions(const QList<QAction *> &pActions)
                     break;
                 }
 
-            Core::showEnableAction(action, showEnable);
+            showEnableAction(action, showEnable);
         }
     }
 }
@@ -1292,6 +1303,15 @@ void MainWindow::showDockedWindows(const bool &pShow,
     // Update the checked state of our docked windows action
 
     mGui->actionDockedWindows->setChecked(pShow);
+}
+
+//==============================================================================
+
+void MainWindow::toggleDockedWindows()
+{
+    // Toggle the visible state of our docked windows
+
+    showDockedWindows(!mGui->actionDockedWindows->isChecked());
 }
 
 //==============================================================================

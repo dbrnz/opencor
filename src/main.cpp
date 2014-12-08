@@ -19,7 +19,9 @@ specific language governing permissions and limitations under the License.
 // Main
 //==============================================================================
 
-#include "common.h"
+#include "checkforupdateswindow.h"
+#include "cliutils.h"
+#include "coresettings.h"
 #include "guiutils.h"
 #include "mainwindow.h"
 #include "settings.h"
@@ -28,8 +30,10 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include <QDir>
+#include <QLocale>
 #include <QProcess>
 #include <QSettings>
+#include <QVariant>
 
 #ifdef Q_OS_WIN
     #include <QWebSettings>
@@ -149,12 +153,76 @@ int main(int pArgC, char *pArgV[])
 
     SharedTools::QtSingleApplication *guiApp = new SharedTools::QtSingleApplication(QFileInfo(pArgV[0]).baseName(),
                                                                                     pArgC, pArgV);
+    QString appDate = QString();
 
-    OpenCOR::initApplication(guiApp);
+    OpenCOR::initApplication(guiApp, &appDate);
+
+    // Check whether we want to check for new versions at startup
+
+    QSettings settings(OpenCOR::SettingsOrganization, OpenCOR::SettingsApplication);
+
+#ifndef QT_DEBUG
+    settings.beginGroup("CheckForUpdatesWindow");
+        bool checkForUpdatesAtStartup = settings.value(OpenCOR::SettingsCheckForUpdatesAtStartup, true).toBool();
+        bool includeSnapshots = settings.value(OpenCOR::SettingsIncludeSnapshots, false).toBool();
+    settings.endGroup();
+#endif
+
+    // Check whether a new version of OpenCOR is available
+
+#ifndef QT_DEBUG
+    if (checkForUpdatesAtStartup) {
+        OpenCOR::CheckForUpdatesEngine *checkForUpdatesEngine = new OpenCOR::CheckForUpdatesEngine(appDate);
+
+        checkForUpdatesEngine->check();
+
+        if (   ( includeSnapshots && checkForUpdatesEngine->hasNewerVersion())
+            || (!includeSnapshots && checkForUpdatesEngine->hasNewerOfficialVersion())) {
+            // Retrieve the language to be used to show the check for updates
+            // window
+
+            const QString systemLocale = QLocale::system().name().left(2);
+
+            QString locale = settings.value(OpenCOR::SettingsLocale, QString()).toString();
+
+            if (locale.isEmpty())
+                locale = systemLocale;
+
+            QLocale::setDefault(QLocale(locale));
+
+            QTranslator qtTranslator;
+            QTranslator appTranslator;
+
+            qtTranslator.load(":qt_"+locale);
+            qApp->installTranslator(&qtTranslator);
+
+            appTranslator.load(":app_"+locale);
+            qApp->installTranslator(&appTranslator);
+
+            // Show the check for updates window
+            // Note: checkForUpdatesEngine gets deleted by
+            //       checkForUpdatesWindow...
+
+            OpenCOR::CheckForUpdatesWindow checkForUpdatesWindow(checkForUpdatesEngine);
+
+            settings.beginGroup(checkForUpdatesWindow.objectName());
+                checkForUpdatesWindow.loadSettings(&settings);
+            settings.endGroup();
+
+            checkForUpdatesWindow.exec();
+
+            settings.beginGroup(checkForUpdatesWindow.objectName());
+                checkForUpdatesWindow.saveSettings(&settings);
+            settings.endGroup();
+        } else {
+            delete checkForUpdatesEngine;
+        }
+    }
+#endif
 
     // Initialise our colours by 'updating' them
 
-    OpenCOR::Core::updateColors();
+    OpenCOR::updateColors();
 
     // Create and show our splash screen, if we are not in debug mode
 
@@ -190,7 +258,7 @@ int main(int pArgC, char *pArgV[])
 
     // Create our main window
 
-    OpenCOR::MainWindow *win = new OpenCOR::MainWindow(guiApp);
+    OpenCOR::MainWindow *win = new OpenCOR::MainWindow(guiApp, appDate);
 
     // Keep track of our main window (required by QtSingleApplication so that it
     // can do what it's supposed to be doing)
@@ -285,7 +353,7 @@ int main(int pArgC, char *pArgV[])
             // this will ensure that the various windows are, for instance,
             // properly reset with regards to their dimensions)
 
-            QSettings(OpenCOR::SettingsOrganization, OpenCOR::SettingsApplication).clear();
+            settings.clear();
 
         // Restart OpenCOR, but without providing any of the arguments that were
         // originally passed to us since we want to reset everything

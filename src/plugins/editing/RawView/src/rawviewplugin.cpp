@@ -19,7 +19,8 @@ specific language governing permissions and limitations under the License.
 // RawView plugin
 //==============================================================================
 
-#include "cliutils.h"
+#include "corecliutils.h"
+#include "filemanager.h"
 #include "rawviewplugin.h"
 #include "rawviewwidget.h"
 
@@ -56,6 +57,31 @@ Editor::EditorWidget * RawViewPlugin::editor(const QString &pFileName) const
     // Return the requested editor
 
     return mViewWidget->editor(pFileName);
+}
+
+//==============================================================================
+
+bool RawViewPlugin::isEditorUseable(const QString &pFileName) const
+{
+    Q_UNUSED(pFileName);
+
+    // We don't handle this interface...
+
+    return true;
+}
+
+//==============================================================================
+
+bool RawViewPlugin::isEditorContentsModified(const QString &pFileName) const
+{
+    // Return whether the requested editor has been modified, which here is done
+    // by comparing its contents to that of the given file
+
+    Editor::EditorWidget *currentEditor = editor(pFileName);
+
+    return currentEditor?
+               Core::FileManager::instance()->isDifferent(pFileName, currentEditor->contents()):
+               false;
 }
 
 //==============================================================================
@@ -114,6 +140,22 @@ void RawViewPlugin::fileRenamed(const QString &pOldFileName,
     // The given file has been renamed, so let our view widget know about it
 
     mViewWidget->fileRenamed(pOldFileName, pNewFileName);
+}
+
+//==============================================================================
+
+void RawViewPlugin::fileSaved(const QString &pFileName)
+{
+    // The given file has been saved, but because it was done directly by
+    // manipulating the file, we need to ask our file manager to unmanage it and
+    // manage it back, so that anyone that relies on an internal representation
+    // of the file (e.g. the CellML Annotation view plugin) will get properly
+    // updated
+
+    Core::FileManager *fileManagerInstance = Core::FileManager::instance();
+
+    fileManagerInstance->unmanage(pFileName);
+    fileManagerInstance->manage(pFileName);
 }
 
 //==============================================================================

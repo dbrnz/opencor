@@ -20,12 +20,12 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include "borderedwidget.h"
-#include "cliutils.h"
 #include "corecellmleditingwidget.h"
+#include "corecliutils.h"
+#include "coreguiutils.h"
 #include "editorlistwidget.h"
 #include "editorwidget.h"
 #include "filemanager.h"
-#include "guiutils.h"
 #include "viewerwidget.h"
 
 //==============================================================================
@@ -39,6 +39,7 @@ specific language governing permissions and limitations under the License.
 #include <QListView>
 #include <QSettings>
 #include <QSplitter>
+#include <QVariant>
 
 //==============================================================================
 
@@ -53,11 +54,15 @@ CoreCellmlEditingWidget::CoreCellmlEditingWidget(const QString &pContents,
                                                  QWidget *pParent) :
     QSplitter(pParent),
     Core::CommonWidget(pParent),
-    mGui(new Ui::CoreCellmlEditingWidget)
+    mGui(new Ui::CoreCellmlEditingWidget),
+    mEditingWidgetSizes(QIntList())
 {
     // Set up the GUI
 
     mGui->setupUi(this);
+
+    connect(this, SIGNAL(splitterMoved(int, int)),
+            this, SLOT(splitterMoved()));
 
     // Create our viewer, editor and editor list
 
@@ -90,13 +95,13 @@ CoreCellmlEditingWidget::~CoreCellmlEditingWidget()
 
 //==============================================================================
 
-static const auto SettingsEditingWidgetSizes = QStringLiteral("EditingWidgetSizes");
+static const auto SettingsCoreCellmlEditingWidgetSizes = QStringLiteral("EditingWidgetSizes");
 
 //==============================================================================
 
 void CoreCellmlEditingWidget::loadSettings(QSettings *pSettings)
 {
-    // Retrieve our sizes
+    // Retrieve and set our sizes
     // Note #1: the viewer's and editor list's default height is 19% and 13%,
     //          respectively, of the desktop's height while that of the editor
     //          is as big as it can be...
@@ -109,7 +114,9 @@ void CoreCellmlEditingWidget::loadSettings(QSettings *pSettings)
                                                             << qApp->desktop()->screenGeometry().height()
                                                             << 0.13*qApp->desktop()->screenGeometry().height();
 
-    setSizes(qVariantListToIntList(pSettings->value(SettingsEditingWidgetSizes, defaultEditingWidgetSizes).toList()));
+    mEditingWidgetSizes = qVariantListToIntList(pSettings->value(SettingsCoreCellmlEditingWidgetSizes, defaultEditingWidgetSizes).toList());
+
+    setSizes(mEditingWidgetSizes);
 
     // Retrieve our viewer's and editor's settings
 
@@ -123,7 +130,7 @@ void CoreCellmlEditingWidget::saveSettings(QSettings *pSettings) const
 {
     // Keep track of our sizes
 
-    pSettings->setValue(SettingsEditingWidgetSizes, qIntListToVariantList(sizes()));
+    pSettings->setValue(SettingsCoreCellmlEditingWidgetSizes, qIntListToVariantList(mEditingWidgetSizes));
 
     // Keep track of our viewer's and editor's settings
 
@@ -146,14 +153,16 @@ void CoreCellmlEditingWidget::retranslateUi()
 
 void CoreCellmlEditingWidget::updateSettings(CoreCellmlEditingWidget *pCoreCellmlEditingWidget)
 {
-    // Make sure that we are given another widget
+    // Make sure that we are given another editing widget
 
-    if (!pCoreCellmlEditingWidget)
+    if (!pCoreCellmlEditingWidget || (pCoreCellmlEditingWidget == this))
         return;
 
     // Update our sizes, viewer settings and editor settings
 
-    setSizes(pCoreCellmlEditingWidget->sizes());
+    mEditingWidgetSizes = pCoreCellmlEditingWidget->editingWidgetSizes();
+
+    setSizes(mEditingWidgetSizes);
 
     mViewer->updateSettings(pCoreCellmlEditingWidget->viewer());
     mEditor->updateSettings(pCoreCellmlEditingWidget->editor());
@@ -188,11 +197,29 @@ EditorList::EditorListWidget * CoreCellmlEditingWidget::editorList() const
 
 //==============================================================================
 
+QIntList CoreCellmlEditingWidget::editingWidgetSizes() const
+{
+    // Return our editing widget sizes
+
+    return mEditingWidgetSizes;
+}
+
+//==============================================================================
+
+void CoreCellmlEditingWidget::splitterMoved()
+{
+    // We have moved, so keep track of our new sizes
+
+    mEditingWidgetSizes = sizes();
+}
+
+//==============================================================================
+
 void CoreCellmlEditingWidget::itemRequested(EditorList::EditorListItem *pItem)
 {
     // Set our editor's cursor position to the line/column of the given item and
-    // give our editor the focuse so that we can see the exact location of the
-    // item (otherwise it will mEditorList that will have the focus since we
+    // give our editor the focus so that we can see the exact location of the
+    // item (otherwise it will be mEditorList that will have the focus since we
     // just double-clicked on it)
 
     mEditor->setCursorPosition(pItem->line()-1, pItem->column()-1);

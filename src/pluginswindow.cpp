@@ -93,7 +93,6 @@ bool sortPlugins(Plugin *pPlugin1, Plugin *pPlugin2)
 PluginsWindow::PluginsWindow(PluginManager *pPluginManager,
                              MainWindow *pMainWindow) :
     QDialog(pMainWindow),
-    Core::CommonWidget(pMainWindow),
     mGui(new Ui::PluginsWindow),
     mMainWindow(pMainWindow),
     mPluginManager(pPluginManager),
@@ -154,7 +153,7 @@ PluginsWindow::PluginsWindow(PluginManager *pPluginManager,
     QMap<QString, QString> diacriticCategories = QMap<QString, QString>();
 
     foreach (const QString &diacriticCategory, mMappedCategories.keys())
-        diacriticCategories.insert(Core::nonDiacriticString(diacriticCategory), diacriticCategory);
+        diacriticCategories.insert(nonDiacriticString(diacriticCategory), diacriticCategory);
 
     QStringList nonDiacriticCategories = diacriticCategories.keys();
 
@@ -326,8 +325,7 @@ void PluginsWindow::loadSettings(QSettings *pSettings)
 {
     // Retrieve whether to show selectable plugins
 
-    mGui->selectablePluginsCheckBox->setChecked(pSettings->value(SettingsShowOnlySelectablePlugins,
-                                                                 true).toBool());
+    mGui->selectablePluginsCheckBox->setChecked(pSettings->value(SettingsShowOnlySelectablePlugins, true).toBool());
 
     // Show/hide our unselectable plugins
 
@@ -356,7 +354,7 @@ QString PluginsWindow::statusDescription(Plugin *pPlugin) const
     case Plugin::NotNeeded:
         return tr("the plugin is not needed.");
     case Plugin::NotLoaded:
-        return tr("the plugin could not be loaded due to the following problem: %1.").arg(Core::formatErrorMessage(pPlugin->statusErrors()));
+        return tr("the plugin could not be loaded due to the following problem: %1.").arg(formatErrorMessage(pPlugin->statusErrors()));
     case Plugin::NotPlugin:
         return tr("this is not a plugin.");
     case Plugin::NotCorePlugin:

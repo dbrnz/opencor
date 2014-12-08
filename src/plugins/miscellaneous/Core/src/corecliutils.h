@@ -16,11 +16,11 @@ specific language governing permissions and limitations under the License.
 *******************************************************************************/
 
 //==============================================================================
-// CLI utilities
+// Core CLI utilities
 //==============================================================================
 
-#ifndef CLIUTILS_H
-#define CLIUTILS_H
+#ifndef CORECLIUTILS_H
+#define CORECLIUTILS_H
 
 //==============================================================================
 
@@ -31,6 +31,7 @@ specific language governing permissions and limitations under the License.
 
 #include <QAbstractMessageHandler>
 #include <QByteArray>
+#include <QDomDocument>
 #include <QSourceLocation>
 #include <QSslError>
 #include <QUrl>
@@ -43,6 +44,8 @@ typedef QList<int> QIntList;
 
 QIntList CORE_EXPORT qVariantListToIntList(const QVariantList &pVariantList);
 QVariantList CORE_EXPORT qIntListToVariantList(const QIntList &pIntList);
+
+QString CORE_EXPORT qDomDocumentToString(const QDomDocument &pDomDocument);
 
 //==============================================================================
 
@@ -57,7 +60,10 @@ namespace Core {
 
 //==============================================================================
 
-#ifndef OpenCOR_MAIN
+#include "corecliutils.h.inl"
+
+//==============================================================================
+
 class CORE_EXPORT DummyMessageHandler : public QAbstractMessageHandler
 {
     Q_OBJECT
@@ -67,11 +73,12 @@ protected:
                                const QUrl &pIdentifier,
                                const QSourceLocation &pSourceLocation);
 };
-#endif
 
 //==============================================================================
+// Note: both cliutils.h and corecliutils.h must specifically define
+//       SynchronousTextFileDownloader. To have it in cliutils.h.inl is NOT good
+//       enough since the MOC won't pick it up...
 
-#ifndef OpenCOR_MAIN
 class SynchronousTextFileDownloader : public QObject
 {
     Q_OBJECT
@@ -84,13 +91,8 @@ private Q_SLOTS:
     void networkAccessManagerSslErrors(QNetworkReply *pNetworkReply,
                                        const QList<QSslError> &pSslErrors);
 };
-#endif
 
 //==============================================================================
-
-QString CORE_EXPORT osName();
-
-QString CORE_EXPORT copyright();
 
 QString CORE_EXPORT locale();
 
@@ -117,11 +119,6 @@ QByteArray CORE_EXPORT resourceAsByteArray(const QString &pResource);
 bool CORE_EXPORT writeResourceToFile(const QString &pFilename,
                                      const QString &pResource);
 
-#ifndef OpenCOR_MAIN
-bool CORE_EXPORT readTextFromUrl(const QString &pUrl, QString &pText,
-                                 QString *pErrorMessage = 0);
-#endif
-
 bool CORE_EXPORT readTextFromFile(const QString &pFileName, QString &pText);
 bool CORE_EXPORT writeTextToFile(const QString &pFilename,
                                  const QString &pText);
@@ -133,12 +130,6 @@ void CORE_EXPORT setActiveDirectory(const QString &pDirName);
 QString CORE_EXPORT activeDirectory();
 
 QString CORE_EXPORT nativeCanonicalFileName(const QString &pFileName);
-
-QString CORE_EXPORT formatErrorMessage(const QString &pErrorMessage,
-                                       const bool &pLowerCase = true,
-                                       const bool &pDotDotDot = false);
-
-QString CORE_EXPORT nonDiacriticString(const QString &pString);
 
 void CORE_EXPORT doNothing(const int &pMax);
 

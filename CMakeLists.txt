@@ -30,11 +30,11 @@ SET(VERSION_MAJOR 0)
 SET(VERSION_MINOR 3)
 SET(VERSION_PATCH 0)
 
-IF(SNAPSHOT)
-    TRY_RUN(DATE_RUN DATE_COMPILE
-            ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR}/cmake/date.c
-            RUN_OUTPUT_VARIABLE DATE)
+TRY_RUN(DATE_RUN DATE_COMPILE
+        ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR}/cmake/date.c
+        RUN_OUTPUT_VARIABLE DATE)
 
+IF(SNAPSHOT)
     SET(VERSION ${DATE})
 ELSE()
     SET(VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
@@ -44,16 +44,12 @@ ELSE()
     ENDIF()
 ENDIF()
 
-FILE(WRITE ${CMAKE_BINARY_DIR}/version.txt ${VERSION})
+FILE(WRITE ${CMAKE_BINARY_DIR}/versiondate.txt "${VERSION}\n${DATE}")
 
 # Files that make up the GUI version of OpenCOR
-# Note: when it comes to using some of the Core plugin features, we don't want
-#       any of them to require a MOC file to be generated. Indeed, should this
-#       happen, then some build systems (e.g. Ninja) will warn that there exist
-#       multiple rules to generate it. In practice, it's fine, but it's still a
-#       warning and we don't like (and want) warnings...
 
 SET(SOURCES
+    src/checkforupdateswindow.cpp
     src/main.cpp
     src/mainwindow.cpp
     src/pluginswindow.cpp
@@ -61,30 +57,31 @@ SET(SOURCES
     src/splashscreenwindow.cpp
 
     src/misc/cliapplication.cpp
-    src/misc/common.cpp
+    src/misc/cliutils.cpp
+    src/misc/guiutils.cpp
 
     src/plugins/guiinterface.cpp
     src/plugins/i18ninterface.cpp
     src/plugins/plugin.cpp
     src/plugins/plugininfo.cpp
     src/plugins/pluginmanager.cpp
-
-    src/plugins/miscellaneous/Core/src/cliutils.cpp
-    src/plugins/miscellaneous/Core/src/commonwidget.cpp
-    src/plugins/miscellaneous/Core/src/guiutils.cpp
 )
 
 SET(HEADERS_MOC
+    src/checkforupdateswindow.h
     src/mainwindow.h
     src/pluginswindow.h
     src/preferenceswindow.h
     src/splashscreenwindow.h
+
+    src/misc/cliutils.h
 
     src/plugins/plugin.h
     src/plugins/pluginmanager.h
 )
 
 SET(UIS
+    src/checkforupdateswindow.ui
     src/mainwindow.ui
     src/pluginswindow.ui
     src/preferenceswindow.ui
@@ -97,23 +94,22 @@ SET(RESOURCES
 )
 
 # Files that make up the CLI version of OpenCOR (Windows specific)
-# Note: see the node about using Core plugin features above...
 
 IF(WIN32)
     SET(WINDOWS_CLI_SOURCES
-        windows/main.cpp
-
         src/misc/cliapplication.cpp
-        src/misc/common.cpp
+        src/misc/cliutils.cpp
 
         src/plugins/plugin.cpp
         src/plugins/plugininfo.cpp
         src/plugins/pluginmanager.cpp
 
-        src/plugins/miscellaneous/Core/src/cliutils.cpp
+        src/windows/main.cpp
     )
 
     SET(WINDOWS_CLI_HEADERS_MOC
+        src/misc/cliutils.h
+
         src/plugins/plugin.h
         src/plugins/pluginmanager.h
     )
@@ -124,14 +120,10 @@ IF(WIN32)
 ENDIF()
 
 # Various include directories
-# Note: the OpenCOR executable uses bits of the Core plugin, hence we include
-#       its directory so that we can build OpenCOR without any plugin, should we
-#       ever want/need to do that...
 
 INCLUDE_DIRECTORIES(
     src/misc
     src/plugins
-    src/plugins/miscellaneous/Core/src
 )
 
 # Update the translation (.ts) files and generate the language (.qm) files
@@ -179,7 +171,7 @@ IF(ENABLE_TESTS)
     SET(RUNTESTS_NAME runtests)
 
     ADD_EXECUTABLE(${RUNTESTS_NAME}
-        tests/main.cpp
+        src/tests/main.cpp
     )
 
     TARGET_LINK_LIBRARIES(${RUNTESTS_NAME}
@@ -249,10 +241,13 @@ SET(PLUGINS
     widget/EditorList
     widget/Viewer
 
+    # Plugins that provide some generic features
+
+    editing/CoreEditing
+
     # Plugins that have dependencies on others
 
     editing/CoreCellMLEditing
-    editing/CoreEditing
 
     # Selectable plugins
 
@@ -342,6 +337,7 @@ IF(WIN32)
 
     TARGET_LINK_LIBRARIES(${WINDOWS_CLI_PROJECT_NAME}
         Qt5::Core
+        Qt5::Xml
         Qt5::XmlPatterns
     )
 ENDIF()
@@ -506,13 +502,31 @@ SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${PROJECT_NAME}")
 SET(CPACK_PACKAGE_EXECUTABLES "${PROJECT_NAME}" "${PROJECT_NAME}")
 
 IF(WIN32)
-    # Select NSIS and ZIP as the packagers on Windows
+    # Select NSIS, if available, and ZIP as the packagers on Windows
 
-    SET(CPACK_GENERATOR NSIS ZIP)
+    IF(EXISTS $ENV{PROGRAMFILES}/NSIS/makensis.exe)
+        SET(NSIS_FOUND TRUE)
+        SET(NSIS_GENERATOR NSIS)
+    ELSE()
+        SET(NSIS_FOUND FALSE)
+        SET(NSIS_GENERATOR)
+    ENDIF()
+
+    SET(CPACK_GENERATOR ${NSIS_GENERATOR} ZIP)
 
     SET(CPACK_SYSTEM_NAME "Windows${ARCHITECTURE}")
 
     SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
+
+    # Specify the default installation directory
+
+    IF(NSIS_FOUND)
+        IF(${ARCHITECTURE} EQUAL 32)
+            SET(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES")
+        ELSE()
+            SET(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
+        ENDIF()
+    ENDIF()
 
     # Install both the GUI and CLI versions of OpenCOR
 
@@ -561,16 +575,18 @@ IF(WIN32)
     #       file icons (so that it is clear to the user that an extension has
     #       been (un)registered...
 
-    SET(CPACK_NSIS_DEFINES "!include ${CMAKE_SOURCE_DIR}\\\\distrib\\\\windows\\\\FileAssociation.nsh")
+    IF(NSIS_FOUND)
+        SET(CPACK_NSIS_DEFINES "!include ${CMAKE_SOURCE_DIR}\\\\distrib\\\\windows\\\\FileAssociation.nsh")
 
-    SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
-        \\\${RegisterExtension} \\\"\\\$INSTDIR\\\\bin\\\\${PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX}\\\" \\\".cellml\\\" \\\"CellML File\\\"
-        System::Call \\\"Shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0)\\\"
-    ")
-    SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
-        \\\${UnregisterExtension} \\\".cellml\\\" \\\"CellML File\\\"
-        System::Call \\\"Shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0)\\\"
-    ")
+        SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
+            \\\${RegisterExtension} \\\"\\\$INSTDIR\\\\bin\\\\${PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX}\\\" \\\".cellml\\\" \\\"CellML File\\\"
+            System::Call \\\"Shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0)\\\"
+        ")
+        SET(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
+            \\\${UnregisterExtension} \\\".cellml\\\" \\\"CellML File\\\"
+            System::Call \\\"Shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0)\\\"
+        ")
+    ENDIF()
 ELSEIF(APPLE)
     # Select PackageMaker and ZIP as the packagers on OS X
 

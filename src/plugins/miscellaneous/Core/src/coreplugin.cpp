@@ -19,12 +19,12 @@ specific language governing permissions and limitations under the License.
 // Core plugin
 //==============================================================================
 
-#include "cliutils.h"
 #include "centralwidget.h"
+#include "corecliutils.h"
+#include "coreguiutils.h"
 #include "coreplugin.h"
 #include "filetypeinterface.h"
 #include "filemanager.h"
-#include "guiutils.h"
 #include "organisationwidget.h"
 #include "plugin.h"
 
@@ -198,6 +198,15 @@ void CorePlugin::fileRenamed(const QString &pOldFileName,
     // closed
 
     fileClosed(pOldFileName);
+}
+
+//==============================================================================
+
+void CorePlugin::fileSaved(const QString &pFileName)
+{
+    Q_UNUSED(pFileName);
+
+    // We don't handle this interface...
 }
 
 //==============================================================================

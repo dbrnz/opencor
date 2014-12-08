@@ -28,9 +28,9 @@ specific language governing permissions and limitations under the License.
 #include "cellmlannotationviewmetadatawebviewwidget.h"
 #include "cellmlannotationviewwidget.h"
 #include "cellmlfilerdftriple.h"
-#include "cliutils.h"
+#include "corecliutils.h"
+#include "coreguiutils.h"
 #include "filemanager.h"
-#include "guiutils.h"
 #include "treeviewwidget.h"
 #include "usermessagewidget.h"
 
@@ -149,6 +149,8 @@ CellmlAnnotationViewMetadataEditDetailsWidget::CellmlAnnotationViewMetadataEditD
 
     connect(mNetworkAccessManager, SIGNAL(finished(QNetworkReply *)),
             this, SLOT(termLookedUp(QNetworkReply *)));
+    connect(mNetworkAccessManager, SIGNAL(sslErrors(QNetworkReply *, const QList<QSslError> &)),
+            this, SLOT(sslErrors(QNetworkReply *, const QList<QSslError> &)) );
 
     // Create and populate our context menu
 
@@ -370,20 +372,21 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateGui(iface::cellml_api:
     // Enable/disable our add term button, depending on whether the direct term
     // is already associated with the CellML element
 
-    bool fileReadableAndWritable = Core::FileManager::instance()->isReadableAndWritable(mCellmlFile->fileName());
+    bool fileReadableAndWritableAndNoIssues =     Core::FileManager::instance()->isReadableAndWritable(mCellmlFile->fileName())
+                                              && !mCellmlFile->issues().count();
     bool termIsDirect = isDirectTerm(mTermValue->text());
 
     if (termIsDirect) {
         QStringList termInformation = mTermValue->text().split("/");
 
         if (mQualifierValue->currentIndex() < CellMLSupport::CellmlFileRdfTriple::LastBioQualifier)
-            mAddTermButton->setEnabled(    fileReadableAndWritable
+            mAddTermButton->setEnabled(    fileReadableAndWritableAndNoIssues
                                        && !mCellmlFile->rdfTriple(mElement,
                                                                   CellMLSupport::CellmlFileRdfTriple::BioQualifier(mQualifierValue->currentIndex()+1),
                                                                   termInformation[0],
                                                                   termInformation[1]));
         else
-            mAddTermButton->setEnabled(    fileReadableAndWritable
+            mAddTermButton->setEnabled(    fileReadableAndWritableAndNoIssues
                                        && !mCellmlFile->rdfTriple(mElement,
                                                                   CellMLSupport::CellmlFileRdfTriple::ModelQualifier(mQualifierValue->currentIndex()-CellMLSupport::CellmlFileRdfTriple::LastBioQualifier+1),
                                                                   termInformation[0],
@@ -415,12 +418,12 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::updateGui(iface::cellml_api:
         bool enabledButton;
 
         if (mQualifierValue->currentIndex() < CellMLSupport::CellmlFileRdfTriple::LastBioQualifier)
-            enabledButton =     fileReadableAndWritable
+            enabledButton =     fileReadableAndWritableAndNoIssues
                             && !mCellmlFile->rdfTriple(mElement,
                                                        CellMLSupport::CellmlFileRdfTriple::BioQualifier(mQualifierValue->currentIndex()+1),
                                                        item.resource, item.id);
         else
-            enabledButton =     fileReadableAndWritable
+            enabledButton =     fileReadableAndWritableAndNoIssues
                             && !mCellmlFile->rdfTriple(mElement,
                                                        CellMLSupport::CellmlFileRdfTriple::ModelQualifier(mQualifierValue->currentIndex()-CellMLSupport::CellmlFileRdfTriple::LastBioQualifier+1),
                                                        item.resource, item.id);
@@ -445,7 +448,8 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::upudateOutputMessage(const b
     if (pShowBusyWidget)
         *pShowBusyWidget = false;
 
-    if (!Core::FileManager::instance()->isReadableAndWritable(mCellmlFile->fileName())) {
+    if (   !Core::FileManager::instance()->isReadableAndWritable(mCellmlFile->fileName())
+        ||  mCellmlFile->issues().count()) {
         mOutputMessage->setIconMessage(QString(), QString());
 
         if (pShowBusyWidget && pLookUpTerm && !mTermValue->text().isEmpty())
@@ -971,6 +975,17 @@ void CellmlAnnotationViewMetadataEditDetailsWidget::termLookedUp(QNetworkReply *
     // Delete (later) the network reply
 
     pNetworkReply->deleteLater();
+}
+
+//==============================================================================
+
+void CellmlAnnotationViewMetadataEditDetailsWidget::sslErrors(QNetworkReply *pNetworkReply,
+                                                              const QList<QSslError> &pSslErrors)
+{
+    // Ignore the SSL errors since we trust the website and therefore its
+    // certificate (even if it is invalid, e.g. it has expired)
+
+    pNetworkReply->ignoreSslErrors(pSslErrors);
 }
 
 //==============================================================================

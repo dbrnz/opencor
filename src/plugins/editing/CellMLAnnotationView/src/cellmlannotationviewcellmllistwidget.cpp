@@ -21,7 +21,7 @@ specific language governing permissions and limitations under the License.
 
 #include "cellmlannotationviewcellmllistwidget.h"
 #include "cellmlannotationvieweditingwidget.h"
-#include "cliutils.h"
+#include "corecliutils.h"
 #include "filemanager.h"
 #include "treeviewwidget.h"
 
@@ -866,6 +866,12 @@ void CellmlAnnotationViewCellmlListWidget::updateMetadataDetails(const QModelInd
 
 void CellmlAnnotationViewCellmlListWidget::showCustomContextMenu(const QPoint &pPosition) const
 {
+    // Make sure that we are dealing with a CellML files that doesn't have any
+    // issues
+
+    if (mCellmlFile->issues().count())
+        return;
+
     // Determine whether to show the context menu based on whether we are over
     // an item
 

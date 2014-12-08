@@ -31,6 +31,7 @@ specific language governing permissions and limitations under the License.
 
 #include <QMap>
 #include <QModelIndex>
+#include <QSslError>
 #include <QStandardItem>
 #include <QStyledItemDelegate>
 #include <QStyleOptionViewItem>
@@ -198,6 +199,8 @@ private Q_SLOTS:
 
     void termChanged(const QString &pTerm);
     void termLookedUp(QNetworkReply *pNetworkReply);
+    void sslErrors(QNetworkReply *pNetworkReply,
+                   const QList<QSslError> &pSslErrors);
 
     void addTerm();
 

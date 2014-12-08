@@ -22,7 +22,6 @@ specific language governing permissions and limitations under the License.
 #include "cliapplication.h"
 #include "cliinterface.h"
 #include "cliutils.h"
-#include "common.h"
 #include "pluginmanager.h"
 
 //==============================================================================
@@ -81,9 +80,8 @@ QString CliApplication::pluginDescription(Plugin *pPlugin) const
 {
     // Retrieve and return the plugin's default description, stripped out of all
     // its HTML (should it have some)
-    // Note: we enclose the CLI plugin's default description within an html
-    //       tag so that the stripping out can proceed without any
-    //       problem...
+    // Note: we enclose the CLI plugin's default description within an html tag
+    //       so that the stripping out can proceed without any problem...
 
     QXmlStreamReader description("<html>"+pPlugin->info()->description()+"</html>");
     QString res = QString();
@@ -103,8 +101,8 @@ void CliApplication::about() const
 
     version();
 
-    std::cout << Core::osName().toStdString() << std::endl;
-    std::cout << Core::copyright().toStdString() << std::endl;
+    std::cout << osName().toStdString() << std::endl;
+    std::cout << copyright().toStdString() << std::endl;
     std::cout << std::endl;
     std::cout << mApp->applicationName().toStdString()
               << " is a cross-platform CellML-based modelling environment,"
@@ -295,7 +293,7 @@ void CliApplication::status() const
 
             break;
         case Plugin::NotLoaded:
-            pluginInfo += QString("the plugin could not be loaded due to the following problem: %1.").arg(Core::formatErrorMessage(plugin->statusErrors()));
+            pluginInfo += QString("the plugin could not be loaded due to the following problem: %1.").arg(formatErrorMessage(plugin->statusErrors()));
 
             break;
         case Plugin::NotPlugin:

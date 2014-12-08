@@ -21,12 +21,15 @@ specific language governing permissions and limitations under the License.
 
 #include "cellmlfilemanager.h"
 #include "cellmlsupportplugin.h"
+#include "filemanager.h"
 #include "prettycellmlviewplugin.h"
 #include "prettycellmlviewwidget.h"
 
 //==============================================================================
 
+#include <QApplication>
 #include <QMainWindow>
+#include <QMessageBox>
 #include <QSettings>
 
 //==============================================================================
@@ -52,11 +55,16 @@ PLUGININFO_FUNC PrettyCellMLViewPluginInfo()
 // CellML editing interface
 //==============================================================================
 
-void PrettyCellMLViewPlugin::validate(const QString &pFileName) const
+void PrettyCellMLViewPlugin::validateCellml(const QString &pFileName) const
 {
-    Q_UNUSED(pFileName);
+//---GRY--- TO BE IMPLEMENTED...
 
-    // We don't handle this interface...
+Q_UNUSED(pFileName);
+
+QMessageBox::information(qApp->activeWindow(),
+                         tr("CellML Validation"),
+                         "Validation is not yet available for the <strong>Pretty CellML</strong> view.",
+                         QMessageBox::Ok);
 }
 
 //==============================================================================
@@ -68,6 +76,27 @@ Editor::EditorWidget * PrettyCellMLViewPlugin::editor(const QString &pFileName) 
     // Return the requested editor
 
     return mViewWidget->editor(pFileName);
+}
+
+//==============================================================================
+
+bool PrettyCellMLViewPlugin::isEditorUseable(const QString &pFileName) const
+{
+    // Return whether the requested editor is useable
+
+    return mViewWidget->isEditorUseable(pFileName);
+}
+
+//==============================================================================
+
+bool PrettyCellMLViewPlugin::isEditorContentsModified(const QString &pFileName) const
+{
+    // Return whether the requested editor has been modified, which here is done
+    // by comparing its contents to that of the given file
+
+    Editor::EditorWidget *currentEditor = editor(pFileName);
+
+    return currentEditor?currentEditor->isUndoAvailable():false;
 }
 
 //==============================================================================
@@ -129,6 +158,22 @@ void PrettyCellMLViewPlugin::fileRenamed(const QString &pOldFileName,
     // The given file has been renamed, so let our view widget know about it
 
     mViewWidget->fileRenamed(pOldFileName, pNewFileName);
+}
+
+//==============================================================================
+
+void PrettyCellMLViewPlugin::fileSaved(const QString &pFileName)
+{
+    // The given file has been saved, but because it was done directly by
+    // manipulating the file, we need to ask our file manager to unmanage it and
+    // manage it back, so that anyone that relies on an internal representation
+    // of the file (e.g. the CellML Annotation view plugin) will get properly
+    // updated
+
+    Core::FileManager *fileManagerInstance = Core::FileManager::instance();
+
+    fileManagerInstance->unmanage(pFileName);
+    fileManagerInstance->manage(pFileName);
 }
 
 //==============================================================================

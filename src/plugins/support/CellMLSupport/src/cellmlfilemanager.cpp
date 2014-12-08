@@ -21,7 +21,7 @@ specific language governing permissions and limitations under the License.
 
 #include "cellmlfilemanager.h"
 #include "cellmlsupportplugin.h"
-#include "cliutils.h"
+#include "corecliutils.h"
 #include "filemanager.h"
 
 //==============================================================================
@@ -53,11 +53,6 @@ CellmlFileManager::CellmlFileManager() :
 
     connect(fileManagerInstance, SIGNAL(fileRenamed(const QString &, const QString &)),
             this, SLOT(renameFile(const QString &, const QString &)));
-
-    connect(fileManagerInstance, SIGNAL(fileSaved(const QString &)),
-            this, SLOT(unmanageFile(const QString &)));
-    connect(fileManagerInstance, SIGNAL(fileSaved(const QString &)),
-            this, SLOT(manageFile(const QString &)));
 }
 
 //==============================================================================

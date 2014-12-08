@@ -2,6 +2,29 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="fr_FR" sourcelanguage="en_GB">
 <context>
+    <name>CheckForUpdatesWindow</name>
+    <message>
+        <source>Check for updates...</source>
+        <translation>Vérifier pour des mises à jour...</translation>
+    </message>
+    <message>
+        <source>Recheck</source>
+        <translation>Revérifier</translation>
+    </message>
+    <message>
+        <source>Recheck for updates</source>
+        <translation>Revérifier pour des mises à jour</translation>
+    </message>
+    <message>
+        <source>Check for updates at startup</source>
+        <translation>Vérifier pour des mises à jour au démarrage</translation>
+    </message>
+    <message>
+        <source>Include snapshots</source>
+        <translation>Inclure les snapshots</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
         <source>&amp;File</source>
@@ -130,6 +153,33 @@
     <message>
         <source>Quit OpenCOR</source>
         <translation>Quitter OpenCOR</translation>
+    </message>
+    <message>
+        <source>Check for Updates...</source>
+        <translation>Vérifier pour des Mises à Jour...</translation>
+    </message>
+    <message>
+        <source>Check for updates</source>
+        <translation>Vérifier pour des mises à jour</translation>
+    </message>
+</context>
+<context>
+    <name>OpenCOR::CheckForUpdatesWindow</name>
+    <message>
+        <source>&lt;a href=&quot;%1&quot;&gt;%2 %3&lt;/a&gt; is ready for you to &lt;a href=&quot;http://opencor.ws/downloads/&quot;&gt;download&lt;/a&gt;.</source>
+        <translation>&lt;a href=&quot;%1&quot;&gt;%2 %3&lt;/a&gt; est prêt à être &lt;a href=&quot;http://opencor.ws/downloads/&quot;&gt;téléchargé&lt;/a&gt;.</translation>
+    </message>
+    <message>
+        <source>The &lt;a href=&quot;%1&quot;&gt;latest snapshot&lt;/a&gt; is ready for you to &lt;a href=&quot;http://opencor.ws/downloads/&quot;&gt;download&lt;/a&gt;.</source>
+        <translation>Le &lt;a href=&quot;%1&quot;&gt;dernier snapshot&lt;/a&gt; est prêt à être &lt;a href=&quot;http://opencor.ws/downloads/&quot;&gt;téléchargé&lt;/a&gt;.</translation>
+    </message>
+    <message>
+        <source>No newer version or snapshot of %1 is available.</source>
+        <translation>Aucune nouvelle version ou snapshot d&apos;%1 n&apos;est disponible.</translation>
+    </message>
+    <message>
+        <source>No newer version of %1 is available.</source>
+        <translation>Aucune nouvelle version d&apos;%1 n&apos;est disponible.</translation>
     </message>
 </context>
 <context>
@@ -359,61 +409,6 @@
     <message>
         <source>Preferences</source>
         <translation>Préférences</translation>
-    </message>
-</context>
-<context>
-    <name>QObject</name>
-    <message>
-        <source>Copyright</source>
-        <translation>Tous droits réservés</translation>
-    </message>
-    <message>
-        <source>B</source>
-        <translation>o</translation>
-    </message>
-    <message>
-        <source>KB</source>
-        <translation>Ko</translation>
-    </message>
-    <message>
-        <source>MB</source>
-        <translation>Mo</translation>
-    </message>
-    <message>
-        <source>GB</source>
-        <translation>Go</translation>
-    </message>
-    <message>
-        <source>TB</source>
-        <translation>To</translation>
-    </message>
-    <message>
-        <source>PB</source>
-        <translation>Po</translation>
-    </message>
-    <message>
-        <source>EB</source>
-        <translation>Eo</translation>
-    </message>
-    <message>
-        <source>ZB</source>
-        <translation>Zo</translation>
-    </message>
-    <message>
-        <source>YB</source>
-        <translation>Yo</translation>
-    </message>
-    <message>
-        <source>Please choose a different file name.</source>
-        <translation>Veuillez choisir un nom de fichier différent.</translation>
-    </message>
-    <message>
-        <source>&lt;strong&gt;%1&lt;/strong&gt; already exists. Do you want to overwrite it?</source>
-        <translation>&lt;strong&gt;%1&lt;/strong&gt; existe déjà. Voulez-vous le remplacer ?</translation>
-    </message>
-    <message>
-        <source>All Files</source>
-        <translation>Tous Fichiers</translation>
     </message>
 </context>
 </TS>

@@ -48,7 +48,7 @@ class QSettings;
 
 namespace SharedTools {
     class QtSingleApplication;
-}
+}   // namespace SharedTools
 
 //==============================================================================
 
@@ -73,7 +73,8 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(SharedTools::QtSingleApplication *pApp);
+    explicit MainWindow(SharedTools::QtSingleApplication *pApplication,
+                        const QString &pApplicationDate);
     ~MainWindow();
 
     QString locale() const;
@@ -93,6 +94,8 @@ protected:
 
 private:
     Ui::MainWindow *mGui;
+
+    QString mApplicationDate;
 
     bool mShuttingDown;
 
@@ -151,12 +154,14 @@ private Q_SLOTS:
     void on_actionPlugins_triggered();
     void on_actionPreferences_triggered();
     void on_actionHomePage_triggered();
+    void on_actionCheckForUpdates_triggered();
     void on_actionAbout_triggered();
 
     void updateGui(Plugin *pViewPlugin, const QString &pFileName);
 
     void showDockedWindows(const bool &pShow,
                            const bool &pInitialisation = false);
+    void toggleDockedWindows();
 
     void updateDockWidgetsVisibility();
 
