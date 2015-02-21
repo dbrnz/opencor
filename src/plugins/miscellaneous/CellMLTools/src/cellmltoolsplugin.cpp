@@ -29,13 +29,11 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include <QApplication>
-#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QMainWindow>
 #include <QMenu>
 #include <QMessageBox>
-#include <QTemporaryFile>
 
 //==============================================================================
 
@@ -339,7 +337,7 @@ int CellMLToolsPlugin::runExportCommand(const QStringList &pArguments)
     bool inIsLocalFile;
     QString inFileNameOrUrl;
 
-    Core::checkFileNameOrUrl(pArguments.at(0), inIsLocalFile, inFileNameOrUrl);
+    Core::checkFileNameOrUrl(pArguments[0], inIsLocalFile, inFileNameOrUrl);
 
     QString inFileName = inFileNameOrUrl;
 
@@ -357,24 +355,12 @@ int CellMLToolsPlugin::runExportCommand(const QStringList &pArguments)
             // We were able to retrieve the contents of the remote file, so save
             // it locally to a 'temporary' file
 
-            QTemporaryFile localFile(QDir::tempPath()+QDir::separator()+"XXXXXX.tmp");
+            inFileName = Core::temporaryFileName();
 
-            if (localFile.open()) {
-                localFile.setAutoRemove(false);
-                // Note: by default, a temporary file is to autoremove itself,
-                //       but we clearly don't want that here...
-
-                localFile.close();
-
-                inFileName = localFile.fileName();
-
-                if (!Core::writeTextToFile(inFileName, fileContents))
-                    errorMessage = "The input file could not be saved locally.";
-            } else {
+            if (!Core::writeTextToFile(inFileName, fileContents))
                 errorMessage = "The input file could not be saved locally.";
-            }
         } else {
-            errorMessage = QString("The input file could not be opened (%1).").arg(Core::formatErrorMessage(errorMessage));
+            errorMessage = QString("The input file could not be opened (%1).").arg(Core::formatMessage(errorMessage));
         }
     }
 
@@ -408,7 +394,7 @@ int CellMLToolsPlugin::runExportCommand(const QStringList &pArguments)
                     // At this stage, everything is fine with the input file, so
                     // now we need to check the type of export the user wants
 
-                    QString predefinedFormatOrUserDefinedFormatFileName = pArguments.at(2);
+                    QString predefinedFormatOrUserDefinedFormatFileName = pArguments[2];
                     bool wantExportToUserDefinedFormat = predefinedFormatOrUserDefinedFormatFileName.compare("cellml_1_0");
 
                     // If we want to export to a CellML 1.0, then we need to
@@ -425,8 +411,8 @@ int CellMLToolsPlugin::runExportCommand(const QStringList &pArguments)
                         // Everything seems to be fine, so attempt the export
                         // itself
 
-                        if (   ( wantExportToUserDefinedFormat && !inCellmlFile->exportTo(pArguments.at(1), predefinedFormatOrUserDefinedFormatFileName))
-                            || (!wantExportToUserDefinedFormat && !inCellmlFile->exportTo(pArguments.at(1), CellMLSupport::CellmlFile::Cellml_1_0))) {
+                        if (   ( wantExportToUserDefinedFormat && !inCellmlFile->exportTo(pArguments[1], predefinedFormatOrUserDefinedFormatFileName))
+                            || (!wantExportToUserDefinedFormat && !inCellmlFile->exportTo(pArguments[1], CellMLSupport::CellmlFile::Cellml_1_0))) {
                             errorMessage = "The input file could not be exported";
 
                             CellMLSupport::CellmlFileIssues issues = inCellmlFile->issues();

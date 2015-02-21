@@ -130,6 +130,16 @@ void EditorListWidget::addItem(const EditorListItem::Type &pType,
 //==============================================================================
 
 void EditorListWidget::addItem(const EditorListItem::Type &pType,
+                               const int &pLine, const QString &pMessage)
+{
+    // Add the given item to our list
+
+    addItem(pType, pLine, -1, pMessage);
+}
+
+//==============================================================================
+
+void EditorListWidget::addItem(const EditorListItem::Type &pType,
                                const QString &pMessage)
 {
     // Add the given item to our list
@@ -228,7 +238,7 @@ void EditorListWidget::requestItem(const QModelIndex &pItemIndex)
 
     EditorListItem *item = static_cast<EditorListItem *>(mModel->itemFromIndex(pItemIndex));
 
-    if (item)
+    if (item && (item->line() != -1))
         emit itemRequested(item);
 }
 

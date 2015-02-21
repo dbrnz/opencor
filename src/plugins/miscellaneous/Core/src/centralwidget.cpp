@@ -40,7 +40,7 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
-#include <QApplication>
+#include <QCoreApplication>
 #include <QDesktopWidget>
 #include <QDialog>
 #include <QDialogButtonBox>
@@ -264,7 +264,7 @@ CentralWidget::CentralWidget(QMainWindow *pMainWindow) :
 //---GRY--- THE ORIGINAL PLAN WAS TO HAVE A REGULAR EXPRESSION TO VALIDATE A
 //          URL, BUT IT LOOKS LIKE THERE MIGHT BE AN ISSUE WITH
 //          QRegularExpressionValidator, SO WE SIMPLY ALLOW FREE TEXT FOR NOW
-//          (SEE https://bugreports.qt-project.org/browse/QTBUG-38034)
+//          (SEE https://bugreports.qt.io/browse/QTBUG-38034)
 
     mRemoteFileDialog = new QDialog(this);
     QGridLayout *dialogLayout = new QGridLayout(mRemoteFileDialog);
@@ -847,7 +847,7 @@ void CentralWidget::openRemoteFile(const QString &pUrl,
             // Make sure that the file has indeed been created
 
             if (createStatus != Core::FileManager::Created)
-                qFatal("FATAL ERROR | %s:%d: the remote file was not created", __FILE__, __LINE__);
+                qFatal("FATAL ERROR | %s:%d: the remote file was not created.", __FILE__, __LINE__);
 #endif
         } else {
             // We were not able to retrieve the contents of the remote file, so
@@ -855,7 +855,7 @@ void CentralWidget::openRemoteFile(const QString &pUrl,
 
             if (pShowWarning)
                 QMessageBox::warning(this, tr("Open Remote File"),
-                                     tr("<strong>%1</strong> could not be opened (%2).").arg(fileNameOrUrl, Core::formatErrorMessage(errorMessage)));
+                                     tr("<strong>%1</strong> could not be opened (%2).").arg(fileNameOrUrl, Core::formatMessage(errorMessage)));
         }
     } else {
         openFile(fileName);
@@ -913,7 +913,7 @@ void CentralWidget::reloadFile(const int &pIndex, const bool &pForce)
                 // The current file is modified, so ask the user whether s/he
                 // still wants to reload it
 
-                doReloadFile = QMessageBox::question(mMainWindow, qApp->applicationName(),
+                doReloadFile = QMessageBox::question(mMainWindow, qAppName(),
                                                      tr("<strong>%1</strong> has been modified. Do you still want to reload it?").arg(fileName),
                                                      QMessageBox::Yes|QMessageBox::No,
                                                      QMessageBox::Yes) == QMessageBox::Yes;
@@ -938,7 +938,7 @@ void CentralWidget::reloadFile(const int &pIndex, const bool &pForce)
                         fileManagerInstance->reload(fileName);
                     } else {
                         QMessageBox::warning(this, tr("Reload Remote File"),
-                                             tr("<strong>%1</strong> could not be reloaded (%2).").arg(url, Core::formatErrorMessage(errorMessage)));
+                                             tr("<strong>%1</strong> could not be reloaded (%2).").arg(url, Core::formatMessage(errorMessage)));
                     }
                 } else {
                     fileManagerInstance->reload(fileName);
@@ -973,7 +973,7 @@ void CentralWidget::duplicateFile()
     // Make sure that the file has indeed been duplicated
 
     if (duplicateStatus != FileManager::Duplicated)
-        qFatal("FATAL ERROR | %s:%d: '%s' did not get duplicated", __FILE__, __LINE__, qPrintable(fileName));
+        qFatal("FATAL ERROR | %s:%d: '%s' did not get duplicated.", __FILE__, __LINE__, qPrintable(fileName));
 #endif
 }
 
@@ -1020,10 +1020,20 @@ bool CentralWidget::saveFile(const int &pIndex, const bool &pNeedNewFileName)
         return false;
     }
 
+    // Make sure that we have a valid view for the file
+
+    QString oldFileName = mFileNames[pIndex];
+
+    if (!viewInterface->viewWidget(oldFileName)){
+        QMessageBox::warning(mMainWindow, tr("Save File"),
+                             tr("The <strong>%1</strong> view cannot save <strong>%2</strong>.").arg(viewInterface->viewName(), oldFileName));
+
+        return false;
+    }
+
     // Make sure that we have a file name
 
     FileManager *fileManagerInstance = FileManager::instance();
-    QString oldFileName = mFileNames[pIndex];
     QString newFileName = oldFileName;
     bool fileIsNew = fileManagerInstance->isNew(oldFileName);
     bool hasNewFileName = false;
@@ -1078,6 +1088,8 @@ bool CentralWidget::saveFile(const int &pIndex, const bool &pNeedNewFileName)
                 QMessageBox::warning(mMainWindow, tr("Save File"),
                                      tr("The <strong>%1</strong> view could not save <strong>%2</strong>.").arg(viewInterface->viewName(), newFileName));
 
+                fileManagerInstance->setCanCheckFiles(true);
+
                 return false;
             }
         } else {
@@ -1092,6 +1104,8 @@ bool CentralWidget::saveFile(const int &pIndex, const bool &pNeedNewFileName)
             if (!QFile::copy(oldFileName, newFileName)) {
                 QMessageBox::warning(mMainWindow, tr("Save File"),
                                      tr("<strong>%1</strong> could not be saved.").arg(newFileName));
+
+                fileManagerInstance->setCanCheckFiles(true);
 
                 return false;
             }
@@ -1120,7 +1134,7 @@ bool CentralWidget::saveFile(const int &pIndex, const bool &pNeedNewFileName)
             // Make sure that the file has indeed been renamed
 
             if (renameStatus != FileManager::Renamed)
-                qFatal("FATAL ERROR | %s:%d: '%s' did not get renamed to '%s'", __FILE__, __LINE__, qPrintable(oldFileName), qPrintable(newFileName));
+                qFatal("FATAL ERROR | %s:%d: '%s' did not get renamed to '%s'.", __FILE__, __LINE__, qPrintable(oldFileName), qPrintable(newFileName));
 #endif
         }
 
@@ -1133,10 +1147,6 @@ bool CentralWidget::saveFile(const int &pIndex, const bool &pNeedNewFileName)
         // done whenever a file has been reloaded
 
         fileReloaded(newFileName);
-
-        // Update our modified settings
-
-        updateModifiedSettings();
 
         // Re-activate our file manager
 
@@ -1211,7 +1221,7 @@ bool CentralWidget::canCloseFile(const int &pIndex)
         // The current file is modified, so ask the user whether to save it or
         // ignore it
 
-        switch (QMessageBox::question(mMainWindow, qApp->applicationName(),
+        switch (QMessageBox::question(mMainWindow, qAppName(),
                                       fileManagerInstance->isNew(fileName)?
                                           tr("<strong>%1</strong> is new. Do you want to save it before closing it?").arg(mFileTabs->tabToolTip(pIndex)):
                                           tr("<strong>%1</strong> has been modified. Do you want to save it before closing it?").arg(fileName),
@@ -1358,8 +1368,7 @@ void CentralWidget::addView(Plugin *pPlugin)
 {
     // Make sure that our list of required modes is up to date
 
-    ViewInterface *viewInterface = qobject_cast<ViewInterface *>(pPlugin->instance());
-    ViewInterface::Mode viewMode = viewInterface->viewMode();
+    ViewInterface::Mode viewMode = qobject_cast<ViewInterface *>(pPlugin->instance())->viewMode();
 
     if (!mModes.value(viewMode)->isEnabled()) {
         // There is no tab for the mode, so add one and enable it
@@ -1479,7 +1488,7 @@ Plugin * CentralWidget::viewPlugin(const int &pIndex) const
     if (pIndex != -1) {
         CentralWidgetMode *mode = mModes.value(mModeTabIndexModes.value(mFileModeTabIndexes.value(mFileNames[pIndex])));
 
-        return mode->viewPlugins()->value(mode->viewTabs()->currentIndex());
+        return mode?mode->viewPlugins()->value(mode->viewTabs()->currentIndex()):0;
     } else {
         return 0;
     }
@@ -1595,8 +1604,7 @@ void CentralWidget::updateGui()
     // Ask the GUI interface for the widget to use for the current file (should
     // there be one)
 
-    CentralWidgetMode *mode = mModes.value(mModeTabIndexModes.value(fileModeTabIndex));
-    Plugin *fileViewPlugin = mode?mode->viewPlugins()->value(mode->viewTabs()->currentIndex()):0;
+    Plugin *fileViewPlugin = viewPlugin(mFileTabs->currentIndex());
     ViewInterface *viewInterface = fileViewPlugin?qobject_cast<ViewInterface *>(fileViewPlugin->instance()):0;
     QWidget *newView;
 
@@ -1756,17 +1764,10 @@ void CentralWidget::updateNoViewMsg()
     // Customise, if possible, our no view widget so that it shows a relevant
     // warning message
 
-    int fileModeTabIndex = mModeTabs->currentIndex();
+    Plugin *fileViewPlugin = viewPlugin(mFileTabs->currentIndex());
 
-    if (fileModeTabIndex == -1) {
-        // There are no modes (and therefore no views) available, so leave
-
-        return;
-    } else {
-        CentralWidgetMode *mode = mModes.value(mModeTabIndexModes.value(fileModeTabIndex));
-
-        mNoViewMsg->setMessage(tr("The <strong>%1</strong> view does not support this type of file...").arg(qobject_cast<ViewInterface *>(mode->viewPlugins()->value(mode->viewTabs()->currentIndex())->instance())->viewName()));
-    }
+    if (fileViewPlugin)
+        mNoViewMsg->setMessage(tr("The <strong>%1</strong> view does not support this type of file...").arg(qobject_cast<ViewInterface *>(fileViewPlugin->instance())->viewName()));
 }
 
 //==============================================================================
@@ -1783,20 +1784,37 @@ void CentralWidget::fileChanged(const QString &pFileName)
         &&  fileManagerInstance->isDifferent(pFileName)) {
         // The given file has been changed, so ask the user whether to reload it
 
-        if (QMessageBox::question(mMainWindow, qApp->applicationName(),
+        if (QMessageBox::question(mMainWindow, qAppName(),
                                   tr("<strong>%1</strong> has been modified. Do you want to reload it?").arg(pFileName),
                                   QMessageBox::Yes|QMessageBox::No,
                                   QMessageBox::Yes) == QMessageBox::Yes) {
             // The user wants to reload the file
 
-            for (int i = 0, iMax = mFileNames.count(); i < iMax; ++i)
+            for (int i = 0, iMax = mFileNames.count(); i < iMax; ++i) {
                 if (!mFileNames[i].compare(pFileName)) {
                     // We have found the file to reload
 
+                    ViewInterface *viewInterface = qobject_cast<ViewInterface *>(viewPlugin(i)->instance());
+                    QWidget *oldView = viewInterface->viewWidget(pFileName);
+
                     reloadFile(i, true);
+
+                    // Check whether the view for the file has changed for the
+                    // current file, in which case we need to update the GUI
+                    // Note: this could happen if we are using a CellML-based
+                    //       view and the file is not initially recognised as
+                    //       being a CellML file, but then it gets updated
+                    //       outside of OpenCOR and then gets recognised as
+                    //       being a CellML file...
+
+                    if (   (mFileTabs->currentIndex() == i)
+                        && (viewInterface->viewWidget(pFileName) != oldView)) {
+                        updateGui();
+                    }
 
                     break;
                 }
+            }
         } else {
             // The user doesn't want to reload the file, so consider it as
             // modified
@@ -1812,7 +1830,7 @@ void CentralWidget::fileDeleted(const QString &pFileName)
 {
     // The given file doesn't exist anymore, so ask the user whether to close it
 
-    if (QMessageBox::question(mMainWindow, qApp->applicationName(),
+    if (QMessageBox::question(mMainWindow, qAppName(),
                               tr("<strong>%1</strong> does not exist anymore. Do you want to close it?").arg(pFileName),
                               QMessageBox::Yes|QMessageBox::No,
                               QMessageBox::Yes) == QMessageBox::Yes) {
@@ -1933,9 +1951,9 @@ void CentralWidget::fileReloaded(const QString &pFileName)
         if (fileManagerInstance->canCheckFiles() || (plugin != fileViewPlugin))
             qobject_cast<FileHandlingInterface *>(plugin->instance())->fileReloaded(pFileName);
 
-    // Now, because of the way some of our views may reload a file (see
-    // CoreEditingPlugin::fileReloaded()), we need to tell them to update their
-    // GUI
+    // Now, because of the way some of our views may reload a file (see, for
+    // example, CoreEditingPlugin::fileReloaded()), we need to tell them to
+    // update their GUI
 
     foreach (Plugin *plugin, mLoadedGuiPlugins)
         if (fileManagerInstance->canCheckFiles() || (plugin != fileViewPlugin))

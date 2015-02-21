@@ -93,7 +93,11 @@ bool RawViewPlugin::saveFile(const QString &pOldFileName,
 {
     // Save the given file
 
-    return Core::writeTextToFile(pNewFileName, editor(pOldFileName)->contents());
+    Editor::EditorWidget *currentEditor = editor(pOldFileName);
+
+    return currentEditor?
+               Core::writeTextToFile(pNewFileName, currentEditor->contents()):
+               false;
 }
 
 //==============================================================================
@@ -147,15 +151,11 @@ void RawViewPlugin::fileRenamed(const QString &pOldFileName,
 void RawViewPlugin::fileSaved(const QString &pFileName)
 {
     // The given file has been saved, but because it was done directly by
-    // manipulating the file, we need to ask our file manager to unmanage it and
-    // manage it back, so that anyone that relies on an internal representation
-    // of the file (e.g. the CellML Annotation view plugin) will get properly
-    // updated
+    // manipulating the file, we need to ask our file manager to reload it, so
+    // that anyone that relies on an internal representation of the file (e.g.
+    // the CellML Annotation view plugin) will get properly updated
 
-    Core::FileManager *fileManagerInstance = Core::FileManager::instance();
-
-    fileManagerInstance->unmanage(pFileName);
-    fileManagerInstance->manage(pFileName);
+    Core::FileManager::instance()->reload(pFileName);
 }
 
 //==============================================================================

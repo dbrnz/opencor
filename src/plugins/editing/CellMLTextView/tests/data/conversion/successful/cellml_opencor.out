@@ -1,0 +1,174 @@
+def model{cellml_1_1} cellml_1_1 as
+    // A comment can fit on one line...
+
+    // A comment can also fit
+    // on one, two or even
+    // more lines...
+
+    // In between comment...
+
+    def import{importx} using "importedmodel.cellml" for
+        // Comments can be within an import definition...
+
+        // In between comment...
+
+        // Comments can be within a unit import,
+        // but if kept it will be serialised back in the
+        // corresponding import definition...
+
+        unit{unitsx} unitsx using unit refunitsx;
+
+        // In between comment...
+
+        // Comments can be within a component import,
+        // but if kept it will be serialised back in the
+        // corresponding import definition...
+
+        comp{componentx} componentx using comp refcomponentx;
+    enddef;
+
+    // In between comment...
+
+    // Comments can be within a base unit definition,
+    // but if kept it will be serialised back in the
+    // corresponding model definition...
+
+    def unit{baseunitsx} baseunitsx as base unit;
+
+    // In between comment...
+
+    def unit{unitsx} unitsx as
+        // Comments can be within a unit definition...
+
+        // In between comment...
+
+        // Comments can be within a unit statement,
+        // but if kept it will be serialised back in the
+        // corresponding unit definition...
+
+        unit{unitx} unitx;
+    enddef;
+
+    // In between comment...
+
+    def comp{componentx} componentx as
+        // Comments can be within a component definition...
+
+        // In between comment...
+
+        // Comments can be within a variable declaration,
+        // but if kept it will be serialised back in the
+        // corresponding component definition...
+
+        var{variablex} variablex: unitsx;
+
+        a = ode(f, t, 2{dimensionless});
+        a = nan;
+        a = inf;
+    enddef;
+
+    // In between comment...
+
+    def group{groupx} as containment{containmentx1} containmentx1 and containment{containmentx2} containmentx2 and encapsulation{encapsulationx} for
+        // Comments can be within a group definition...
+
+        // In between comment...
+
+        // Comments can be within a relationship reference,
+        // but if kept it will be serialised back in the
+        // corresponding group definition...
+
+        // In between comment...
+
+        // Comments can be within a relationship reference,
+        // but if kept it will be serialised back in the
+        // corresponding group definition...
+
+        // In between comment...
+
+        // Comments can be within a relationship reference,
+        // but if kept it will be serialised back in the
+        // corresponding group definition...
+
+        // In between comment...
+
+        comp{componentx} componentx incl
+            // Comments can be within a component reference
+            // with component reference children...
+
+            // In between comment...
+
+            // Comments can be within a component reference
+            // without component reference children, but
+            // if kept it will be serialised back in the
+            // corresponding group definition...
+
+            comp{componentxx} componentxx;
+
+            // In between comment...
+
+            // Comments can be within a component reference
+            // without component reference children, but
+            // if kept it will be serialised back in the
+            // corresponding group definition...
+
+            comp{componentxy} componentxy;
+            comp componentxz;
+        endcomp;
+
+        // In between comment...
+
+        comp{componenty} componenty incl
+            // Comments can be within a component reference
+            // with component reference children...
+
+            // In between comment...
+
+            // Comments can be within a component reference
+            // without component reference children, but
+            // if kept it will be serialised back in the
+            // corresponding group definition...
+
+            comp{componentyx} componentyx;
+
+            // In between comment...
+
+            // Comments can be within a component reference
+            // without component reference children, but
+            // if kept it will be serialised back in the
+            // corresponding group definition...
+
+            comp{componentyy} componentyy;
+            comp componentyz;
+        endcomp;
+    enddef;
+
+    // In between comment...
+
+    def map{connectionx} between{mapcomponentxy} componentx and componenty for
+        // Comments can be within a connection definition...
+
+        // In between comment...
+
+        // Comments can be within a component mapping,
+        // but if kept it will be serialised back in the
+        // corresponding connection definition...
+
+        // In between comment...
+
+        // Comments can be within a variable mapping,
+        // but if kept it will be serialised back in the
+        // corresponding connection definition...
+
+        vars{mapvariablesx} variablexx and variablexy;
+
+        // In between comment...
+
+        // Comments can be within a variable mapping,
+        // but if kept it will be serialised back in the
+        // corresponding connection definition...
+
+        vars{mapvariablesy} variableyx and variableyy;
+        vars variablezx and variablezy;
+    enddef;
+enddef;

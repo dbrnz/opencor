@@ -30,7 +30,6 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include <QList>
-#include <QObject>
 #include <QStringList>
 
 //==============================================================================
@@ -107,10 +106,8 @@ typedef QList<CellmlFileRuntimeParameter *> CellmlFileRuntimeParameters;
 
 //==============================================================================
 
-class CELLMLSUPPORT_EXPORT CellmlFileRuntime : public QObject
+class CELLMLSUPPORT_EXPORT CellmlFileRuntime
 {
-    Q_OBJECT
-
 public:
     enum ModelType {
         Ode,
@@ -211,7 +208,7 @@ private:
 
     void reset(const bool &pRecreateCompilerEngine, const bool &pResetIssues);
 
-    void couldNotGenerateModelCodeIssue();
+    void couldNotGenerateModelCodeIssue(const QString &pExtraInfo);
     void unknownProblemDuringModelCodeGenerationIssue();
 
     void checkCodeInformation(iface::cellml_services::CodeInformation *pCodeInformation);

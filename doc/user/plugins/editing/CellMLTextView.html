@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            CellMLTextView Plugin
+        </title>
+
+        <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+
+        <link href="../../res/stylesheet.css" rel="stylesheet" type="text/css"/>
+
+        <script src="../../../3rdparty/jQuery/jquery.js" type="text/javascript"></script>
+        <script src="../../../res/common.js" type="text/javascript"></script>
+        <script src="../../res/menu.js" type="text/javascript"></script>
+
+        <style>
+            span.comment {
+                color: rgb(127, 127, 127);
+            }
+
+            span.keyword {
+                color: rgb(0, 0, 127);
+            }
+        </style>
+    </head>
+    <body ondragstart="return false;" ondrop="return false;">
+        <script type="text/javascript">
+            headerAndContentsMenu("CellMLTextView Plugin", "../../..");
+        </script>
+
+        <p>
+            The CellMLTextView plugin can be used to edit <a href="http://www.cellml.org/">CellML</a> files using a text editor and a CellML text format. Besides using a specific format, the text editor behaves the same way as the text editor in the <a href="RawView.html">Raw</a> and <a href="RawCellMLView.html">RawCellML</a> views. Then, like in the <a href="RawCellMLView.html">RawCellML</a> view, there is a panel above the text editor, which is used to visualise mathematical equations in real-time, and another below to list all the issues with the CellML file, if any.
+        </p>
+
+        <p class="nomargins note">
+            the CellMLTextView plugin is still very much work in progress. As a result, to open a CellML file will 'only' result in its conversion to the CellML text format, together with syntax highlighting. Editing is possible, but changes cannot be serialised back. The panels above and below the editor do not work either.
+        </p>
+
+        <div class="section">
+            Compatibility
+        </div>
+
+        <p>
+            People who are already familiar with <a href="http://cor.physiol.ox.ac.uk/">COR</a> will find that the same format is used in both cases, although the CellML text format has been extended to support:
+        </p>
+
+        <ul>
+            <li>Comments (both <code>// XXX</code> and <code>/* XXX */</code>).</li>
+            <li>The <code>import</code> element (i.e. support for CellML 1.1).</li>
+            <li>The <code>cmeta:id</code> attribute on all CellML elements (i.e. support for CellML annotation).</li>
+            <li><a href="http://www.w3.org/Math/">MathML</a>: the <code>degree</code> qualifier for the <code>diff</code> element (i.e. not limited to first derivatives), as well as the <code>notanumber</code> and <code>infinity</code> constants.</li>
+            <li>An unlimited number of group types (in <a href="http://cor.physiol.ox.ac.uk/">COR</a>, a group can only specify one <code>encapsulation</code> and/or one <code>containment</code> type).</li>
+        </ul>
+
+        <div class="section">
+            Format
+        </div>
+
+        <p>
+            To be done...
+        </p>
+
+        <div class="section">
+            Comments
+        </div>
+
+        <p>
+            You can (un)comment a piece of code by pressing <code>Ctrl</code>+<code>/</code>. If no text is selected or if the selected text consists of one or several full lines, then the comment will be rendered as <code>// XXX</code>, e.g.
+        </p>
+
+        <pre><span class="keyword">def model</span> my_model <span class="keyword">as</span>
+    <span class="comment">// A single line comment</span>
+    ...
+<span class="keyword">endef</span>;</pre>
+
+        <p>
+            Alternatively, if some text is selected and it does not consist of one or several full lines, then the comment will be rendered as <code>/* XXX */</code>, e.g.
+        </p>
+
+        <pre><span class="keyword">def model</span> my_<span class="comment">/*super_duper_*/</span>model <span class="keyword">as</span>
+    ...
+<span class="keyword">endef</span>;</pre>
+
+        <p>
+            Note that <code>/* XXX */</code> comments are only for convenience and are not serialised back.
+        </p>
+
+        <div class="section">
+            Limitations
+        </div>
+
+        <p>
+            The CellML text format has the same limitations as the <a href="http://cor.physiol.ox.ac.uk/">COR</a> format:
+        </p>
+
+        <ul>
+            <li>Comments can be made anywhere in a CellML file. However, the rendering of the <code>component</code>, <code>map_components</code>, <code>map_variables</code>, <code>relationship_ref</code>, <code>unit</code>, <code>units</code> and <code>variable</code> elements using the CellML text format is such that when serialised back, those comments will be incorporated in the parent element of those elements.</li>
+            <li>The <code>reaction</code> element is not supported (indeed, its use is not only discouraged, but the <code>reaction</code> element is to be removed from the forthcoming CellML 1.2 specifications).</li>
+            <li>A <code>piecewise</code> statement can only be used as part of a top-level <code>eq</code> statement, and nested <code>piecewise</code> statements are not allowed (the nested limitation is not a limitation as such since an equation can always be rewritten without nested <code>piecewise</code> statements; more importantly, it is easier to read and maintain an equation that uses only one <code>piecewise</code> statement).</li>
+            <li>A <code>component</code> element may contain a set of <code>math</code> elements. However, its rendering is such that when serialised back, only one <code>math</code> element will remain, with all the equations originally distributed among the set now in that one and unique <code>math</code> element.</li>
+        </ul>
+
+        <script type="text/javascript">
+            copyright("../../..");
+        </script>
+    </body>
+</html>

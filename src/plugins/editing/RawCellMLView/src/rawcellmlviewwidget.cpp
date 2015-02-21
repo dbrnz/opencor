@@ -20,6 +20,7 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include "cellmlfilemanager.h"
+#include "cellmlsupportplugin.h"
 #include "corecellmleditingwidget.h"
 #include "editorlistwidget.h"
 #include "editorwidget.h"
@@ -128,10 +129,9 @@ void RawCellmlViewWidget::retranslateUi()
 
 bool RawCellmlViewWidget::contains(const QString &pFileName) const
 {
-    // Return whether we know about the given file, i.e. whether we have an
-    // editing widget for it
+    // Return whether we know about the given file
 
-    return mEditingWidgets.value(pFileName);
+    return mEditingWidgets.contains(pFileName);
 }
 
 //==============================================================================
@@ -257,16 +257,18 @@ void RawCellmlViewWidget::fileReloaded(const QString &pFileName)
 {
     // The given file has been reloaded, so reload it, should it be managed
     // Note: if the view for the given file is not the active view, then to call
-    //       call finalize() and then initialize() would activate the contents
-    //       of the view (but the file tab would still point to the previously
-    //       active file). However, we want to the 'old' file to remain the
-    //       active one, hence the extra argument we pass to initialize()...
+    //       finalize() and then initialize() would activate the contents of the
+    //       view (but the file tab would still point to the previously active
+    //       file). However, we want to the 'old' file to remain the active one,
+    //       hence the extra argument we pass to initialize()...
 
     if (contains(pFileName)) {
         bool update = mEditingWidget == mEditingWidgets.value(pFileName);
 
         finalize(pFileName);
-        initialize(pFileName, update);
+
+        if (CellMLSupport::isCellmlFile(pFileName))
+            initialize(pFileName, update);
     }
 }
 
@@ -355,42 +357,44 @@ void RawCellmlViewWidget::validate(const QString &pFileName) const
 
 //==============================================================================
 
-void RawCellmlViewWidget::cleanUpXml(const QDomNode &pDomNode) const
+void RawCellmlViewWidget::cleanMathml(QDomElement pElement)
 {
-    // Clean up the current node
+    // Clean up the current element
+    // Note: the idea is to remove all the attributes that are not in the
+    //       MathML namespace. Indeed, if we were to leave them in then the XSL
+    //       transformation would either do nothing or, worst, crash OpenCOR...
 
-    QDomNamedNodeMap domNodeAttributes = pDomNode.attributes();
+    QDomNamedNodeMap attributes = pElement.attributes();
+    QList<QDomNode> nonMathmlAttributes = QList<QDomNode>();
 
-    QStringList attributeNames = QStringList();
+    for (int i = 0, iMax = attributes.count(); i < iMax; ++i) {
+        QDomNode attribute = attributes.item(i);
 
-    for (int j = 0, jMax = domNodeAttributes.count(); j < jMax; ++j) {
-        QString attributeName = domNodeAttributes.item(j).nodeName();
-
-        if (attributeName.contains(":"))
-            attributeNames << attributeName;
+        if (attribute.namespaceURI().compare(CellMLSupport::MathmlNamespace))
+            nonMathmlAttributes << attribute;
     }
 
-    foreach (const QString &attributeName, attributeNames)
-        domNodeAttributes.removeNamedItem(attributeName);
+    foreach (QDomNode nonMathmlAttribute, nonMathmlAttributes)
+        pElement.removeAttributeNode(nonMathmlAttribute.toAttr());
 
-    // Go through the node's children, if any, and clean them up
+    // Go through the element's child elements, if any, and clean them up
 
-    for (int i = 0, iMax = pDomNode.childNodes().count(); i < iMax; ++i)
-        cleanUpXml(pDomNode.childNodes().at(i));
+    for (QDomElement childElement = pElement.firstChildElement();
+         !childElement.isNull(); childElement = childElement.nextSiblingElement()) {
+        cleanMathml(childElement);
+    }
 }
 
 //==============================================================================
 
-QString RawCellmlViewWidget::cleanUpXml(const QString &pMathml) const
+QString RawCellmlViewWidget::cleanMathml(const QString &pMathml)
 {
-    // Clean up and return the given XML string
+    // Clean up and return the given MathML string
 
     QDomDocument domDocument;
 
-    if (domDocument.setContent(pMathml)) {
-        QDomNode domNode = domDocument.documentElement();
-
-        cleanUpXml(domNode);
+    if (domDocument.setContent(pMathml, true)) {
+        cleanMathml(domDocument.documentElement());
 
         return domDocument.toString(-1);
     } else {
@@ -407,15 +411,14 @@ QString RawCellmlViewWidget::retrieveContentMathmlEquation(const QString &pConte
 
     QDomDocument domDocument;
 
-    if (domDocument.setContent(pContentMathmlBlock)) {
+    if (domDocument.setContent(pContentMathmlBlock, true)) {
         // Look for the child node within which our position is located, if any
 
-        int childNodeIndex = -1;
-        QDomNode domNode = domDocument.documentElement();
+        QDomElement domElement = domDocument.documentElement();
+        QDomElement foundChildElement = QDomElement();
 
-        for (int i = 0, iMax = domNode.childNodes().count(); i < iMax; ++i) {
-            QDomNode childNode = domNode.childNodes().at(i);
-
+        for (QDomElement childElement = domElement.firstChildElement();
+             !childElement.isNull(); childElement = childElement.nextSiblingElement()) {
             // Retrieve the start position of the current child node
             // Note: it needs to be corrected since the line and column numbers
             //       we are getting for the current child node correspond to the
@@ -426,38 +429,38 @@ QString RawCellmlViewWidget::retrieveContentMathmlEquation(const QString &pConte
 
             Core::stringLineColumnAsPosition(pContentMathmlBlock,
                                              mEditingWidget->editor()->eolString(),
-                                             childNode.lineNumber(),
-                                             childNode.columnNumber(),
+                                             childElement.lineNumber(),
+                                             childElement.columnNumber(),
                                              childNodeStartPosition);
 
-            childNodeStartPosition = pContentMathmlBlock.lastIndexOf("<"+childNode.nodeName(), childNodeStartPosition);
+            childNodeStartPosition = pContentMathmlBlock.lastIndexOf("<"+childElement.localName(), childNodeStartPosition);
 
             // Retrieve the end position of the current child node
 
             int childNodeEndPosition = -1;
 
-            if (i < iMax-1) {
+            if (childElement != domElement.lastChildElement()) {
                 // We are not dealing with the last child node, so update the
                 // position from which we are to look for the closing tag, which
                 // here must be the start position of the next child node and
                 // not the end of the given Content MathML block
 
-                QDomNode nextChildNode = domNode.childNodes().at(i+1);
+                QDomElement nextChildElement = childElement.nextSiblingElement();
 
                 Core::stringLineColumnAsPosition(pContentMathmlBlock,
                                                  mEditingWidget->editor()->eolString(),
-                                                 nextChildNode.lineNumber(),
-                                                 nextChildNode.columnNumber(),
+                                                 nextChildElement.lineNumber(),
+                                                 nextChildElement.columnNumber(),
                                                  childNodeEndPosition);
             }
 
-            childNodeEndPosition = pContentMathmlBlock.lastIndexOf("</"+childNode.nodeName()+">", childNodeEndPosition)+2+childNode.nodeName().length();
+            childNodeEndPosition = pContentMathmlBlock.lastIndexOf("</"+childElement.localName()+">", childNodeEndPosition)+2+childElement.localName().length();
 
             // Check whether our position is within the start and end positions
             // of the current child node
 
             if ((pPosition >= childNodeStartPosition) && (pPosition <= childNodeEndPosition)) {
-                childNodeIndex = i;
+                foundChildElement = childElement;
 
                 break;
             }
@@ -465,15 +468,22 @@ QString RawCellmlViewWidget::retrieveContentMathmlEquation(const QString &pConte
 
         // Check whether our position is within a child node
 
-        if (childNodeIndex != -1) {
+        if (!foundChildElement.isNull()) {
             // We are within a childe node, so remove all the other child nodes
-            // and the string representation of the resulting DOM document
+            // and return the string representation of the resulting DOM
+            // document
 
-            for (int i = 0, iMax = domNode.childNodes().count()-1-childNodeIndex; i < iMax; ++i)
-                domNode.removeChild(domNode.lastChild());
+            for (QDomElement childElement = domElement.firstChildElement();
+                 childElement != foundChildElement;
+                 childElement = domElement.firstChildElement()) {
+                domElement.removeChild(childElement);
+            }
 
-            for (int i = 0; i < childNodeIndex; ++i)
-                domNode.removeChild(domNode.firstChild());
+            for (QDomElement childElement = domElement.lastChildElement();
+                 childElement != foundChildElement;
+                 childElement = domElement.lastChildElement()) {
+                domElement.removeChild(childElement);
+            }
 
             return domDocument.toString(-1);
         } else {
@@ -502,7 +512,7 @@ void RawCellmlViewWidget::updateViewer()
     // Retrieve the Content MathML block around our current position, if any
 
     static const QString StartMathTag = "<math ";
-    static const QByteArray EndMathTag = "</math>";
+    static const QString EndMathTag = "</math>";
 
     Editor::EditorWidget *editor = mEditingWidget->editor();
     int currentPosition = editor->currentPosition();
@@ -533,7 +543,7 @@ void RawCellmlViewWidget::updateViewer()
         // Note: indeed, our Content MathML block may not be valid, in which
         //       case cleaning it up will result in an empty string...
 
-        if (cleanUpXml(contentMathmlBlock).isEmpty()) {
+        if (cleanMathml(contentMathmlBlock).isEmpty()) {
             mContentMathmlEquation = QString();
 
             mEditingWidget->viewer()->setError(true);
@@ -541,7 +551,7 @@ void RawCellmlViewWidget::updateViewer()
             // A Content MathML block contains 0+ child nodes, so extract and
             // clean up the one, if any, at our current position
 
-            QString contentMathmlEquation = cleanUpXml(retrieveContentMathmlEquation(contentMathmlBlock, currentPosition-crtStartMathTagPos));
+            QString contentMathmlEquation = cleanMathml(retrieveContentMathmlEquation(contentMathmlBlock, currentPosition-crtStartMathTagPos));
 
             // Check whether we have got a Content MathML equation
 

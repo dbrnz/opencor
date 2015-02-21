@@ -115,6 +115,10 @@
         <source>Sample</source>
         <translation>Exemple</translation>
     </message>
+    <message>
+        <source>The &lt;strong&gt;%1&lt;/strong&gt; view cannot save &lt;strong&gt;%2&lt;/strong&gt;.</source>
+        <translation>La vue &lt;strong&gt;%1&lt;/strong&gt; ne peut pas sauvegarder &lt;strong&gt;%2&lt;/strong&gt;.</translation>
+    </message>
 </context>
 <context>
     <name>OpenCOR::Core::CorePlugin</name>
@@ -233,6 +237,14 @@
     <message>
         <source>Open a remote file</source>
         <translation>Ouvrir un fichier à distance</translation>
+    </message>
+    <message>
+        <source>Most Recent</source>
+        <translation>Plus Récent</translation>
+    </message>
+    <message>
+        <source>Reopen the most recently closed file</source>
+        <translation>Réouvrir le fichier qui a été le plus récemment fermé</translation>
     </message>
 </context>
 <context>

@@ -88,22 +88,9 @@ void CoreEditingPlugin::fileOpened(const QString &pFileName)
 
 void CoreEditingPlugin::filePermissionsChanged(const QString &pFileName)
 {
-    // Update some actions and make our editor read-only or writable, if needed
+    // The given file has been un/locked, so update our GUI accordingly
 
-    if (mEditingInterface && !pFileName.compare(mFileName)) {
-        // Update some actions
-
-        updateUndoAndRedoActions();
-        updateEditingActions();
-        updateFindPreviousNextActions();
-        updateSelectAllAction();
-
-        // Make our editor read-only or writable
-
-        if (mEditor)
-            mEditor->setReadOnly(   !Core::FileManager::instance()->isReadableAndWritable(pFileName)
-                                 || !mEditingInterface->isEditorUseable(pFileName));
-    }
+    updateGui(pFileName);
 }
 
 //==============================================================================
@@ -232,15 +219,9 @@ void CoreEditingPlugin::updateGui(Plugin *pViewPlugin, const QString &pFileName)
 
     Core::showEnableAction(mEditSelectAllAction, mEditingInterface, mEditor);
 
-    // Enable/disable some of our actions, if we have both an editing interface
-    // and an editor
+    // Finish updating our GUI
 
-    if (mEditingInterface && mEditor) {
-        updateUndoAndRedoActions();
-        updateEditingActions();
-        updateFindPreviousNextActions();
-        updateSelectAllAction();
-    }
+    updateGui(pFileName);
 }
 
 //==============================================================================
@@ -447,6 +428,28 @@ void CoreEditingPlugin::handleAction(const QUrl &pUrl)
 // Plugin specific
 //==============================================================================
 
+void CoreEditingPlugin::updateGui(const QString &pFileName)
+{
+    // Update some actions and make our editor read-only or writable, if needed
+
+    if (mEditingInterface && !pFileName.compare(mFileName)) {
+        // Update some actions
+
+        updateUndoAndRedoActions();
+        updateEditingActions();
+        updateFindPreviousNextActions();
+        updateSelectAllAction();
+
+        // Make our editor read-only or writable
+
+        if (mEditor)
+            mEditor->setReadOnly(   !Core::FileManager::instance()->isReadableAndWritable(pFileName)
+                                 || !mEditingInterface->isEditorUseable(pFileName));
+    }
+}
+
+//==============================================================================
+
 void CoreEditingPlugin::unpopulateEditMenu()
 {
     // Unpopulate our Edit menu
@@ -581,7 +584,7 @@ void CoreEditingPlugin::newFile()
     // Make sure that the file has indeed been created
 
     if (createStatus != Core::FileManager::Created)
-        qFatal("FATAL ERROR | %s:%d: the new file was not created", __FILE__, __LINE__);
+        qFatal("FATAL ERROR | %s:%d: the new file was not created.", __FILE__, __LINE__);
 #endif
 }
 

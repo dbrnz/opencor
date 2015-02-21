@@ -1,15 +1,17 @@
 var jsonData = {"versions":[
-                   {"anchor":"latest", "description":"Latest snapshot", "date":"5 December 2014",
+                   {"anchor":"latest", "description":"Latest snapshot", "date":"7 February 2015",
                     "categories":[
                         {"name":"General",
                          "entries":[
-                             {"type":"Added", "description":"Support for 64-bit <a href=\"http://en.wikipedia.org/wiki/Microsoft_Windows\">Windows</a>."},
-                             {"type":"Added", "description":"Support for 64-bit <a href=\"http://en.wikipedia.org/wiki/Microsoft_Windows\">Windows</a>."},
                              {"type":"Added", "description":"Checking for updates."},
+                             {"type":"Added", "description":"Support for 64-bit <a href=\"http://en.wikipedia.org/wiki/Microsoft_Windows\">Windows</a>."},
+                             {"type":"Added", "description":"Support for <a href=\"http://en.wikipedia.org/wiki/OS_X\">OS X</a> 10.10 (Yosemite)."},
                              {"type":"Improved", "description":"OpenCOR logo."},
                              {"type":"Improved", "description":"Binaries on <a href=\"http://en.wikipedia.org/wiki/OS_X\">OS X</a>."},
+                             {"type":"Improved", "description":"<a href=\"http://nsis.sourceforge.net/\">NSIS</a> packaging on <a href=\"http://en.wikipedia.org/wiki/Microsoft_Windows\">Windows</a>."},
                              {"type":"Improved", "description":"<a href=\"http://en.wikipedia.org/wiki/Zip_(file_format)\">ZIP</a> packaging on <a href=\"http://en.wikipedia.org/wiki/OS_X\">OS X</a>."},
-                             {"type":"Improved", "description":"Displaying of numbers."}
+                             {"type":"Improved", "description":"Display of numbers."},
+                             {"type":"Improved", "description":"Opening and reopening of files."}
                          ]
                         },
                         {"name":"Data store",
@@ -30,14 +32,32 @@ var jsonData = {"versions":[
                                   {"type":"Improved", "description":"Detection of direct ontological terms."},
                                   {"type":"Improved", "description":"Retrieval of ontological terms."},
                                   {"type":"Improved", "description":"Listing of ontological terms."},
-                                  {"type":"Fixed", "description":"Editing a malformed CellML files."},
-                                  {"type":"Fixed", "description":"Further editing after saving a CellML file."}
+                                  {"type":"Fixed", "description":"Editing of malformed CellML files."},
+                                  {"type":"Fixed", "description":"Further editing after saving a CellML file."},
+                                  {"type":"Fixed", "description":"Risk of the same <code>cmeta:id</code> value being used for two different CellML elements."}
+                              ]
+                             },
+                             {"type":"subCategory", "name":"Raw view",
+                              "entries":[
+                                  {"type":"Improved", "description":"File permissions changes."}
                               ]
                              },
                              {"type":"subCategory", "name":"Raw CellML view",
                               "entries":[
                                   {"type":"Improved", "description":"Context menu."},
+                                  {"type":"Improved", "description":"Equation rendering."},
+                                  {"type":"Improved", "description":"File permissions changes."},
                                   {"type":"Fixed", "description":"Retrieval of view settings."}
+                              ]
+                             },
+                             {"type":"Added", "description":"<a href=\"plugins/editing/CellMLTextView.html\">CellML Text view</a> <em>(work in progress)</em>."}
+                         ]
+                        },
+                        {"name":"Miscellaneous",
+                         "entries":[
+                             {"type":"subCategory", "name":"Help",
+                              "entries":[
+                                  {"type":"Improved", "description":"Printing."}
                               ]
                              }
                          ]
@@ -66,7 +86,10 @@ var jsonData = {"versions":[
                          "entries":[
                              {"type":"subCategory", "name":"CellML support",
                               "entries":[
-                                  {"type":"Improved", "description":"Serialisation of CellML files."}
+                                  {"type":"Improved", "description":"Serialisation of CellML files."},
+                                  {"type":"Improved", "description":"Reloading of CellML files."},
+                                  {"type":"Improved", "description":"Error messages."},
+                                  {"type":"Fixed", "description":"Loading of CellML files."}
                               ]
                              }
                          ]

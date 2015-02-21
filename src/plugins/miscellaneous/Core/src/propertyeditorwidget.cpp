@@ -107,9 +107,9 @@ void TextEditorWidget::keyPressEvent(QKeyEvent *pEvent)
 IntegerEditorWidget::IntegerEditorWidget(QWidget *pParent) :
     TextEditorWidget(pParent)
 {
-    // Set a validator which accepts any integer
+    // Set a validator that accepts any integer
 
-    setValidator(new QRegularExpressionValidator(QRegularExpression("^[+-]?[0-9]*$"), this));
+    setValidator(new QRegularExpressionValidator(QRegularExpression("^[+-]?\\d*$"), this));
 }
 
 //==============================================================================
@@ -117,9 +117,9 @@ IntegerEditorWidget::IntegerEditorWidget(QWidget *pParent) :
 DoubleEditorWidget::DoubleEditorWidget(QWidget *pParent) :
     TextEditorWidget(pParent)
 {
-    // Set a validator which accepts any double
+    // Set a validator that accepts any double
 
-    setValidator(new QRegularExpressionValidator(QRegularExpression("^[+-]?[0-9]*\\.?[0-9]+([eE][+-]?[0-9]+)?$"), this));
+    setValidator(new QRegularExpressionValidator(QRegularExpression("^[+-]?(\\d+(\\.\\d*)?|\\.\\d+)([eE][+-]?\\d+)?$"), this));
 }
 
 //==============================================================================
@@ -551,15 +551,6 @@ QList<QStandardItem *> Property::items() const
 
 //==============================================================================
 
-QModelIndex Property::index() const
-{
-    // Return our index
-
-    return mName->index();
-}
-
-//==============================================================================
-
 bool Property::hasIndex(const QModelIndex &pIndex) const
 {
     // Return whether the given is that our name, value or unit item
@@ -570,6 +561,15 @@ bool Property::hasIndex(const QModelIndex &pIndex) const
         res = res || (mUnit->index()  == pIndex);
 
     return res;
+}
+
+//==============================================================================
+
+QModelIndex Property::index() const
+{
+    // Return our index
+
+    return mName->index();
 }
 
 //==============================================================================
@@ -791,13 +791,13 @@ void Property::setListValue(const QStringList &pListValue,
     int iMax = pListValue.count();
 
     for (; i < iMax; ++i)
-        if (!pListValue.at(i).isEmpty())
+        if (!pListValue[i].isEmpty())
             break;
 
     bool previousItemIsSeparator = false;
 
     for (; i < iMax; ++i) {
-        QString listValueItem = pListValue.at(i);
+        QString listValueItem = pListValue[i];
 
         if (!listValueItem.isEmpty()) {
             listValue << listValueItem;

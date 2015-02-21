@@ -53,15 +53,17 @@ QScintillaWidget::QScintillaWidget(QsciLexer *pLexer, QWidget *pParent) :
     // Customise ourselves
 
     setCaretLineVisible(true);
+    setFolding(QsciScintilla::BoxedTreeFoldStyle);
     setFrameShape(QFrame::NoFrame);
+    setIndentationsUseTabs(false);
     setMarginWidth(SC_MARGIN_NUMBER, 0);
+    setTabWidth(4);
     setUtf8(true);
 
-    // Associate a lexer to our Scintilla editor, should one be provided
-    // Note: the default font family and size come from Qt Creator...
+    // Set our font
 
 #if defined(Q_OS_WIN)
-    mFont = QFont("Courier", 10);
+    mFont = QFont("Lucida Console", 11);
 #elif defined(Q_OS_LINUX)
     mFont = QFont("Monospace", 9);
 #elif defined(Q_OS_MAC)
@@ -70,24 +72,11 @@ QScintillaWidget::QScintillaWidget(QsciLexer *pLexer, QWidget *pParent) :
     #error Unsupported platform
 #endif
 
-    if (pLexer) {
-        // A lexer was provided, so specify its fonts and associate it with our
-        // Scintilla editor
+    setFont(mFont);
 
-        pLexer->setFont(mFont);
+    // Use the given lexer
 
-        setLexer(pLexer);
-
-        // Specify the type of tree folding to be used (some lexers may indeed
-        // use that feature)
-
-        setFolding(QsciScintilla::BoxedTreeFoldStyle);
-    } else {
-        // No lexer was provided, so simply specify a default font family and
-        // size for our Scintilla editor
-
-        setFont(mFont);
-    }
+    setLexer(pLexer);
 
     // Force the use of UNIX EOL mode
     // Note: by default QScintilla will use EolWindows on Windows and EolUnix on
@@ -112,6 +101,7 @@ QScintillaWidget::QScintillaWidget(QsciLexer *pLexer, QWidget *pParent) :
     //          press Ctrl+L, then nothing would happen while we would have
     //          expected the current file to be (un)locked...
 
+    SendScintilla(SCI_CLEARCMDKEY, (SCMOD_CTRL << 16)+'/');
     SendScintilla(SCI_CLEARCMDKEY, (SCMOD_CTRL << 16)+'D');
     SendScintilla(SCI_CLEARCMDKEY, (SCMOD_CTRL << 16)+'L');
     SendScintilla(SCI_CLEARCMDKEY, (SCMOD_CTRL << 16)+(SCMOD_SHIFT << 16)+'L');
@@ -184,6 +174,18 @@ void QScintillaWidget::setCursorPosition(int pLine, int pColumn)
 
 //==============================================================================
 
+void QScintillaWidget::setLexer(QsciLexer *pLexer)
+{
+    // Set our font for the given lexer, if any
+
+    if (pLexer)
+        pLexer->setFont(mFont);
+
+    QsciScintilla::setLexer(pLexer);
+}
+
+//==============================================================================
+
 int QScintillaWidget::currentPosition() const
 {
     // Return our current position
@@ -232,8 +234,8 @@ int QScintillaWidget::contentsSize() const
 QString QScintillaWidget::textInRange(const int &pStartRange,
                                       const int &pEndRange) const
 {
-    // Retrieve and return the text in the given range, making sure that the
-    // given range makes sense
+    // Retrieve and return the text in the given range, after making sure that
+    // the given range makes sense
 
     int maxRange = contentsSize();
 
@@ -375,12 +377,30 @@ QString QScintillaWidget::eolString() const
 
 //==============================================================================
 
+QColor QScintillaWidget::backgroundColor(const int &pStyle)
+{
+    // Return the background color for the given style
+
+    return SendScintilla(SCI_STYLEGETBACK, pStyle);
+}
+
+//==============================================================================
+
 void QScintillaWidget::setBackgroundColor(const int &pStyle,
                                           const QColor &pBackgroundColor)
 {
     // Set the background color for the given style
 
     SendScintilla(SCI_STYLESETBACK, pStyle, pBackgroundColor);
+}
+
+//==============================================================================
+
+QColor QScintillaWidget::foregroundColor(const int &pStyle)
+{
+    // Return the foreground color for the given style
+
+    return SendScintilla(SCI_STYLEGETFORE, pStyle);
 }
 
 //==============================================================================

@@ -29,7 +29,6 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
-#include <QDomNode>
 #include <QMap>
 
 //==============================================================================
@@ -108,8 +107,8 @@ private:
 
     QString mContentMathmlEquation;
 
-    void cleanUpXml(const QDomNode &pDomNode) const;
-    QString cleanUpXml(const QString &pMathml) const;
+    void cleanMathml(QDomElement pElement);
+    QString cleanMathml(const QString &pMathml);
 
     QString retrieveContentMathmlEquation(const QString &pContentMathmlBlock,
                                           const int &pPosition) const;

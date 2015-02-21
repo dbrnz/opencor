@@ -31,8 +31,8 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
+#include <QDomElement>
 #include <QMap>
-#include <QObject>
 
 //==============================================================================
 
@@ -43,13 +43,15 @@ namespace CellMLSupport {
 
 static const auto Cellml_1_0_Namespace = QStringLiteral("http://www.cellml.org/cellml/1.0#");
 static const auto Cellml_1_1_Namespace = QStringLiteral("http://www.cellml.org/cellml/1.1#");
+static const auto CmetaIdNamespace     = QStringLiteral("http://www.cellml.org/metadata/1.0#");
+static const auto MathmlNamespace      = QStringLiteral("http://www.w3.org/1998/Math/MathML");
+static const auto RdfNamespace         = QStringLiteral("http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+static const auto XlinkNamespace       = QStringLiteral("http://www.w3.org/1999/xlink");
 
 //==============================================================================
 
-class CELLMLSUPPORT_EXPORT CellmlFile : public QObject
+class CELLMLSUPPORT_EXPORT CellmlFile
 {
-    Q_OBJECT
-
 public:
     enum Version {
         Cellml_1_0,
@@ -110,7 +112,7 @@ public:
                          const CellmlFileRdfTriple::BioQualifier &pBioQualifier,
                          const QString &pResource, const QString &pId);
 
-    QString xmlBase() const;
+    QString xmlBase();
 
     bool exportTo(const QString &pFileName, const Version &pVersion);
     bool exportTo(const QString &pFileName,
@@ -138,6 +140,8 @@ private:
 
     QMap<QString, QString> mImportContents;
 
+    QStringList mUsedCmetaIds;
+
     void reset();
 
     void retrieveImports(iface::cellml_api::Model *pModel,
@@ -152,6 +156,10 @@ private:
                 ObjRef<iface::cellml_api::Model> *pModel,
                 CellmlFileIssues &pIssues);
 
+    void retrieveCmetaIdsFromCellmlElement(iface::cellml_api::CellMLElement *pElement);
+    void clearCmetaIdsFromCellmlElement(const QDomElement &pElement,
+                                        const QStringList &pUsedCmetaIds);
+
     bool doIsValid(iface::cellml_api::Model *pModel, CellmlFileIssues &pIssues);
 
     CellmlFileRdfTriple * rdfTriple(iface::cellml_api::CellMLElement *pElement,
@@ -159,7 +167,7 @@ private:
                                     const QString &pResource,
                                     const QString &pId) const;
 
-    QString rdfTripleSubject(iface::cellml_api::CellMLElement *pElement) const;
+    QString rdfTripleSubject(iface::cellml_api::CellMLElement *pElement);
 };
 
 //==============================================================================

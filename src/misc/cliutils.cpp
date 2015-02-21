@@ -34,7 +34,9 @@ specific language governing permissions and limitations under the License.
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QProcess>
+#include <QResource>
 #include <QSettings>
+#include <QTemporaryFile>
 
 //==============================================================================
 
@@ -97,22 +99,27 @@ void initPluginsPath(const QString &pAppFileName)
 
 void initApplication(QCoreApplication *pApp, QString *pAppDate)
 {
+    // Remove all 'global' instances, in case OpenCOR previously crashed or
+    // something (and therefore didn't remove all of them before quitting)
+
+    OpenCOR::removeGlobalInstances();
+
     // Set the name of the application
 
     pApp->setApplicationName(QFileInfo(pApp->applicationFilePath()).baseName());
 
     // Retrieve and set the version of the application
 
-    QFile versionDateFile(":app_versiondate");
+    QString versionData;
 
-    versionDateFile.open(QIODevice::ReadOnly);
+    readTextFromFile(":app_versiondate", versionData);
 
-    pApp->setApplicationVersion(QString(versionDateFile.readLine()).trimmed());
+    QStringList versionDataList = versionData.split(eolString());
+
+    pApp->setApplicationVersion(versionDataList.first());
 
     if (pAppDate)
-        *pAppDate = QString(versionDateFile.readLine()).trimmed();
-
-    versionDateFile.close();
+        *pAppDate = versionDataList.last();
 }
 
 //==============================================================================

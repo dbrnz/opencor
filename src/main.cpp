@@ -45,17 +45,8 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
-#include <stdlib.h>
-
-//==============================================================================
-
 int main(int pArgC, char *pArgV[])
 {
-    // Remove all 'global' instances, in case OpenCOR previously crashed or
-    // something (and therefore didn't remove all of them before quitting)
-
-    OpenCOR::removeGlobalInstances();
-
     // Determine whether we should try the CLI version of OpenCOR:
     //  - Windows: we never try the CLI version of OpenCOR. We go straight for
     //             its GUI version.
@@ -83,8 +74,8 @@ int main(int pArgC, char *pArgV[])
     //          opening it from the command line, a special argument in the form
     //          of -psn_0_1234567 is passed to OpenCOR, so we can use that to
     //          determine whether we need to force OpenCOR to be run in GUI mode
-    //          or whether we first try the CLI version of OpenCOR, and then the
-    //          GUI version if needed...
+    //          or whether we first try the CLI version of OpenCOR, and then its
+    //          GUI version, if needed...
 
 #if defined(Q_OS_WIN)
     bool tryCliVersion = false;
@@ -115,16 +106,14 @@ int main(int pArgC, char *pArgV[])
 
         bool runCliApplication = OpenCOR::cliApplication(cliApp, &res);
 
+        OpenCOR::removeGlobalInstances();
+
         delete cliApp;
 
-        if (runCliApplication) {
-            // OpenCOR was run as a CLI application, so remove all our global
-            // instances and leave
-
-            OpenCOR::removeGlobalInstances();
+        if (runCliApplication)
+            // OpenCOR was run as a CLI application, so leave
 
             return res;
-        }
 
         // Note: at this stage, we tried the CLI version of OpenCOR, but in the
         //       end we need to go for its GUI version, so start over but with
@@ -140,19 +129,41 @@ int main(int pArgC, char *pArgV[])
     //       using indirect rendering...
 
 #ifdef Q_OS_LINUX
-        setenv("LIBGL_ALWAYS_INDIRECT", "1", 1);
+    qputenv("LIBGL_ALWAYS_INDIRECT", "1");
 #endif
 
     // Initialise the plugins path
 
     OpenCOR::initPluginsPath(pArgV[0]);
 
-    // Create and initialise the GUI version of OpenCOR
-    // Note: if we tried the CLI version of OpenCOR before, then it won't have
-    //       done anything, so no need to re-remove all 'global' instances...
+    // Create the GUI version of OpenCOR
 
     SharedTools::QtSingleApplication *guiApp = new SharedTools::QtSingleApplication(QFileInfo(pArgV[0]).baseName(),
                                                                                     pArgC, pArgV);
+
+    // Send a message (containing the arguments that were passed to this
+    // instance of OpenCOR minus the first one since it corresponds to the full
+    // path to our executable, which we are not interested in) to our 'official'
+    // instance of OpenCOR, should there be one. If there is no none, then just
+    // carry on as normal, otherwise exit since we want only one instance of
+    // OpenCOR at any given time
+
+    QStringList appArguments = guiApp->arguments();
+
+    appArguments.removeFirst();
+
+    QString arguments = appArguments.join("|");
+
+    if (guiApp->isRunning()) {
+        guiApp->sendMessage(arguments);
+
+        delete guiApp;
+
+        return 0;
+    }
+
+    // Initialise the GUI version of OpenCOR
+
     QString appDate = QString();
 
     OpenCOR::initApplication(guiApp, &appDate);
@@ -230,31 +241,7 @@ int main(int pArgC, char *pArgV[])
     OpenCOR::SplashScreenWindow *splashScreen = new OpenCOR::SplashScreenWindow();
 
     splashScreen->show();
-
-    guiApp->processEvents();
-    // Note: this ensures that our splash screen is immediately visible...
 #endif
-
-    // Send a message (containing the arguments that were passed to this
-    // instance of OpenCOR minus the first one since it corresponds to the full
-    // path to our executable, which we are not interested in) to our 'official'
-    // instance of OpenCOR, should there be one. If there is no none, then just
-    // carry on as normal, otherwise exit since we want only one instance of
-    // OpenCOR at any given time
-
-    QStringList appArguments = guiApp->arguments();
-
-    appArguments.removeFirst();
-
-    QString arguments = appArguments.join("|");
-
-    if (guiApp->isRunning()) {
-        guiApp->sendMessage(arguments);
-
-        delete guiApp;
-
-        return 0;
-    }
 
     // Create our main window
 
@@ -313,13 +300,13 @@ int main(int pArgC, char *pArgV[])
 
     delete win;
 
-    // If we use QtWebKit, and QWebPage in particular, then leak messages will
-    // get generated on Windows when leaving OpenCOR. This is because an object
-    // cache is shared between all QWebPage instances. So to destroy a QWebPage
-    // instance won't clear the cache, hence the leak messages. However, these
-    // messages are 'only' warnings, so we can safely live with them. Still, it
-    // doesn't look 'good', so we clear the memory caches, thus avoiding those
-    // leak messages...
+    // We use QtWebKit, and QWebPage in particular, which results in some leak
+    // messages being generated on Windows when leaving OpenCOR. This is because
+    // an object cache is shared between all QWebPage instances. So to destroy a
+    // QWebPage instance doesn't clear the cache, hence the leak messages.
+    // However, those messages are 'only' warnings, so we can safely live with
+    // them. Still, it doesn't look 'good', so we clear the memory caches, thus
+    // avoiding those leak messages...
     // Note: the below must absolutely be done after calling guiApp->exec() and
     //       before deleting guiApp...
 
@@ -327,14 +314,14 @@ int main(int pArgC, char *pArgV[])
     QWebSettings::clearMemoryCaches();
 #endif
 
-    // Delete our application
-
-    delete guiApp;
-
     // Remove all 'global' instances that were created and used during this
     // session
 
     OpenCOR::removeGlobalInstances();
+
+    // Delete our application
+
+    delete guiApp;
 
     // We are done with the execution of our application, so now the question is
     // whether we need to restart

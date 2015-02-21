@@ -115,7 +115,7 @@ PluginsWindow::PluginsWindow(PluginManager *pPluginManager,
 
     // Update the note label
 
-    mGui->noteLabel->setText(mGui->noteLabel->text().arg(qApp->applicationName()));
+    mGui->noteLabel->setText(mGui->noteLabel->text().arg(qAppName()));
 
     // Set up the tree view widget with a delegate, so that we can select
     // plugins that are shown as 'disabled' (to reflect the fact that users
@@ -354,7 +354,7 @@ QString PluginsWindow::statusDescription(Plugin *pPlugin) const
     case Plugin::NotNeeded:
         return tr("the plugin is not needed.");
     case Plugin::NotLoaded:
-        return tr("the plugin could not be loaded due to the following problem: %1.").arg(formatErrorMessage(pPlugin->statusErrors()));
+        return tr("the plugin could not be loaded due to the following problem: %1.").arg(formatMessage(pPlugin->statusErrors()));
     case Plugin::NotPlugin:
         return tr("this is not a plugin.");
     case Plugin::NotCorePlugin:
@@ -691,8 +691,8 @@ void PluginsWindow::on_buttonBox_rejected()
 
 void PluginsWindow::apply()
 {
-    if (QMessageBox::question(this, qApp->applicationName(),
-                              tr("<strong>%1</strong> must be restarted for your changes to take effect. Do you wish to proceed?").arg(qApp->applicationName()),
+    if (QMessageBox::question(this, qAppName(),
+                              tr("<strong>%1</strong> must be restarted for your changes to take effect. Do you wish to proceed?").arg(qAppName()),
                               QMessageBox::Yes|QMessageBox::No,
                               QMessageBox::Yes) == QMessageBox::Yes ) {
         // Do what is done when clicking on the OK button

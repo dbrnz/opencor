@@ -16,28 +16,28 @@ IF(USE_PREBUILT_QSCINTILLA_PLUGIN)
     IF(WIN32)
         IF(${ARCHITECTURE} EQUAL 32)
             IF(RELEASE_MODE)
-                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.dll 113d806c195f2fecfbc4978bf51a840721734ee6)
-                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.lib 8ccbf1cc6ffbe8ab169494406499d96562f62133)
+                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.dll 835d56d0e37d99173d7f6b7332d36e830ebf20c0)
+                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.lib 30d5431c4558165de942eb4eb7d788bb0acae33c)
             ELSE()
-                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.dll 6868fd831b045f7662893e05d9de923382a72492)
-                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.lib 2a140e51a7dc0e5417a81bb4ad4224b64f56fb1b)
+                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.dll 3477c97cc1c8c167f87e2969b2b135004bf987bc)
+                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.lib 5f0f52a46b6ff1dc57dd59501c594d797629f757)
             ENDIF()
         ELSE()
             IF(RELEASE_MODE)
-                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.dll 36ea603c29907df930b45e24663f5ef83d244d5b)
-                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.lib 4ab6f050c4adaabd552180d46bbea3b3a2c04728)
+                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.dll 1f99de46ef69220b1c0f37bb60045d61dd35508e)
+                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.lib 09fcf7cd20a17ecb8ef4895a5006bf717bb7a6d0)
             ELSE()
-                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.dll 080fb39953c5d2d2d2f3f2bec2cb05089c4fa684)
-                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.lib c5e9352815a90b254e5088f5991283bb90cb43ad)
+                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.dll 9367f47bee8879d3103f310ca0c213a5c201a61a)
+                RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} QScintilla.lib 6234c391ad7d34e73d983cc9a19a9f756aa5466a)
             ENDIF()
         ENDIF()
     ELSEIF(APPLE)
-        RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} libQScintilla.dylib 33f8e58d750299c1bdb8227809a803248299c85d)
+        RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} libQScintilla.dylib 23be6d5df253eafe25aae735582d28a6b9aa1d2b)
     ELSE()
         IF(${ARCHITECTURE} EQUAL 32)
-            RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} libQScintilla.so a133c1eb17b6b2b34a941b1339736a2517b34edf)
+            RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} libQScintilla.so f04867a457655ca13128d294372d88c296663616)
         ELSE()
-            RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} libQScintilla.so ccc5d26af6857fa847eafa6be07d23726d4ce882)
+            RETRIEVE_BINARY_FILE(${RELATIVE_PROJECT_SOURCE_DIR} libQScintilla.so 7f0b532d1ea8cb969f5fd7bb673bd7d463a51c39)
         ENDIF()
     ENDIF()
 
@@ -69,10 +69,8 @@ ELSE()
 
     IF(APPLE)
         SET(MAC_EXTRAS MacExtras)
-        SET(QT_MAC_EXTRAS QtMacExtras)
     ELSE()
         SET(MAC_EXTRAS)
-        SET(QT_MAC_EXTRAS)
     ENDIF()
 
     SET(QSCINTILLA_PLUGIN QScintilla PARENT_SCOPE)
@@ -104,6 +102,7 @@ ELSE()
             Qt4Qt5/qscidocument.cpp
             Qt4Qt5/qscilexer.cpp
             Qt4Qt5/qscilexercpp.cpp
+            Qt4Qt5/qscilexercustom.cpp
             Qt4Qt5/qscilexerhtml.cpp
             Qt4Qt5/qscilexerjavascript.cpp
             Qt4Qt5/qscilexerpython.cpp
@@ -147,6 +146,7 @@ ELSE()
             Qt4Qt5/Qsci/qsciapis.h
             Qt4Qt5/Qsci/qscilexer.h
             Qt4Qt5/Qsci/qscilexercpp.h
+            Qt4Qt5/Qsci/qscilexercustom.h
             Qt4Qt5/Qsci/qscilexerhtml.h
             Qt4Qt5/Qsci/qscilexerjavascript.h
             Qt4Qt5/Qsci/qscilexerpython.h

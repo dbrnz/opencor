@@ -4,6 +4,12 @@ PROJECT(OpenCOR)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 3.0.0)
 
+# Policies that we want to use
+
+IF(POLICY CMP0054)
+    CMAKE_POLICY(SET CMP0054 NEW)
+ENDIF()
+
 # Some in-house CMake functions/macros
 
 INCLUDE(${CMAKE_SOURCE_DIR}/cmake/common.cmake)
@@ -124,6 +130,7 @@ ENDIF()
 INCLUDE_DIRECTORIES(
     src/misc
     src/plugins
+    src/plugins/miscellaneous/Core/src
 )
 
 # Update the translation (.ts) files and generate the language (.qm) files
@@ -152,10 +159,16 @@ ELSEIF(APPLE)
     LIST(APPEND SOURCES res/${IconFile})
 ENDIF()
 
-# Check whether tests are required and, if so, set the destination tests
-# directory and build our main test program
+# Check whether tests are required and, if so, 'reset' our list of tests and set
+# the destination tests directory
 
 IF(ENABLE_TESTS)
+    # 'Reset' our list of tests
+
+    SET(TESTS_LIST_FILENAME ${PROJECT_BUILD_DIR}/tests.txt)
+
+    FILE(REMOVE ${TESTS_LIST_FILENAME})
+
     # Destination tests directory
     # Note: DEST_TESTS_DIR isn't only used here, but also in our ADD_PLUGIN()
     #       macro...
@@ -165,13 +178,21 @@ IF(ENABLE_TESTS)
     ELSE()
         SET(DEST_TESTS_DIR ${PROJECT_BUILD_DIR}/bin)
     ENDIF()
+ENDIF()
 
+# Check whether tests are required and, if so, build our main test program
+
+IF(ENABLE_TESTS)
     # Build our main test program
 
     SET(RUNTESTS_NAME runtests)
 
+    QT5_ADD_RESOURCES(RUNTESTS_SOURCES_RCS src/tests/res/tests.qrc)
+
     ADD_EXECUTABLE(${RUNTESTS_NAME}
-        src/tests/main.cpp
+        src/tests/src/main.cpp
+
+        ${RUNTESTS_SOURCES_RCS}
     )
 
     TARGET_LINK_LIBRARIES(${RUNTESTS_NAME}
@@ -255,7 +276,7 @@ SET(PLUGINS
     datastore/PythonStore
 
     editing/CellMLAnnotationView
-    editing/PrettyCellMLView
+    editing/CellMLTextView
     editing/RawCellMLView
     editing/RawView
 
@@ -356,7 +377,7 @@ IF(WIN32)
     )
 ENDIF()
 
-# Some post-processing specific
+# Some post-processing specific stuff
 
 IF(APPLE)
     # Configure and use our own Info.plist file
@@ -383,6 +404,7 @@ IF(APPLE)
     # Clean up the OpenCOR executable
 
     SET(QT_LIBRARIES
+        QtCLucene
         QtConcurrent
         QtCore
         QtGui
@@ -397,7 +419,9 @@ IF(APPLE)
         QtQml
         QtQuick
         QtSensors
+        QtSql
         QtSvg
+        QtWebChannel
         QtWebKit
         QtWebKitWidgets
         QtWidgets
@@ -409,7 +433,7 @@ IF(APPLE)
 
     # Deploy our Qt libraries
 
-    OS_X_DEPLOY_QT_LIBRARIES(${QT_LIBRARIES} QtCLucene QtSql)
+    OS_X_DEPLOY_QT_LIBRARIES(${QT_LIBRARIES})
 
     IF(ENABLE_TESTS)
         OS_X_DEPLOY_QT_LIBRARIES(QtTest)
@@ -417,7 +441,6 @@ IF(APPLE)
 
     # Deploy some plugins
 
-    OS_X_DEPLOY_QT_PLUGIN(accessible qtaccessiblewidgets)
     OS_X_DEPLOY_QT_PLUGIN(imageformats qjpeg)
     OS_X_DEPLOY_QT_PLUGIN(platforms qcocoa)
     OS_X_DEPLOY_QT_PLUGIN(printsupport cocoaprintersupport)
@@ -470,11 +493,11 @@ ELSE()
         ENDIF()
 
         IF(${ARCHITECTURE} EQUAL 32)
-            RETRIEVE_BINARY_FILE(distrib/${DISTRIB_DIR} libeay32.dll 824d314e6f24c490ec0329d20762ae8a3263af92)
-            RETRIEVE_BINARY_FILE(distrib/${DISTRIB_DIR} ssleay32.dll fbf26c1f27b89b4116b43f28964b3d3176776804)
+            RETRIEVE_BINARY_FILE(distrib/${DISTRIB_DIR} libeay32.dll 22c9aee60cf0286f22690cf2d8cbf1cdb1f6e394)
+            RETRIEVE_BINARY_FILE(distrib/${DISTRIB_DIR} ssleay32.dll 9fd71a15fbaac87b797b3e1e7477d97a7aa30ae0)
         ELSE()
-            RETRIEVE_BINARY_FILE(distrib/${DISTRIB_DIR} libeay32.dll e674f9bc7271b1f0112c5d38d5ecb09b45b4b8ab)
-            RETRIEVE_BINARY_FILE(distrib/${DISTRIB_DIR} ssleay32.dll 597653fd6b869f37a865b84fa5b59fd0905a1ed5)
+            RETRIEVE_BINARY_FILE(distrib/${DISTRIB_DIR} libeay32.dll f12d2ca58bff5813a255110a27d3eb432ad211e8)
+            RETRIEVE_BINARY_FILE(distrib/${DISTRIB_DIR} ssleay32.dll 3a9bb668e2da40a479bc23eb17df6c6763bfc43e)
         ENDIF()
 
         LIST(APPEND ADDITIONAL_FILES
@@ -500,6 +523,14 @@ SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A cross-platform CellML-based modelling e
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/distrib/readMe.txt")
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${PROJECT_NAME}")
 SET(CPACK_PACKAGE_EXECUTABLES "${PROJECT_NAME}" "${PROJECT_NAME}")
+SET(CPACK_PACKAGE_VENDOR "Physiome Project")
+SET(CPACK_PACKAGE_VERSION "${VERSION}")
+
+IF(SNAPSHOT)
+    SET(CPACK_PACKAGE_VERSION_PATCH "")
+ELSE()
+    SET(CPACK_PACKAGE_VERSION_PATCH "${VERSION_PATCH}")
+ENDIF()
 
 IF(WIN32)
     # Select NSIS, if available, and ZIP as the packagers on Windows
@@ -526,6 +557,8 @@ IF(WIN32)
         ELSE()
             SET(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
         ENDIF()
+
+        SET(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\${PROJECT_NAME}.exe")
     ENDIF()
 
     # Install both the GUI and CLI versions of OpenCOR
@@ -541,8 +574,8 @@ IF(WIN32)
 
     # Qt libraries required by OpenCOR
 
-    WINDOWS_DEPLOY_QT_LIBRARIES(Qt5CLucene Qt5Core Qt5Gui Qt5Help Qt5Multimedia Qt5MultimediaWidgets Qt5Network Qt5OpenGL Qt5Positioning Qt5PrintSupport Qt5Qml Qt5Quick Qt5Sensors Qt5Sql Qt5Svg Qt5WebKit Qt5WebKitWidgets Qt5Widgets Qt5Xml Qt5XmlPatterns)
-    WINDOWS_DEPLOY_QT_LIBRARIES(icudt52 icuin52 icuuc52)
+    WINDOWS_DEPLOY_QT_LIBRARIES(Qt5CLucene Qt5Core Qt5Gui Qt5Help Qt5Multimedia Qt5MultimediaWidgets Qt5Network Qt5OpenGL Qt5Positioning Qt5PrintSupport Qt5Qml Qt5Quick Qt5Sensors Qt5Sql Qt5Svg Qt5WebChannel Qt5WebKit Qt5WebKitWidgets Qt5Widgets Qt5Xml Qt5XmlPatterns)
+    WINDOWS_DEPLOY_QT_LIBRARIES(icudt53 icuin53 icuuc53)
 
     IF(ENABLE_TESTS)
         WINDOWS_DEPLOY_QT_LIBRARIES(Qt5Test)
@@ -550,7 +583,6 @@ IF(WIN32)
 
     # Qt plugins required by OpenCOR
 
-    WINDOWS_DEPLOY_QT_PLUGIN(accessible qtaccessiblewidgets)
     WINDOWS_DEPLOY_QT_PLUGIN(imageformats qjpeg)
     WINDOWS_DEPLOY_QT_PLUGIN(platforms qwindows)
     WINDOWS_DEPLOY_QT_PLUGIN(printsupport windowsprintersupport)
@@ -589,6 +621,9 @@ IF(WIN32)
     ENDIF()
 ELSEIF(APPLE)
     # Select PackageMaker and ZIP as the packagers on OS X
+    # Note: this is actually done within the package script, so that the ZIP
+    #       package can be done 'properly', i.e. we don't have the full tree
+    #       structure in the ZIP file...
 
     SET(CPACK_SYSTEM_NAME "OSX")
 
@@ -629,21 +664,20 @@ ELSE()
     #       its suffix, so unless making the macro unnecessarily cumbersome to
     #       use, it's better to do things ourselves...
 
-    FOREACH(QT_LIBRARY CLucene Core DBus Gui Help Network OpenGL Positioning PrintSupport Qml Quick Sensors Sql Svg WebKit WebKitWidgets Widgets Xml XmlPatterns)
+    FOREACH(QT_LIBRARY CLucene Core DBus Gui Help Network OpenGL Positioning PrintSupport Qml Quick Sensors Sql Svg WebChannel WebKit WebKitWidgets Widgets Xml XmlPatterns)
         INSTALL(FILES ${QT_LIBRARY_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}Qt${QT_VERSION_MAJOR}${QT_LIBRARY}${CMAKE_SHARED_LIBRARY_SUFFIX}.${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}
                 DESTINATION lib
                 RENAME ${CMAKE_SHARED_LIBRARY_PREFIX}Qt${QT_VERSION_MAJOR}${QT_LIBRARY}${CMAKE_SHARED_LIBRARY_SUFFIX}.${QT_VERSION_MAJOR})
     ENDFOREACH()
 
     FOREACH(QT_FILE icudata icui18n icuuc)
-        INSTALL(FILES ${QT_LIBRARY_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}${QT_FILE}${CMAKE_SHARED_LIBRARY_SUFFIX}.52.1
+        INSTALL(FILES ${QT_LIBRARY_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}${QT_FILE}${CMAKE_SHARED_LIBRARY_SUFFIX}.53.1
                 DESTINATION lib
-                RENAME ${CMAKE_SHARED_LIBRARY_PREFIX}${QT_FILE}${CMAKE_SHARED_LIBRARY_SUFFIX}.52)
+                RENAME ${CMAKE_SHARED_LIBRARY_PREFIX}${QT_FILE}${CMAKE_SHARED_LIBRARY_SUFFIX}.53)
     ENDFOREACH()
 
     # Qt plugins required by OpenCOR
 
-    LINUX_DEPLOY_QT_PLUGIN(accessible qtaccessiblewidgets)
     LINUX_DEPLOY_QT_PLUGIN(imageformats qjpeg)
     LINUX_DEPLOY_QT_PLUGIN(platforms qxcb)
     LINUX_DEPLOY_QT_PLUGIN(printsupport cupsprintersupport)

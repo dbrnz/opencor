@@ -25,7 +25,6 @@ specific language governing permissions and limitations under the License.
 //==============================================================================
 
 #include <QApplication>
-#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QIODevice>
@@ -93,7 +92,7 @@ FileManager::Status FileManager::manage(const QString &pFileName,
     QString nativeFileName = nativeCanonicalFileName(pFileName);
 
     if (QFile::exists(nativeFileName)) {
-        if (isManaged(nativeFileName)) {
+        if (file(nativeFileName)) {
             return AlreadyManaged;
         } else {
             // The file isn't already managed, so add it to our list of managed
@@ -120,14 +119,14 @@ FileManager::Status FileManager::unmanage(const QString &pFileName)
     // Unmanage the given file, should it be managed
 
     QString nativeFileName = nativeCanonicalFileName(pFileName);
-    File *file = isManaged(nativeFileName);
+    File *nativeFile = file(nativeFileName);
 
-    if (file) {
+    if (nativeFile) {
         // The file is managed, so we can remove it
 
         mFiles.remove(nativeFileName);;
 
-        delete file;
+        delete nativeFile;
 
         if (mFiles.isEmpty())
             mTimer->stop();
@@ -142,9 +141,9 @@ FileManager::Status FileManager::unmanage(const QString &pFileName)
 
 //==============================================================================
 
-File * FileManager::isManaged(const QString &pFileName) const
+File * FileManager::file(const QString &pFileName) const
 {
-    // Return whether the given file is managed
+    // Return the File object, if any, associated with the given file
 
     return mFiles.value(nativeCanonicalFileName(pFileName), 0);
 }
@@ -173,11 +172,10 @@ QString FileManager::sha1(const QString &pFileName) const
 {
     // Return the SHA-1 value of the given file, should it be managed
 
-    QString nativeFileName = nativeCanonicalFileName(pFileName);
-    File *file = isManaged(nativeFileName);
+    File *nativeFile = file(nativeCanonicalFileName(pFileName));
 
-    if (file)
-        return file->sha1();
+    if (nativeFile)
+        return nativeFile->sha1();
     else
         return QString();
 }
@@ -188,11 +186,10 @@ void FileManager::reset(const QString &pFileName)
 {
     // Reset the given file, should it be managed
 
-    QString nativeFileName = nativeCanonicalFileName(pFileName);
-    File *file = isManaged(nativeFileName);
+    File *nativeFile = file(nativeCanonicalFileName(pFileName));
 
-    if (file)
-        file->reset();
+    if (nativeFile)
+        nativeFile->reset();
 }
 
 //==============================================================================
@@ -201,10 +198,10 @@ int FileManager::newIndex(const QString &pFileName) const
 {
     // Return the given file's new index, if it is being managed
 
-    File *file = isManaged(nativeCanonicalFileName(pFileName));
+    File *nativeFile = file(nativeCanonicalFileName(pFileName));
 
-    if (file)
-        return file->newIndex();
+    if (nativeFile)
+        return nativeFile->newIndex();
     else
         return 0;
 }
@@ -215,10 +212,10 @@ QString FileManager::url(const QString &pFileName) const
 {
     // Return the given file's URL, if it is being managed
 
-    File *file = isManaged(nativeCanonicalFileName(pFileName));
+    File *nativeFile = file(nativeCanonicalFileName(pFileName));
 
-    if (file)
-        return file->url();
+    if (nativeFile)
+        return nativeFile->url();
     else
         return QString();
 }
@@ -230,10 +227,10 @@ bool FileManager::isDifferent(const QString &pFileName) const
     // Return whether the given file, if it is being managed, is different from
     // its corresponding physical version
 
-    File *file = isManaged(nativeCanonicalFileName(pFileName));
+    File *nativeFile = file(nativeCanonicalFileName(pFileName));
 
-    if (file)
-        return file->isDifferent();
+    if (nativeFile)
+        return nativeFile->isDifferent();
     else
         return false;
 }
@@ -246,10 +243,10 @@ bool FileManager::isDifferent(const QString &pFileName,
     // Return whether the given file, if it is being managed, has the same
     // contents has the given one
 
-    File *file = isManaged(nativeCanonicalFileName(pFileName));
+    File *nativeFile = file(nativeCanonicalFileName(pFileName));
 
-    if (file)
-        return file->isDifferent(pFileContents);
+    if (nativeFile)
+        return nativeFile->isDifferent(pFileContents);
     else
         return false;
 }
@@ -260,10 +257,10 @@ bool FileManager::isNew(const QString &pFileName) const
 {
     // Return whether the given file, if it is being managed, is new
 
-    File *file = isManaged(nativeCanonicalFileName(pFileName));
+    File *nativeFile = file(nativeCanonicalFileName(pFileName));
 
-    if (file)
-        return file->isNew();
+    if (nativeFile)
+        return nativeFile->isNew();
     else
         return false;
 }
@@ -274,10 +271,10 @@ bool FileManager::isRemote(const QString &pFileName) const
 {
     // Return whether the given file, if it is being managed, is a remote one
 
-    File *file = isManaged(nativeCanonicalFileName(pFileName));
+    File *nativeFile = file(nativeCanonicalFileName(pFileName));
 
-    if (file)
-        return file->isRemote();
+    if (nativeFile)
+        return nativeFile->isRemote();
     else
         return false;
 }
@@ -288,10 +285,10 @@ bool FileManager::isModified(const QString &pFileName) const
 {
     // Return whether the given file, if it is being managed, has been modified
 
-    File *file = isManaged(nativeCanonicalFileName(pFileName));
+    File *nativeFile = file(nativeCanonicalFileName(pFileName));
 
-    if (file)
-        return file->isModified();
+    if (nativeFile)
+        return nativeFile->isModified();
     else
         return false;
 }
@@ -311,13 +308,13 @@ void FileManager::makeNew(const QString &pFileName)
 {
     // Make the given file new, should it be managed
 
-    File *file = isManaged(nativeCanonicalFileName(pFileName));
+    File *nativeFile = file(nativeCanonicalFileName(pFileName));
 
-    if (file) {
+    if (nativeFile) {
         QString newFileName;
 
         if (newFile(QString(), newFileName))
-            file->makeNew(newFileName);
+            nativeFile->makeNew(newFileName);
     }
 }
 
@@ -328,9 +325,9 @@ void FileManager::setModified(const QString &pFileName, const bool &pModified)
     // Set the modified state of the given file, should it be managed
 
     QString nativeFileName = nativeCanonicalFileName(pFileName);
-    File *file = isManaged(nativeFileName);
+    File *nativeFile = file(nativeFileName);
 
-    if (file && file->setModified(pModified))
+    if (nativeFile && nativeFile->setModified(pModified))
         emit fileModified(nativeFileName);
 }
 
@@ -340,10 +337,10 @@ bool FileManager::isReadable(const QString &pFileName) const
 {
     // Return whether the given file, if it is being managed, is readable
 
-    File *file = isManaged(nativeCanonicalFileName(pFileName));
+    File *nativeFile = file(nativeCanonicalFileName(pFileName));
 
-    if (file)
-        return file->isReadable();
+    if (nativeFile)
+        return nativeFile->isReadable();
     else
         return false;
 }
@@ -354,10 +351,10 @@ bool FileManager::isWritable(const QString &pFileName) const
 {
     // Return whether the given file, if it is being managed, is writable
 
-    File *file = isManaged(nativeCanonicalFileName(pFileName));
+    File *nativeFile = file(nativeCanonicalFileName(pFileName));
 
-    if (file)
-        return file->isWritable();
+    if (nativeFile)
+        return nativeFile->isWritable();
     else
         return false;
 }
@@ -378,10 +375,10 @@ bool FileManager::isLocked(const QString &pFileName) const
 {
     // Return whether the given file, if it is being managed, is locked
 
-    File *file = isManaged(nativeCanonicalFileName(pFileName));
+    File *nativeFile = file(nativeCanonicalFileName(pFileName));
 
-    if (file)
-        return file->isLocked();
+    if (nativeFile)
+        return nativeFile->isLocked();
     else
         return false;
 }
@@ -394,10 +391,10 @@ FileManager::Status FileManager::setLocked(const QString &pFileName,
     // Set the locked status of the given file, should it be managed
 
     QString nativeFileName = nativeCanonicalFileName(pFileName);
-    File *file = isManaged(nativeFileName);
+    File *nativeFile = file(nativeFileName);
 
-    if (file) {
-        File::Status status = file->setLocked(pLocked);
+    if (nativeFile) {
+        File::Status status = nativeFile->setLocked(pLocked);
 
         if (status == File::LockedSet)
             emitFilePermissionsChanged(nativeFileName);
@@ -420,13 +417,13 @@ void FileManager::reload(const QString &pFileName)
     // Make sure that the given file is managed
 
     QString nativeFileName = nativeCanonicalFileName(pFileName);
-    File *file = isManaged(nativeFileName);
+    File *nativeFile = file(nativeFileName);
 
-    if (file) {
+    if (nativeFile) {
         // The file is managed, so reset its settings and let people know that
         // it should be reloaded
 
-        file->reset();
+        nativeFile->reset();
 
         emit fileReloaded(nativeFileName);
     }
@@ -436,22 +433,14 @@ void FileManager::reload(const QString &pFileName)
 
 bool FileManager::newFile(const QString &pContents, QString &pFileName)
 {
-    // Create a new file
+    // Retrieve a temporary file name for our new file
 
-    QTemporaryFile file(QDir::tempPath()+QDir::separator()+"XXXXXX.tmp");
+    QString newFileName = Core::temporaryFileName();
 
-    if (file.open()) {
-        file.setAutoRemove(false);
-        // Note: by default, a temporary file is to autoremove itself, but we
-        //       clearly don't want that here...
+    // Create a new file with the given contents
 
-        QTextStream fileOut(&file);
-
-        fileOut << pContents;
-
-        file.close();
-
-        pFileName = file.fileName();
+    if (Core::writeTextToFile(newFileName, pContents)) {
+        pFileName = newFileName;
 
         return true;
     } else {
@@ -468,12 +457,12 @@ FileManager::Status FileManager::create(const QString &pUrl,
 {
     // Create a new file
 
-    QString createdFileName;
+    QString newFileName;
 
-    if (newFile(pContents, createdFileName)) {
+    if (newFile(pContents, newFileName)) {
         // Let people know that we have created a file
 
-        emit fileCreated(createdFileName, pUrl);
+        emit fileCreated(newFileName, pUrl);
 
         return Created;
     } else {
@@ -489,14 +478,14 @@ FileManager::Status FileManager::rename(const QString &pOldFileName,
     // Make sure that the given 'old' file is managed
 
     QString oldNativeFileName = nativeCanonicalFileName(pOldFileName);
-    File *file = isManaged(oldNativeFileName);
+    File *nativeFile = file(oldNativeFileName);
 
-    if (file) {
+    if (nativeFile) {
         // The 'old' file is managed, so rename it and let people know about it
 
         QString newNativeFileName = nativeCanonicalFileName(pNewFileName);
 
-        if (file->setFileName(newNativeFileName)) {
+        if (nativeFile->setFileName(newNativeFileName)) {
             mFiles.insert(newNativeFileName, mFiles.value(oldNativeFileName));
             mFiles.remove(oldNativeFileName);
 
@@ -517,10 +506,9 @@ FileManager::Status FileManager::duplicate(const QString &pFileName)
 {
     // Make sure that the given file is managed
 
-    QString nativeFileName = nativeCanonicalFileName(pFileName);
-    File *file = isManaged(nativeFileName);
+    File *nativeFile = file(nativeCanonicalFileName(pFileName));
 
-    if (file) {
+    if (nativeFile) {
         // The file is managed, so retrieve its contents
 
         QString fileContents;
@@ -529,12 +517,12 @@ FileManager::Status FileManager::duplicate(const QString &pFileName)
             // Now, we can create a new file, which contents will be that of our
             // given file
 
-            QString duplicatedFileName;
+            QString newFileName;
 
-            if (newFile(fileContents, duplicatedFileName)) {
+            if (newFile(fileContents, newFileName)) {
                 // Let people know that we have duplicated a file
 
-                emit fileDuplicated(duplicatedFileName);
+                emit fileDuplicated(newFileName);
 
                 return Duplicated;
             } else {
@@ -555,13 +543,13 @@ void FileManager::save(const QString &pFileName)
     // Make sure that the given file is managed
 
     QString nativeFileName = nativeCanonicalFileName(pFileName);
-    File *file = isManaged(nativeFileName);
+    File *nativeFile = file(nativeFileName);
 
-    if (file) {
+    if (nativeFile) {
         // The file is managed, so reset its settings and let people know that
         // it has been saved
 
-        file->reset();
+        nativeFile->reset();
 
         emit fileSaved(nativeFileName);
     }

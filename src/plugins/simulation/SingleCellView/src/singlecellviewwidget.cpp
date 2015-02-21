@@ -21,6 +21,7 @@ specific language governing permissions and limitations under the License.
 
 #include "cellmlfilemanager.h"
 #include "cellmlfileruntime.h"
+#include "cellmlsupportplugin.h"
 #include "corecliutils.h"
 #include "coreguiutils.h"
 #include "filemanager.h"
@@ -50,7 +51,6 @@ specific language governing permissions and limitations under the License.
 #include <QApplication>
 #include <QBrush>
 #include <QDesktopWidget>
-#include <QDir>
 #include <QFileDialog>
 #include <QFrame>
 #include <QLabel>
@@ -511,10 +511,9 @@ void SingleCellViewWidget::updateInvalidModelMessageWidget()
 
 bool SingleCellViewWidget::contains(const QString &pFileName) const
 {
-    // Return whether we know about the given CellML file, i.e. whether we have
-    // a simulation for it
+    // Return whether we know about the given CellML file
 
-    return mSimulations.value(pFileName);
+    return mSimulations.contains(pFileName);
 }
 
 //==============================================================================
@@ -997,7 +996,7 @@ void SingleCellViewWidget::fileReloaded(const QString &pFileName)
     //       session), but hasn't yet been selected, in which case it won't have
     //       a simulation associated with it...
 
-    bool needReloadView = true;
+    bool needReloadView = CellMLSupport::isCellmlFile(pFileName);
     SingleCellViewSimulation *simulation = mSimulations.value(pFileName);
 
     mNeedReloadViews << pFileName;

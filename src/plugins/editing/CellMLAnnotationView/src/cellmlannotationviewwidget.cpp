@@ -24,6 +24,7 @@ specific language governing permissions and limitations under the License.
 #include "cellmlannotationviewmetadatadetailswidget.h"
 #include "cellmlannotationviewplugin.h"
 #include "cellmlannotationviewwidget.h"
+#include "cellmlsupportplugin.h"
 
 //==============================================================================
 
@@ -124,10 +125,9 @@ void CellmlAnnotationViewWidget::retranslateUi()
 
 bool CellmlAnnotationViewWidget::contains(const QString &pFileName) const
 {
-    // Return whether we know about the given file, i.e. whether we have an
-    // editing widget for it
+    // Return whether we know about the given file
 
-    return mEditingWidgets.value(pFileName);
+    return mEditingWidgets.contains(pFileName);
 }
 
 //==============================================================================
@@ -226,7 +226,9 @@ void CellmlAnnotationViewWidget::fileReloaded(const QString &pFileName)
 
     if (contains(pFileName)) {
         finalize(pFileName);
-        initialize(pFileName);
+
+        if (CellMLSupport::isCellmlFile(pFileName))
+            initialize(pFileName);
     }
 }
 

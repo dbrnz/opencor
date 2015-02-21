@@ -95,6 +95,13 @@ MACRO(INITIALISE_PROJECT)
     SET(QT_VERSION_MINOR ${Qt5Widgets_VERSION_MINOR})
     SET(QT_VERSION_PATCH ${Qt5Widgets_VERSION_PATCH})
 
+    # Retrieve the real path of the Qt library directory
+    # Note: on Travis CI, QT_LIBRARY_DIR points to a symbolic path. That
+    #       symbolic path is used by some libraries while others use the real
+    #       path instead. So, we need to know about both...
+
+    GET_FILENAME_COMPONENT(REAL_QT_LIBRARY_DIR ${QT_LIBRARY_DIR} REALPATH)
+
     # Some general build settings
     # Note: we need to use C++11, so that we can define strings as static const.
     #       Now, it happens that MSVC enables C++11 support by default, so we
@@ -290,7 +297,7 @@ MACRO(INITIALISE_PROJECT)
 
         SET(CMAKE_INSTALL_RPATH "@executable_path/../Frameworks;@executable_path/../PlugIns/${PROJECT_NAME}")
     ELSEIF(NOT WIN32)
-        SET(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
+        SET(CMAKE_INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/../plugins/${PROJECT_NAME}")
     ENDIF()
 ENDMACRO()
 
@@ -588,6 +595,12 @@ MACRO(ADD_PLUGIN PLUGIN_NAME)
 
     IF(ENABLE_TESTS)
         FOREACH(TEST ${TESTS})
+            # Keep track of the test (for later use by our main test program)
+
+            FILE(APPEND ${TESTS_LIST_FILENAME} "${PLUGIN_NAME}|${TEST}|")
+
+            # Build our test, if possible
+
             SET(TEST_NAME ${PLUGIN_NAME}_${TEST})
 
             SET(TEST_SOURCE tests/${TEST}.cpp)
@@ -597,6 +610,13 @@ MACRO(ADD_PLUGIN PLUGIN_NAME)
                AND EXISTS ${PROJECT_SOURCE_DIR}/${TEST_HEADER_MOC})
                 # The test exists, so build it
 
+                SET(TEST_SOURCES_MOC)
+                # Note: we need to initialise TEST_SOURCES_MOC in case there is
+                #       more than just one test. Indeed, if we were not to do
+                #       that initialisation, then TEST_SOURCES_MOC would include
+                #       the information of all the tests up to the one we want
+                #       build...
+
                 QT5_WRAP_CPP(TEST_SOURCES_MOC
                     ../../plugin.h
                     ../../pluginmanager.h
@@ -605,7 +625,7 @@ MACRO(ADD_PLUGIN PLUGIN_NAME)
                 )
 
                 ADD_EXECUTABLE(${TEST_NAME}
-                    ../../../tests/testsutils.cpp
+                    ../../../tests/src/testsutils.cpp
 
                     ../../plugin.cpp
                     ../../plugininfo.cpp
@@ -786,7 +806,7 @@ ENDMACRO()
 #===============================================================================
 
 MACRO(COPY_FILE_TO_BUILD_DIR PROJECT_TARGET ORIG_DIRNAME DEST_DIRNAME FILENAME)
-    # Copy the file (renaming it if needed) to the destination folder
+    # Copy the file (renaming it, if needed) to the destination folder
     # Note: DIRECT_COPY is used to copy a file that doesn't first need to be
     #       built. This means that we can then use EXECUTE_PROCESS() rather than
     #       ADD_CUSTOM_COMMAND(), and thus reduce the length of the
@@ -941,9 +961,11 @@ MACRO(OS_X_QT_LIBRARIES FILENAME QT_LIBRARIES)
     # Retrieve the file's full-path Qt libraries as a list
 
     SET(QT_LIBRARY_DIR_FOR_GREP "\t${QT_LIBRARY_DIR}/")
+    SET(REAL_QT_LIBRARY_DIR_FOR_GREP "\t${REAL_QT_LIBRARY_DIR}/")
 
     EXECUTE_PROCESS(COMMAND otool -L ${FILENAME}
-                    COMMAND grep --colour=never ${QT_LIBRARY_DIR_FOR_GREP}
+                    COMMAND grep --colour=never -e "${QT_LIBRARY_DIR_FOR_GREP}"
+                                                -e "${REAL_QT_LIBRARY_DIR_FOR_GREP}"
                     OUTPUT_VARIABLE RAW_QT_LIBRARIES)
 
     STRING(REPLACE "\n" ";" RAW_QT_LIBRARIES "${RAW_QT_LIBRARIES}")
@@ -954,6 +976,7 @@ MACRO(OS_X_QT_LIBRARIES FILENAME QT_LIBRARIES)
 
     FOREACH(RAW_QT_LIBRARY ${RAW_QT_LIBRARIES})
         STRING(REPLACE ${QT_LIBRARY_DIR_FOR_GREP} "" RAW_QT_LIBRARY "${RAW_QT_LIBRARY}")
+        STRING(REPLACE ${REAL_QT_LIBRARY_DIR_FOR_GREP} "" RAW_QT_LIBRARY "${RAW_QT_LIBRARY}")
         STRING(REGEX REPLACE "\\.framework.*$" "" QT_LIBRARY "${RAW_QT_LIBRARY}")
 
         LIST(APPEND ${QT_LIBRARIES} ${QT_LIBRARY})
@@ -986,6 +1009,10 @@ MACRO(OS_X_CLEAN_UP_FILE_WITH_QT_LIBRARIES PROJECT_TARGET DIRNAME FILENAME)
 
         ADD_CUSTOM_COMMAND(TARGET ${PROJECT_TARGET} POST_BUILD
                            COMMAND install_name_tool -change ${QT_LIBRARY_DIR}/${DEPENDENCY_FILENAME}
+                                                             @rpath/${DEPENDENCY_FILENAME}
+                                                             ${FULL_FILENAME})
+        ADD_CUSTOM_COMMAND(TARGET ${PROJECT_TARGET} POST_BUILD
+                           COMMAND install_name_tool -change ${REAL_QT_LIBRARY_DIR}/${DEPENDENCY_FILENAME}
                                                              @rpath/${DEPENDENCY_FILENAME}
                                                              ${FULL_FILENAME})
     ENDFOREACH()
@@ -1127,7 +1154,7 @@ MACRO(RETRIEVE_BINARY_FILE DIRNAME FILENAME SHA1_VALUE)
             # Note: this is in case we had an HTTP error of sorts, in which case
             #       we would end up with an empty file...
 
-            MESSAGE(FATAL_ERROR "The compressed version of the file could not be retrieved...")
+            MESSAGE(FATAL_ERROR "The compressed version of ${FILENAME} could not be retrieved...")
         ENDIF()
 
         # Check that the file, if we managed to retrieve it, has the expected
@@ -1139,12 +1166,12 @@ MACRO(RETRIEVE_BINARY_FILE DIRNAME FILENAME SHA1_VALUE)
             IF(NOT "${REAL_SHA1_VALUE}" STREQUAL "${SHA1_VALUE}")
                 FILE(REMOVE ${REAL_FILENAME})
 
-                MESSAGE(FATAL_ERROR "The file does not have the expected SHA-1 value...")
+                MESSAGE(FATAL_ERROR "${FILENAME} does not have the expected SHA-1 value...")
             ENDIF()
         ELSE()
             FILE(REMOVE ${REAL_COMPRESSED_FILENAME})
 
-            MESSAGE(FATAL_ERROR "The file could not be uncompressed...")
+            MESSAGE(FATAL_ERROR "${FILENAME} could not be uncompressed...")
         ENDIF()
     ENDIF()
 ENDMACRO()

@@ -472,10 +472,10 @@ void CellmlFileRuntime::reset(const bool &pRecreateCompilerEngine,
 
 //==============================================================================
 
-void CellmlFileRuntime::couldNotGenerateModelCodeIssue()
+void CellmlFileRuntime::couldNotGenerateModelCodeIssue(const QString &pExtraInfo)
 {
     mIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                               tr("the model code could not be generated"));
+                               QObject::tr("the model code could not be generated (%1)").arg(pExtraInfo));
 }
 
 //==============================================================================
@@ -483,7 +483,7 @@ void CellmlFileRuntime::couldNotGenerateModelCodeIssue()
 void CellmlFileRuntime::unknownProblemDuringModelCodeGenerationIssue()
 {
     mIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                               tr("an unknown problem occurred while trying to generate the model code"));
+                               QObject::tr("an unknown problem occurred while trying to generate the model code"));
 }
 
 //==============================================================================
@@ -503,16 +503,16 @@ void CellmlFileRuntime::checkCodeInformation(iface::cellml_services::CodeInforma
 
         if (constraintLevel == iface::cellml_services::UNDERCONSTRAINED)
             mIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                                       tr("the model is underconstrained (i.e. some variables need to be initialised or computed)"));
+                                       QObject::tr("the model is underconstrained (i.e. some variables need to be initialised or computed)"));
         else if (constraintLevel == iface::cellml_services::UNSUITABLY_CONSTRAINED)
             mIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                                       tr("the model is unsuitably constrained (i.e. some variables could not be found and/or some equations could not be used)"));
+                                       QObject::tr("the model is unsuitably constrained (i.e. some variables could not be found and/or some equations could not be used)"));
         else if (constraintLevel == iface::cellml_services::OVERCONSTRAINED)
             mIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                                       tr("the model is overconstrained (i.e. some variables are either both initialised and computed or computed more than once)"));
+                                       QObject::tr("the model is overconstrained (i.e. some variables are either both initialised and computed or computed more than once)"));
     } else {
         mIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                                   tr("a problem occurred during the generation of the model code"));
+                                   QObject::tr("a problem occurred during the generation of the model code"));
     }
 }
 
@@ -533,8 +533,8 @@ void CellmlFileRuntime::retrieveOdeCodeInformation(iface::cellml_api::Model *pMo
         // Check that the code generation went fine
 
         checkCodeInformation(mOdeCodeInformation);
-    } catch (iface::cellml_api::CellMLException &) {
-        couldNotGenerateModelCodeIssue();
+    } catch (iface::cellml_api::CellMLException &exception) {
+        couldNotGenerateModelCodeIssue(Core::formatMessage(QString::fromStdWString(exception.explanation)));
     } catch (...) {
         unknownProblemDuringModelCodeGenerationIssue();
     }
@@ -562,8 +562,8 @@ void CellmlFileRuntime::retrieveDaeCodeInformation(iface::cellml_api::Model *pMo
         // Check that the code generation went fine
 
         checkCodeInformation(mDaeCodeInformation);
-    } catch (iface::cellml_api::CellMLException &) {
-        couldNotGenerateModelCodeIssue();
+    } catch (iface::cellml_api::CellMLException &exception) {
+        couldNotGenerateModelCodeIssue(Core::formatMessage(QString::fromStdWString(exception.explanation)));
     } catch (...) {
         unknownProblemDuringModelCodeGenerationIssue();
     }
@@ -675,10 +675,10 @@ QStringList CellmlFileRuntime::componentHierarchy(iface::cellml_api::CellMLEleme
 
         ObjRef<iface::cellml_api::CellMLImport> import = QueryInterface(componentParentParent);
         ObjRef<iface::cellml_api::ImportComponentSet> importComponents = import->components();
-        ObjRef<iface::cellml_api::ImportComponentIterator> importComponentsIterator = importComponents->iterateImportComponents();
+        ObjRef<iface::cellml_api::ImportComponentIterator> importComponentsIter = importComponents->iterateImportComponents();
 
-        for (ObjRef<iface::cellml_api::ImportComponent> importComponent = importComponentsIterator->nextImportComponent();
-             importComponent; importComponent = importComponentsIterator->nextImportComponent())
+        for (ObjRef<iface::cellml_api::ImportComponent> importComponent = importComponentsIter->nextImportComponent();
+             importComponent; importComponent = importComponentsIter->nextImportComponent())
             if (!componentName.compare(QString::fromStdWString(importComponent->componentRef()))) {
                 // This is the imported component we are after, so retrieve its
                 // imported name
@@ -770,10 +770,10 @@ void CellmlFileRuntime::update()
 
     // Retrieve all the parameters and sort them by component/variable name
 
-    ObjRef<iface::cellml_services::ComputationTargetIterator> computationTargetIterator = genericCodeInformation->iterateTargets();
+    ObjRef<iface::cellml_services::ComputationTargetIterator> computationTargetIter = genericCodeInformation->iterateTargets();
 
-    for (ObjRef<iface::cellml_services::ComputationTarget> computationTarget = computationTargetIterator->nextComputationTarget();
-         computationTarget; computationTarget = computationTargetIterator->nextComputationTarget()) {
+    for (ObjRef<iface::cellml_services::ComputationTarget> computationTarget = computationTargetIter->nextComputationTarget();
+         computationTarget; computationTarget = computationTargetIter->nextComputationTarget()) {
         // Determine the type of the parameter
 
         CellmlFileRuntimeParameter::ParameterType parameterType;
@@ -952,7 +952,7 @@ void CellmlFileRuntime::update()
         // Add the statement either to our list of 'proper' constants or
         // 'computed' constants
 
-        if (QRegularExpression("^(CONSTANTS|RATES|STATES)\\[[0-9]*\\] = [+-]?[0-9]*\\.?[0-9]+([eE][+-]?[0-9]+)?;$").match(initConst).hasMatch()) {
+        if (QRegularExpression("^(CONSTANTS|RATES|STATES)\\[\\d*\\] = [+-]?\\d*\\.?\\d+([eE][+-]?\\d+)?;$").match(initConst).hasMatch()) {
             // We are dealing with a 'proper' constant (or a rate or a state)
 
             if (!initConsts.isEmpty())
@@ -1004,7 +1004,7 @@ void CellmlFileRuntime::update()
 
     if (modelCode.contains("defint(func"))
         mIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                                   tr("definite integrals are not yet supported"));
+                                   QObject::tr("definite integrals are not yet supported"));
     else if (!mCompilerEngine->compileCode(modelCode))
         mIssues << CellmlFileIssue(CellmlFileIssue::Error,
                                    QString("%1").arg(mCompilerEngine->error()));
@@ -1056,7 +1056,7 @@ void CellmlFileRuntime::update()
 
         if (!functionsOk) {
             mIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                                       tr("an unexpected problem occurred while trying to retrieve the model functions"));
+                                       QObject::tr("an unexpected problem occurred while trying to retrieve the model functions"));
 
             reset(true, false);
         }

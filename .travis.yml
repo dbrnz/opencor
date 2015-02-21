@@ -13,52 +13,42 @@ env:
   - CONFIG=Debug
 
 install:
-  -    if [ "`uname -s`" = "Linux" ] ; then
-            sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
-         && sudo apt-get -qq update
-         && sudo apt-get -qq install g++-4.8
-         && export CXX="g++-4.8"
-         && export CC="gcc-4.8"
-         ;
-       fi
-    && if [ "`uname -s`" = "Linux" ] ; then
-            sudo apt-get -qq update
-         && sudo apt-get -qq install libc6-i386
-         && wget http://www.cmake.org/files/v3.0/cmake-3.0.2-Linux-i386.tar.gz
-         && tar -xzf cmake-3.0.2-Linux-i386.tar.gz
-         && sudo cp -fR cmake-3.0.2-Linux-i386/* /usr
-         ;
-       fi
-    && if [ "`uname -s`" = "Linux" ]; then
-            sudo apt-add-repository -y ppa:beineri/opt-qt532
-         && sudo apt-get -qq update
-         && sudo apt-get -qq install qt53tools qt53svg qt53webkit
-         ;
-       else
-            brew update
-         && brew install qt5
-         && chmod -R 755 /usr/local/opt/qt5/*
-         ;
-       fi
+  - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+         sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
+      && sudo apt-add-repository -y ppa:beineri/opt-qt54
+      && sudo apt-get -qq update
+      && sudo apt-get -qq install g++-4.8 libc6-i386 qt54tools qt54svg qt54webkit
+      && export CXX="g++-4.8"
+      && export CC="gcc-4.8"
+      && wget http://www.cmake.org/files/v3.1/cmake-3.1.0-Linux-i386.tar.gz
+      && tar -xzf cmake-3.1.0-Linux-i386.tar.gz
+      && sudo cp -fR cmake-3.1.0-Linux-i386/* /usr
+      ;
+    else
+         brew update
+      && brew install qt5
+      && chmod -R 755 /usr/local/opt/qt5/*
+      ;
+    fi
 
 script:
   -    cd build
-    && if [ "`uname -s`" = "Linux" ]; then
-         cmake -DCMAKE_BUILD_TYPE=$CONFIG -DCMAKE_PREFIX_PATH=/opt/qt53/lib/cmake -DENABLE_TESTS=ON -DENABLE_SAMPLES=ON ..
+    && if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+         cmake -DCMAKE_BUILD_TYPE=$CONFIG -DCMAKE_PREFIX_PATH=/opt/qt54/lib/cmake -DENABLE_TESTS=ON -DENABLE_SAMPLES=ON ..
          ;
        else
          cmake -DCMAKE_BUILD_TYPE=$CONFIG -DCMAKE_PREFIX_PATH=/usr/local/opt/qt5/lib/cmake -DENABLE_TESTS=ON -DENABLE_SAMPLES=ON ..
          ;
        fi
     && make
-    && if [ "`uname -s`" = "Linux" ]; then
-         cd bin
+    && cd ..
+    && if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+         build/bin/runtests
          ;
        else
-         cd OpenCOR.app/Contents/MacOS
+         build/OpenCOR.app/Contents/MacOS/runtests
          ;
        fi
-    && ./runtests
 
 notifications:
   email:

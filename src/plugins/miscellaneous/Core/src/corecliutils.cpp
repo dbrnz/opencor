@@ -49,6 +49,7 @@ specific language governing permissions and limitations under the License.
 #include <QString>
 #include <QStringList>
 #include <QSysInfo>
+#include <QTemporaryFile>
 #include <QTextStream>
 
 //==============================================================================
@@ -117,29 +118,46 @@ void cleanDomElement(QDomElement &pDomElement,
     if (pDomElement.hasAttributes()) {
         QStringList serialisedAttributes = QStringList();
         QDomNamedNodeMap domElementAttributes = pDomElement.attributes();
-        QDomNode attributeNode;
-        QString serialisedAttribute;
-        QTextStream textStream(&serialisedAttribute, QIODevice::WriteOnly);
+        QDomAttr attributeNode;
 
         while (domElementAttributes.count()) {
-            // Serialise the element's attribute
+            // Serialise (ourselves) the element's attribute
+            // Note: to rely on QDomNode::save() to do the serialisation isn't
+            //       good enough. Indeed, if it is going to be fine for an
+            //       attribute that doesn't have a prefix, e.g.
+            //          name="my_name"
+            //       it may not be fine for an attribute with a prefix, e.g.
+            //          cmeta:id="my_cmeta_id"
+            //       since depending on how that attribute has been created
+            //       (i.e. using QDomDocument::createAttribute() or
+            //       QDomDocument::createAttributeNS()), then it may or not have
+            //       a namespace associated with it. If it does, then its
+            //       serialisation will look something like
+            //          cmeta:id="my_cmeta_id" xmlns:cmeta="http://www.cellml.org/metadata/1.0#"
+            //       which is clearly not what we want since that's effectively
+            //       two attributes in one. So, we need to separate them, which
+            //       is what we do our serialisation...
 
-            attributeNode = domElementAttributes.item(0);
+            attributeNode = domElementAttributes.item(0).toAttr();
 
-            serialisedAttribute = QString();
+            if (attributeNode.namespaceURI().isEmpty()) {
+                serialisedAttributes << attributeNode.name()+"=\""+attributeNode.value()+"\"";
+            } else {
+                serialisedAttributes << attributeNode.prefix()+":"+attributeNode.name()+"=\""+attributeNode.value()+"\"";
+                serialisedAttributes << "xmlns:"+attributeNode.prefix()+"=\""+attributeNode.namespaceURI()+"\"";
+            }
 
-            attributeNode.save(textStream, 4);
+            // Remove the attribute node from the element
 
-            serialisedAttributes << serialisedAttribute;
-
-            // Remove the attribute from the element
-
-            domElementAttributes.removeNamedItem(attributeNode.nodeName());
+            pDomElement.removeAttributeNode(attributeNode);
         }
 
-        // Sort the serialised attributes using the attributes' name
+        // Sort the serialised attributes, using the attributes' name, and
+        // remove duplicates, if any
 
         std::sort(serialisedAttributes.begin(), serialisedAttributes.end(), sortSerialisedAttributes);
+
+        serialisedAttributes.removeDuplicates();
 
         // Keep track of the serialisation of the element's attribute
 
@@ -157,8 +175,10 @@ void cleanDomElement(QDomElement &pDomElement,
 
     // Recursively clean ourselves
 
-    for (QDomElement childElement = pDomElement.firstChildElement(); !childElement.isNull(); childElement = childElement.nextSiblingElement())
+    for (QDomElement childElement = pDomElement.firstChildElement();
+         !childElement.isNull(); childElement = childElement.nextSiblingElement()) {
         cleanDomElement(childElement, pElementsAttributes);
+    }
 }
 
 //==============================================================================
@@ -183,8 +203,10 @@ QString qDomDocumentToString(const QDomDocument &pDomDocument)
     QDomDocument domDocument = pDomDocument.cloneNode().toDocument();
     QMap<QString, QString> elementsAttributes = QMap<QString, QString>();
 
-    for (QDomElement childElement = domDocument.firstChildElement(); !childElement.isNull(); childElement = childElement.nextSiblingElement())
+    for (QDomElement childElement = domDocument.firstChildElement();
+         !childElement.isNull(); childElement = childElement.nextSiblingElement()) {
         cleanDomElement(childElement, elementsAttributes);
+    }
 
     // Serialise our 'reduced' DOM document
 
@@ -422,110 +444,6 @@ void stringLineColumnAsPosition(const QString &pString, const QString &pEol,
 
 //==============================================================================
 
-QByteArray resourceAsByteArray(const QString &pResource)
-{
-    // Retrieve a resource as a QByteArray
-
-    QResource resource(pResource);
-
-    if (resource.isValid()) {
-        if (resource.isCompressed())
-            // The resource is compressed, so uncompress it before returning it
-
-            return qUncompress(resource.data(), resource.size());
-        else
-            // The resource is not compressed, so just return it after doing the
-            // right conversion
-
-            return QByteArray(reinterpret_cast<const char *>(resource.data()),
-                              resource.size());
-    }
-    else {
-        return QByteArray();
-    }
-}
-
-//==============================================================================
-
-bool writeResourceToFile(const QString &pFilename, const QString &pResource)
-{
-    if (QResource(pResource).isValid()) {
-        // The resource exists, so write a file with name pFilename and which
-        // contents is that of the resource which is retrieved as a QByteArray
-
-        QFile file(pFilename);
-
-        if (file.open(QIODevice::WriteOnly)) {
-            QByteArray resource = resourceAsByteArray(pResource);
-            bool res;
-
-            res = file.write(resource) == resource.size();
-
-            file.close();
-
-            // Remove the newly created file in case not all the resource was
-            // written to it
-
-            if (!res)
-                file.remove();
-
-            return res;
-        } else {
-            return false;
-        }
-    } else {
-        return false;
-    }
-}
-
-//==============================================================================
-
-bool readTextFromFile(const QString &pFileName, QString &pText)
-{
-    // Read the contents of the file, which file name is given, as a string
-
-    QFile file(pFileName);
-
-    if (file.open(QIODevice::ReadOnly)) {
-        pText = file.readAll();
-
-        file.close();
-
-        return true;
-    } else {
-        pText = QString();
-
-        return false;
-    }
-}
-
-//==============================================================================
-
-bool writeTextToFile(const QString &pFilename, const QString &pText)
-{
-    // Write the given string to a file with the given file name
-
-    QFile file(pFilename);
-
-    if (file.open(QIODevice::WriteOnly)) {
-        bool res = file.write(pText.toUtf8()) != -1;
-
-        file.close();
-
-        // Remove the newly created file in case the string couldn't be written
-        // to it
-
-        if (!res)
-            file.remove();
-
-        return res;
-    } else {
-        return false;
-    }
-}
-
-//==============================================================================
-
 void * globalInstance(const QString &pObjectName, void *pDefaultGlobalInstance)
 {
     // Retrieve the 'global' instance of an object
@@ -555,8 +473,7 @@ void * globalInstance(const QString &pObjectName, void *pDefaultGlobalInstance)
             // Note #1: for some reasons, on OS X, QSettings doesn't handle
             //          qulonglong values properly, so we do it through a
             //          QString value instead...
-            // Note #2: see
-            //          https://bugreports.qt-project.org/browse/QTBUG-29681 for
+            // Note #2: see https://bugreports.qt.io/browse/QTBUG-29681 for
             //          more information...
         }
     settings.endGroup();
@@ -681,23 +598,6 @@ QString stringFromPercentEncoding(const QString &pString)
     // Remove the percent encoding from the given string
 
     return QUrl::fromPercentEncoding(pString.toUtf8());
-}
-
-//==============================================================================
-
-QString eolString()
-{
-    // Return the end of line to use
-
-#ifdef Q_OS_WIN
-    return "\r\n";
-#else
-    // Note: before OS X, the EOL string would have been "\r", but since OS X it
-    //       is the same as on Linux (i.e. "\n") and since we don't support
-    //       versions prior to OS X...
-
-    return "\n";
-#endif
 }
 
 //==============================================================================

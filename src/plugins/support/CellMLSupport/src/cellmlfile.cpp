@@ -120,6 +120,8 @@ void CellmlFile::reset()
     mRuntimeUpdateNeeded = true;
 
     mImportContents.clear();
+
+    mUsedCmetaIds.clear();
 }
 
 //==============================================================================
@@ -156,10 +158,10 @@ void CellmlFile::retrieveImports(iface::cellml_api::Model *pModel,
     // Retrieve all the imports of the given model
 
     ObjRef<iface::cellml_api::CellMLImportSet> imports = pModel->imports();
-    ObjRef<iface::cellml_api::CellMLImportIterator> importsIterator = imports->iterateImports();
+    ObjRef<iface::cellml_api::CellMLImportIterator> importsIter = imports->iterateImports();
 
-    for (ObjRef<iface::cellml_api::CellMLImport> import = importsIterator->nextImport();
-         import; import = importsIterator->nextImport()) {
+    for (ObjRef<iface::cellml_api::CellMLImport> import = importsIter->nextImport();
+         import; import = importsIter->nextImport()) {
         import->add_ref();
 
         pImportList << import;
@@ -189,12 +191,12 @@ bool CellmlFile::fullyInstantiateImports(iface::cellml_api::Model *pModel,
 
             // Retrieve the list of imports, together with their XML base values
 
-            ObjRef<iface::cellml_api::URI> uri = pModel->xmlBase();
+            ObjRef<iface::cellml_api::URI> baseUri = pModel->xmlBase();
             QList<iface::cellml_api::CellMLImport *> importList = QList<iface::cellml_api::CellMLImport *>();
             QStringList importXmlBaseList = QStringList();
 
             retrieveImports(pModel, importList, importXmlBaseList,
-                            QString::fromStdWString(uri->asText()));
+                            QString::fromStdWString(baseUri->asText()));
 
             // Instantiate all the imports in our list
 
@@ -220,14 +222,18 @@ bool CellmlFile::fullyInstantiateImports(iface::cellml_api::Model *pModel,
 
                     Core::checkFileNameOrUrl(url, isLocalFile, fileNameOrUrl);
 
-                    if (mImportContents.contains(fileNameOrUrl)) {
+                    if (!fileNameOrUrl.compare(mFileName))
+                        // We want to import ourselves, so...
+
+                        throw(std::exception());
+                    else if (mImportContents.contains(fileNameOrUrl)) {
                         // We have already loaded the import contents, so
                         // directly instantiate the import with it
 
                         import->instantiateFromText(mImportContents.value(fileNameOrUrl).toStdWString());
                     } else {
                         // We haven't already loaded the import contents, so do
-                        // so
+                        // so now
 
                         QString fileContents;
 
@@ -264,7 +270,7 @@ bool CellmlFile::fullyInstantiateImports(iface::cellml_api::Model *pModel,
             // Something went wrong with the full instantiation of the imports
 
             pIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                                       tr("the imports could not be fully instantiated"));
+                                       QObject::tr("the imports could not be fully instantiated"));
 
             return false;
         }
@@ -295,47 +301,100 @@ bool CellmlFile::doLoad(const QString &pFileName, const QString &pFileContents,
             *pModel = modelLoader->loadFromURL(QUrl::fromPercentEncoding(QUrl::fromLocalFile(pFileName).toEncoded()).toStdWString());
         else
             *pModel = modelLoader->createFromText(pFileContents.toStdWString());
-    } catch (iface::cellml_api::CellMLException &) {
+    } catch (iface::cellml_api::CellMLException &exception) {
         // Something went wrong with the loading of the model
 
         if (pFileContents.isEmpty())
             pIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                                       tr("the model could not be loaded (%1)").arg(QString::fromStdWString(modelLoader->lastErrorMessage())));
+                                       QObject::tr("the model could not be loaded (%1)").arg(Core::formatMessage(QString::fromStdWString(exception.explanation))));
         else
             pIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                                       tr("the model could not be created (%1)").arg(QString::fromStdWString(modelLoader->lastErrorMessage())));
+                                       QObject::tr("the model could not be created (%1)").arg(Core::formatMessage(QString::fromStdWString(exception.explanation))));
 
         return false;
     }
 
-    // Update the XML base value, should the CellML file be a remote one or its
+    // Update the base URI, should the CellML file be a remote one or its
     // contents be directly passed onto us
 
     Core::FileManager *fileManagerInstance = Core::FileManager::instance();
-    ObjRef<iface::cellml_api::URI> uri = (*pModel)->xmlBase();
+    ObjRef<iface::cellml_api::URI> baseUri = (*pModel)->xmlBase();
 
-    if (fileManagerInstance->isRemote(pFileName))
+    if (fileManagerInstance->isRemote(pFileName)) {
         // We are dealing with a remote file, so its XML base value should point
         // to its remote location
 
-        uri->asText(fileManagerInstance->url(pFileName).toStdWString());
-    else if (!pFileContents.isEmpty())
+        baseUri->asText(fileManagerInstance->url(pFileName).toStdWString());
+    } else if (!pFileContents.isEmpty()) {
         // We are dealing with a file which contents was directly passed onto
         // us, so its XML base value should point to its actual location
 
-        uri->asText(pFileName.toStdWString());
+        baseUri->asText(pFileName.toStdWString());
+    }
 
     return true;
 }
 
 //==============================================================================
 
+void CellmlFile::retrieveCmetaIdsFromCellmlElement(iface::cellml_api::CellMLElement *pElement)
+{
+    // Keep track of the given CellML element's cmeta:id
+
+    QString cmetaId = QString::fromStdWString(pElement->cmetaId());
+
+    if (!cmetaId.isEmpty())
+        mUsedCmetaIds << cmetaId;
+
+    // Do the same for all the child elements of the given CellML element
+
+    ObjRef<iface::cellml_api::CellMLElementSet> childElements = pElement->childElements();
+    ObjRef<iface::cellml_api::CellMLElementIterator> childElementsIter = childElements->iterate();
+
+    try {
+        for (ObjRef<iface::cellml_api::CellMLElement> childElement = childElementsIter->next();
+             childElement; childElement = childElementsIter->next()) {
+            retrieveCmetaIdsFromCellmlElement(childElement);
+        }
+    } catch (...) {
+        // Note: we should never reach this point, but it may still happen if a
+        //       CellML file contains an child element that is not known to the
+        //       CellML API. We are taking the view that this is a limitation of
+        //       the CellML API and shouldn't therefore generate an error for
+        //       something that should have been working fine in the first
+        //       place...
+    }
+}
+
+//==============================================================================
+
+void CellmlFile::clearCmetaIdsFromCellmlElement(const QDomElement &pElement,
+                                                const QStringList &pUsedCmetaIds)
+{
+    // Remove the given CellML element's cmeta:id, if it is not actually being
+    // used
+
+    static const QString CmetaId = "cmeta:id";
+
+    if (!pUsedCmetaIds.contains(pElement.attribute(CmetaId)))
+        pElement.attributes().removeNamedItem(CmetaId);
+
+    // Do the same for all the child elements of the given CellML element
+
+    for (QDomElement childElement = pElement.firstChildElement();
+         !childElement.isNull(); childElement = childElement.nextSiblingElement()) {
+        clearCmetaIdsFromCellmlElement(childElement, pUsedCmetaIds);
+    }
+}
+
+//==============================================================================
+
 bool CellmlFile::load()
 {
-    // Check whether the file is already loaded
+    // Check whether the file is already loaded and without any issues
 
     if (!mLoadingNeeded)
-        return true;
+        return mIssues.isEmpty();
 
     // Consider the file loaded
     // Note: even when we can't load the file, we still consider it 'loaded'
@@ -363,12 +422,23 @@ bool CellmlFile::load()
             ObjRef<iface::rdf_api::TripleEnumerator> rdfTriplesEnumerator = rdfTriples->enumerateTriples();
 
             for (ObjRef<iface::rdf_api::Triple> rdfTriple = rdfTriplesEnumerator->getNextTriple();
-                 rdfTriple; rdfTriple = rdfTriplesEnumerator->getNextTriple())
+                 rdfTriple; rdfTriple = rdfTriplesEnumerator->getNextTriple()) {
                 mRdfTriples << new CellmlFileRdfTriple(this, rdfTriple);
+            }
 
             mRdfTriples.updateOriginalRdfTriples();
         }
     }
+
+    // Determine which cmeta:ids are currently in use, be they in the various
+    // CellML elements or RDF triples
+
+    retrieveCmetaIdsFromCellmlElement(mModel);
+
+    foreach (CellmlFileRdfTriple *rdfTriple, mRdfTriples)
+        mUsedCmetaIds << rdfTriple->metadataId();
+
+    mUsedCmetaIds.removeDuplicates();
 
     return true;
 }
@@ -395,22 +465,6 @@ bool CellmlFile::save(const QString &pNewFileName)
     if (mLoadingNeeded || !mIssues.isEmpty())
         return false;
 
-    // Determine the file name to use for the CellML file
-
-    QString newFileName = pNewFileName.isEmpty()?mFileName:pNewFileName;
-
-    // (Create and) open the file for writing
-
-    QFile file(newFileName);
-
-    if (!file.open(QIODevice::WriteOnly)) {
-        // The file can't be opened, so delete it
-
-        file.remove();
-
-        return false;
-    }
-
     // Make sure that the RDF API representation is up to date by updating its
     // data source
 
@@ -420,52 +474,57 @@ bool CellmlFile::save(const QString &pNewFileName)
 
     mRdfTriples.updateOriginalRdfTriples();
 
-    // Beautify the serialised version of the CellML file, after having removed
-    // the model's XML base value and its RDF child node, should there be no
+    // Get a DOM representation of our CellML file and remove its XML base
+    // value, its RDF child node (should there be no annotations) and all the
+    // cmeta:id's (in CellML elements) that are not used in the CellML file's
     // annotations
-    // Note: as part of good practices, a CellML file should never contain an
-    //       XML base value. Yet, upon loading a CellML file, we set one (see
-    //       doLoad()), so that we can properly import CellML files, if needed.
-    //       So, now, we need to undo what we did...
+    // Note #1: as part of good practices, a CellML file should never contain an
+    //          XML base value. Yet, upon loading a CellML file, we set one (see
+    //          doLoad()), so that we can properly import CellML files, if
+    //          needed. So, now, we need to undo what we did...
+    // Note #2: normally, we would be asking QDomDocument::setContent() to
+    //          process namespaces, but this would then result in a very messy
+    //          serialisation with namespaces being referenced all over the
+    //          place. So, in the end, we do everything without processing
+    //          namespaces...
 
     QDomDocument domDocument;
 
     domDocument.setContent(QString::fromStdWString(mModel->serialisedText()));
 
-    for (int i = 0, iMax = domDocument.childNodes().count(); i < iMax; ++i) {
-        QDomNode domNode = domDocument.childNodes().at(i);
+    QDomElement documentElement = domDocument.documentElement();
 
-        if (!domNode.nodeName().compare("model")) {
-            // Remove the model's XML base value
+    documentElement.attributes().removeNamedItem("xml:base");
 
-            domNode.attributes().removeNamedItem("xml:base");
-
-            // Remove the model's RDF child node, should there be no annotations
-
-            for (int j = 0, jMax = domNode.childNodes().count(); j < jMax; ++j) {
-                QDomNode domChildNode = domNode.childNodes().at(j);
-
-                if (!domChildNode.nodeName().compare("rdf:RDF")) {
-                    if (!domChildNode.childNodes().count())
-                        domNode.removeChild(domChildNode);
-
-                    break;
-                }
-            }
+    for (QDomElement childElement = documentElement.firstChildElement();
+         !childElement.isNull(); childElement = childElement.nextSiblingElement()) {
+        if (!childElement.nodeName().compare("rdf:RDF")) {
+            if (!childElement.childNodes().count())
+                documentElement.removeChild(childElement);
 
             break;
         }
     }
 
-    // Write out the contents of the CellML file to the file
+    QStringList usedCmetaIds = QStringList();
 
-    QTextStream out(&file);
+    foreach (CellmlFileRdfTriple *rdfTriple, mRdfTriples)
+        usedCmetaIds << rdfTriple->metadataId();
 
-    out << qDomDocumentToString(domDocument);
+    usedCmetaIds.removeDuplicates();
 
-    file.close();
+    clearCmetaIdsFromCellmlElement(documentElement, usedCmetaIds);
 
-    // The CellML file being saved, it cannot be modified (should it have been
+    // Determine the file name to use for the CellML file
+
+    QString newFileName = pNewFileName.isEmpty()?mFileName:pNewFileName;
+
+    // Write out the contents of our DOM document to our CellML file
+
+    if (!Core::writeTextToFile(newFileName, qDomDocumentToString(domDocument)))
+        return false;
+
+    // Our CellML file being saved, it cannot be modified (should it have been
     // before)
     // Note: we must do this before updating mFileName (should it be given a new
     //       value) since we use it to update our modified status...
@@ -823,41 +882,32 @@ CellmlFileRdfTriple * CellmlFile::rdfTriple(iface::cellml_api::CellMLElement *pE
 
 //==============================================================================
 
-QString CellmlFile::rdfTripleSubject(iface::cellml_api::CellMLElement *pElement) const
+QString CellmlFile::rdfTripleSubject(iface::cellml_api::CellMLElement *pElement)
 {
     // Make sure that we have a 'proper' cmeta:id or generate one, if needed
 
     QString cmetaId = QString::fromStdWString(pElement->cmetaId());
 
     if (cmetaId.isEmpty()) {
-        // We don't have a 'proper' cmeta:id for the element, so we need to
-        // generate one and in order to do so, we need to know what cmeta:ids
-        // are currently in use in the CellML file
-
-        QStringList cmetaIds = QStringList();
-
-        foreach (CellmlFileRdfTriple *rdfTriple, mRdfTriples) {
-            QString cmetaId = rdfTriple->metadataId();
-
-            if (!cmetaIds.contains(cmetaId))
-                cmetaIds << cmetaId;
-        }
-
-        // Now, we try different cmeta:id values until we find one which is not
-        // present in our list
+        // We don't have a 'proper' cmeta:id for the CellML element, so we need
+        // to generate one and in order to do so, we need to try different
+        // cmeta:id values until we find one that is not used
 
         int counter = 0;
 
         while (true) {
             cmetaId = QString("id_%1").arg(++counter, 9, 10, QChar('0'));
 
-            if (!cmetaIds.contains(cmetaId)) {
-                // We have found a unique cmeta:id, so update our CellML element
-                // and leave
+            if (!mUsedCmetaIds.contains(cmetaId)) {
+                // We have found a unique cmeta:id, so update our CellML
+                // element, consider ourselves modified, update our list of
+                // cmeta:ids and leave
 
                 pElement->cmetaId(cmetaId.toStdWString());
 
                 setModified(true);
+
+                mUsedCmetaIds << cmetaId;
 
                 break;
             }
@@ -919,13 +969,17 @@ bool CellmlFile::removeRdfTriple(iface::cellml_api::CellMLElement *pElement,
 
 //==============================================================================
 
-QString CellmlFile::xmlBase() const
+QString CellmlFile::xmlBase()
 {
-    // Return the CellML file's URI base
+    // Return the CellML file's base URI
 
-    ObjRef<iface::cellml_api::URI> uri = mModel->xmlBase();
+    if (load()) {
+        ObjRef<iface::cellml_api::URI> baseUri = mModel->xmlBase();
 
-    return QString::fromStdWString(uri->asText());
+        return QString::fromStdWString(baseUri->asText());
+    } else {
+        return QString();
+    }
 }
 
 //==============================================================================
@@ -935,10 +989,6 @@ bool CellmlFile::exportTo(const QString &pFileName, const Version &pVersion)
     // Export the model to the required format, after loading it if necessary
 
     if (load()) {
-        // Reset any issues that we may have found before
-
-        mIssues.clear();
-
         // Check that it actually makes sense to export the model
 
         switch (pVersion) {
@@ -998,15 +1048,11 @@ bool CellmlFile::exportTo(const QString &pFileName,
     // Export the model to the required format, after loading it if necessary
 
     if (load()) {
-        // Reset any issues that we may have found before
-
-        mIssues.clear();
-
         // Check that the user-defined format file actually exists
 
         if (!QFile::exists(pUserDefinedFormatFileName)) {
             mIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                                       tr("the user-defined format file does not exist"));
+                                       QObject::tr("the user-defined format file does not exist"));
 
             return false;
         }
@@ -1019,7 +1065,7 @@ bool CellmlFile::exportTo(const QString &pFileName,
 
         if (!Core::readTextFromFile(pUserDefinedFormatFileName, userDefinedFormatFileContents)) {
             mIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                                       tr("the user-defined format file could not be read"));
+                                       QObject::tr("the user-defined format file could not be read"));
 
             return false;
         }
@@ -1028,7 +1074,7 @@ bool CellmlFile::exportTo(const QString &pFileName,
 
         if (!domDocument.setContent(userDefinedFormatFileContents)) {
             mIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                                       tr("the user-defined format file is not a valid XML file"));
+                                       QObject::tr("the user-defined format file is not a valid XML file"));
 
             return false;
         }
@@ -1045,7 +1091,7 @@ bool CellmlFile::exportTo(const QString &pFileName,
 
         if (celedsExporterBootstrap->loadError().length()) {
             mIssues << CellmlFileIssue(CellmlFileIssue::Error,
-                                       tr("the user-defined format file could not be loaded"));
+                                       QObject::tr("the user-defined format file could not be loaded"));
 
             return false;
         }

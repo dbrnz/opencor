@@ -24,6 +24,7 @@ specific language governing permissions and limitations under the License.
 
 //==============================================================================
 
+#include "corecliutils.h"
 #include "editorglobal.h"
 #include "widget.h"
 
@@ -84,6 +85,8 @@ public:
 
     void updateSettings(EditorWidget *pEditorWidget);
 
+    QScintillaSupport::QScintillaWidget * editor() const;
+
     QMenu * contextMenu() const;
     void setContextMenu(const QList<QAction *> &pContextMenuActions);
 
@@ -131,9 +134,6 @@ public:
 
     QString eolString() const;
 
-    void setBackgroundColor(const int &pStyle, const QColor &pBackgroundColor);
-    void setForegroundColor(const int &pStyle, const QColor &pForegroundColor);
-
     int zoomLevel() const;
     void setZoomLevel(const int &pZoomLevel);
 
@@ -152,6 +152,8 @@ private:
     int mCurrentColumn;
 
     bool mFindReplaceVisible;
+
+    QIntList mReadOnlyStyles;
 
     EditorFindReplaceWidget * findReplace();
 

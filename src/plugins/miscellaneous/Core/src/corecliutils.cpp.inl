@@ -148,17 +148,12 @@ QString osName()
         return "OS X 10.8 (Mountain Lion)";
     case QSysInfo::MV_10_9:
         return "OS X 10.9 (Mavericks)";
+    case QSysInfo::MV_10_10:
+        return "OS X 10.10 (Yosemite)";
     default:
-//---GRY--- THE BELOW IS BECAUSE Qt DOESN'T CURRENTLY SUPPORT OS X 10.10
-//          (Yosemite), SO ONCE IT DOES, WE SHOULD BE ABLE TO HAVE A CASE FOR
-//          QSysInfo::MV_10_10 OR SOMETHING SIMILAR...
-        if (QSysInfo::MacintoshVersion == 12)
-            return "OS X 10.10 (Yosemite)";
-        else
-            return "Mac OS";
-            // Note: we return "Mac OS" rather than "Mac OS X" or even "OS X"
-            //       since only versions prior to (Mac) OS X are not
-            //       recognised...
+        return "Mac OS";
+        // Note: we return "Mac OS" rather than "Mac OS X" or even "OS X" since
+        //       only versions prior to (Mac) OS X are not recognised...
     }
 #else
     #error Unsupported platform
@@ -174,38 +169,161 @@ QString copyright()
 
 //==============================================================================
 
-QString formatErrorMessage(const QString &pErrorMessage, const bool &pLowerCase,
-                           const bool &pDotDotDot)
+QString formatMessage(const QString &pMessage, const bool &pLowerCase,
+                      const bool &pDotDotDot)
 {
     static const QString DotDotDot = "...";
 
-    if (pErrorMessage.isEmpty())
+    if (pMessage.isEmpty())
         return pDotDotDot?DotDotDot:QString();
 
-    // Format and return the error message
+    // Format and return the message
 
-    QString errorMessage = pErrorMessage;
+    QString message = pMessage;
 
     // Upper/lower the case of the first character, unless the message is one
     // character long (!!) or unless its second character is in lower case
 
-    if (    (errorMessage.size() <= 1)
-        || ((errorMessage.size() > 1) && errorMessage[1].isLower())) {
+    if (    (message.size() <= 1)
+        || ((message.size() > 1) && message[1].isLower())) {
         if (pLowerCase)
-            errorMessage[0] = errorMessage[0].toLower();
+            message[0] = message[0].toLower();
         else
-            errorMessage[0] = errorMessage[0].toUpper();
+            message[0] = message[0].toUpper();
     }
 
-    // Return the error message after making sure that it ends with "...", if
+    // Return the message after making sure that it ends with "...", if
     // requested
 
-    int subsize = errorMessage.size();
+    int subsize = message.size();
 
-    while (subsize && (errorMessage[subsize-1] == '.'))
+    while (subsize && (message[subsize-1] == '.'))
         --subsize;
 
-    return errorMessage.left(subsize)+(pDotDotDot?DotDotDot:QString());
+    return message.left(subsize)+(pDotDotDot?DotDotDot:QString());
+}
+
+//==============================================================================
+
+QByteArray resourceAsByteArray(const QString &pResource)
+{
+    // Retrieve a resource as a QByteArray
+
+    QResource resource(pResource);
+
+    if (resource.isValid()) {
+        if (resource.isCompressed())
+            // The resource is compressed, so uncompress it before returning it
+
+            return qUncompress(resource.data(), resource.size());
+        else
+            // The resource is not compressed, so just return it after doing the
+            // right conversion
+
+            return QByteArray(reinterpret_cast<const char *>(resource.data()),
+                              resource.size());
+    }
+    else {
+        return QByteArray();
+    }
+}
+
+//==============================================================================
+
+QString temporaryFileName(const QString &pExtension)
+{
+    // Get and return a temporary file name
+
+    QTemporaryFile file(QDir::tempPath()+QDir::separator()+"XXXXXX"+pExtension);
+
+    file.open();
+
+    file.setAutoRemove(false);
+    // Note: by default, a temporary file is to autoremove itself, but we
+    //       clearly don't want that here...
+
+    file.close();
+
+    return file.fileName();
+}
+
+//==============================================================================
+
+bool writeByteArrayToFile(const QString &pFileName,
+                          const QByteArray &pByteArray)
+{
+    // Write the given byte array to a temporary file and rename it to the given
+    // file name, if successful
+
+    QFile file(temporaryFileName());
+
+    if (file.open(QIODevice::WriteOnly)) {
+        bool res = file.write(pByteArray) != -1;
+
+        file.close();
+
+        // Rename the temporary file name to the given file name, if everything
+        // went fine
+
+        if (res) {
+            if (QFile::exists(pFileName))
+                QFile::remove(pFileName);
+
+            res = file.rename(pFileName);
+        }
+
+        // Remove the temporary file, if either we couldn't rename it or the
+        // initial saving didn't work
+
+        if (!res)
+            file.remove();
+
+        return res;
+    } else {
+        return false;
+    }
+}
+
+//==============================================================================
+
+bool writeResourceToFile(const QString &pFileName, const QString &pResource)
+{
+    if (QResource(pResource).isValid())
+        // The resource exists, so write it to the given file
+
+        return writeByteArrayToFile(pFileName, resourceAsByteArray(pResource));
+    else
+        return false;
+}
+
+//==============================================================================
+
+bool readTextFromFile(const QString &pFileName, QString &pText)
+{
+    // Read the contents of the file, which file name is given, as a string
+
+    QFile file(pFileName);
+
+    if (file.open(QIODevice::ReadOnly)) {
+        pText = file.readAll();
+
+        file.close();
+
+        return true;
+    } else {
+        pText = QString();
+
+        return false;
+    }
+}
+
+//==============================================================================
+
+bool writeTextToFile(const QString &pFileName, const QString &pText)
+{
+    // Write the given string to the given file
+
+    return writeByteArrayToFile(pFileName, pText.toUtf8());
 }
 
 //==============================================================================
@@ -218,6 +336,23 @@ bool readTextFromUrl(const QString &pUrl, QString &pText,
     static SynchronousTextFileDownloader synchronousTextFileDownloader;
 
     return synchronousTextFileDownloader.readTextFromUrl(pUrl, pText, pErrorMessage);
+}
+
+//==============================================================================
+
+QString eolString()
+{
+    // Return the end of line to use
+
+#ifdef Q_OS_WIN
+    return "\r\n";
+#else
+    // Note: before OS X, the EOL string would have been "\r", but since OS X it
+    //       is the same as on Linux (i.e. "\n") and since we don't support
+    //       versions prior to OS X...
+
+    return "\n";
+#endif
 }
 
 //==============================================================================

@@ -63,6 +63,7 @@ public:
     void setContextMenu(const QList<QAction *> &pContextMenuActions);
 
     virtual void setCursorPosition(int pLine, int pColumn);
+    virtual void setLexer(QsciLexer *pLexer);
 
     int currentPosition() const;
     void setCurrentPosition(const int &pCurrentPosition);
@@ -92,7 +93,10 @@ public:
 
     QString eolString() const;
 
+    QColor backgroundColor(const int &pStyle);
     void setBackgroundColor(const int &pStyle, const QColor &pBackgroundColor);
+
+    QColor foregroundColor(const int &pStyle);
     void setForegroundColor(const int &pStyle, const QColor &pForegroundColor);
 
     int zoomLevel() const;

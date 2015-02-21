@@ -160,7 +160,7 @@ showEnableAction(mGui->actionPreferences, false);
     // Note: we don't set it in our .ui file since this will require
     //       'translating' it in other languages...
 
-    setWindowTitle(qApp->applicationName());
+    setWindowTitle(qAppName());
 
     // Customise our docked windows action and handle it through a connection
     // Note #1: the reason for having several shortcuts is because one or
@@ -191,7 +191,7 @@ showEnableAction(mGui->actionPreferences, false);
     // A connection to handle the status bar
 
     connect(mGui->actionStatusBar, SIGNAL(triggered(bool)),
-            statusBar(), SLOT(setVisible(bool)));
+            mGui->statusBar, SLOT(setVisible(bool)));
 
     // Some connections to handle our various menu items
 
@@ -398,9 +398,9 @@ void MainWindow::showEvent(QShowEvent *pEvent)
         // all of OpenCOR to be visible in order to be able to determine whether
         // the status bar is visible...
 
-        statusBar()->setVisible(mStatusBarVisible);
+        mGui->statusBar->setVisible(mStatusBarVisible);
 
-        mGui->actionStatusBar->setChecked(statusBar()->isVisible());
+        mGui->actionStatusBar->setChecked(mGui->statusBar->isVisible());
     }
 }
 
@@ -1199,7 +1199,7 @@ void MainWindow::on_actionAbout_triggered()
                         "<h1 align=center><strong>"+version(qApp)+"</strong></h1>"
                        +"<h3 align=center><em>"+osName()+"</em></h3>"
                        +"<p align=center><em>"+copyright()+"</em></p>"
-                       +"<a href=\""+QString(OpencorHomePageUrl)+"\"><strong>"+qApp->applicationName()+"</strong></a> "+tr("is a cross-platform modelling environment, which can be used to organise, edit, simulate and analyse <a href=\"http://www.cellml.org/\">CellML</a> files."));
+                       +"<a href=\""+QString(OpencorHomePageUrl)+"\"><strong>"+qAppName()+"</strong></a> "+tr("is a cross-platform modelling environment, which can be used to organise, edit, simulate and analyse <a href=\"http://www.cellml.org/\">CellML</a> files."));
 }
 
 //==============================================================================
@@ -1341,7 +1341,7 @@ void MainWindow::updateDockWidgetsVisibility()
 
 void MainWindow::resetAll()
 {
-    if (QMessageBox::question(this, qApp->applicationName(),
+    if (QMessageBox::question(this, qAppName(),
                               tr("You are about to reset <strong>all</strong> of your settings. Do you wish to proceed?"),
                               QMessageBox::Yes|QMessageBox::No,
                               QMessageBox::Yes) == QMessageBox::Yes ) {
