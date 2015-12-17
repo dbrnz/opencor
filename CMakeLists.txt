@@ -323,6 +323,7 @@ SET(PLUGINS
     solver/KINSOLSolver
     solver/SecondOrderRungeKuttaSolver
 
+    tool/BioSignalMLBrowser
     tool/CellMLTools
 
     # Sample plugins
