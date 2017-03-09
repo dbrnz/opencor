@@ -53,9 +53,10 @@ public:
 #include "plugininterface.inl"
 
 private:
+    void initialiseKernel(const QString &pConnectionFile);
     int runKernel();
 
-    QString mConnectionFile;
+    bool mRunKernel;
 };
 
 //==============================================================================

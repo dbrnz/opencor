@@ -390,7 +390,6 @@ SET(PLUGINS
     editing/RawTextView
 
     miscellaneous/HelpWindow
-    miscellaneous/WebBrowserWindow
 
     organisation/FileBrowserWindow
     organisation/FileOrganiserWindow
@@ -412,9 +411,12 @@ SET(PLUGINS
     # Python wrappers depend on simulation plugins
 
     miscellaneous/PythonWrapper
-    miscellaneous/PythonConsoleWindow
 
     miscellaneous/JupyterKernel
+
+    # Web browser initialisation might load a notebook so build after Jupyter
+
+    miscellaneous/WebBrowserWindow
 
     # Sample plugins
 

@@ -18,3 +18,10 @@ ADD_PLUGIN(JupyterKernel
         PythonQtSupport
         PythonWrapper
 )
+
+# Install our Jupyter server and kernel startup module
+
+ADD_CUSTOM_COMMAND(TARGET JupyterKernelPlugin POST_BUILD
+    COMMAND ${PYTHON_EXECUTABLE} -s setup.py --quiet build --build-base=${PROJECT_BINARY_DIR}/src install
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src
+)

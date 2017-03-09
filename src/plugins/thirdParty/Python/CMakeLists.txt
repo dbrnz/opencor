@@ -5,7 +5,7 @@ PROJECT(PythonPlugin)
 # that the correct package archive is retrieved when the build configuration
 # is changed (e.g. by changing the git branch).
 
-SET(BUILD_NUMBER 5)
+SET(BUILD_NUMBER 6)
 
 # Specify the version of Python we are using.
 
@@ -21,6 +21,8 @@ SET(SCIPY_VERSION 0.18.1)
 
 SET(IPYKERNEL_VERSION 4.5.2)
 SET(IPYTHON_VERSION 5.2.2)
+SET(IPYWIDGETS_VERSION 6.0.0)
+SET(NOTEBOOK_VERSION 4.4.1)
 
 # We use our own copies of some Windows packages from
 # http://www.lfd.uci.edu/~gohlke/pythonlibs/
@@ -144,10 +146,10 @@ IF(USE_PREBUILT_PYTHON_PACKAGE)
         ENDIF()
     ELSEIF(APPLE)
         RETRIEVE_PACKAGE_FILE(${RELATIVE_PROJECT_SOURCE_DIR}
-            Python ${PYTHON_PACKAGE_VERSION} e566b66f2fb81897bf9d6f275a418c9cbf40c5eb
+            Python ${PYTHON_PACKAGE_VERSION} 1e9d8903f47392f43749c2ac551962c35f3927dd
             CHECKED_FILES ${CHECKED_FILES}
-            SHA1_VALUES f50b1663e2028a2a204561b2b6877d421cee279e
-                        4ab6eed426536b6c90bb1f01ca96379a8dda67a2
+            SHA1_VALUES b1325ad80d4ec133dbc85958c3595d17ae3fc2fc
+                        00d128acf4e855c3dad95fc463b9b6b1b7d13e57
         )
     ELSE()
         RETRIEVE_PACKAGE_FILE(${RELATIVE_PROJECT_SOURCE_DIR}
@@ -471,6 +473,17 @@ ELSE()
             ${PROJECT_SOURCE_DIR}/src/ipython_${IPYTHON_VERSION}.diff
         WORKING_DIRECTORY ${FULL_INSTALL_DIR}/bin
         DEPENDEES install_scipy
+        )
+
+    # Install Jupyter notebook and widgets
+
+    ExternalProject_Add_Step(PythonBuild install_notebook
+        COMMAND ${PIP_EXECUTABLE} install --only-binary all
+            notebook==${NOTEBOOK_VERSION}
+            ipywidgets==${IPYWIDGETS_VERSION}
+        COMMAND ${PYTHON_EXECUTABLE} -s -m notebook.nbextensions enable --py --sys-prefix widgetsnbextension
+        WORKING_DIRECTORY ${FULL_INSTALL_DIR}/bin
+        DEPENDEES install_ipython
         )
 
     # Package Python's include files and libraries
