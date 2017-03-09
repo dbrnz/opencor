@@ -7,8 +7,6 @@ class OpenCORKernel(IOLoopKernelManager):
         self.autorestart = False
         self.connection_file = kwargs.get('connection_file')
 
-##        from pudb import set_trace; set_trace()
-
     def _launch_kernel(self, *args, **kwargs):
         self.log.info('Launch OpenCORKernel:  ARGS: %s  KWDS: %s', args, kwargs)
         self.log.info("CONN: %s", self.parent.opencor_connection)

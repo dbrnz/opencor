@@ -197,42 +197,41 @@ class OCKernelApp(IPKernelApp):
 
 
 if __name__ == '__main__':
-    from ipykernel.kernelapp import IPKernelApp
-    import jupyter_opencor.server
     import OpenCOR
 
-    connection_file = %1
-    if connection_file is None:
-        import jupyter_opencor
+    connection_file = '%1'   # Set by `initialiseKernel()`
+    if connection_file:
+        OpenCOR.serverProcess = None
+    else:
+        # If no connection file has been given then we run a cut-down Jupyter server.
 
+        import jupyter_opencor.server
         import multiprocessing as mp
-        ctx = mp.get_context('spawn')
         ctx.set_executable(os.path.join(sys.exec_prefix, 'bin/python'))  ## .exe under windows...
 
+        ctx = mp.get_context('spawn')
         jupyter_connection, opencor_connection = ctx.Pipe()
-        service = ctx.Process(name='jupyter', target=jupyter_opencor.server.main, args=(opencor_connection,))
-        service.start()
+
+        OpenCOR.serverProcess = ctx.Process(name='jupyter', target=jupyter_opencor.server.main, args=(opencor_connection,))
+        OpenCOR.serverProcess.start()
 
         connection_file = jupyter_connection.recv()
         jupyter_connection.close()
 
-
     # We save the initialised application instance in our module
     # ready for starting when all of OpenCOR has been initialised.
 
-    OpenCOR.app = OCKernelApp.instance(connection_file=connection_file)
-    OpenCOR.app.initialize()
+    OpenCOR.kernelApp = OCKernelApp.instance(connection_file=connection_file)
+    OpenCOR.kernelApp.initialize()
     )PYTHON";
 
 //==============================================================================
 
 void JupyterKernelPlugin::initialiseKernel(const QString &pConnectionFile)
 {
-    // Setup the the kernel using our connection file. If no connection file has been given
-    // then we run our own cut-down Jupyter server.
+    // Setup the the kernel using our connection file
 
-    QString connection = pConnectionFile.isEmpty() ? "None" : QString("'%1'").arg(pConnectionFile);
-    PythonQtSupport::PythonQtSupportPlugin::pythonManager()->executeString(jupyterKernel.arg(connection));
+    PythonQtSupport::PythonQtSupportPlugin::pythonManager()->executeString(jupyterKernel.arg(pConnectionFile));
 }
 
 //==============================================================================
@@ -242,7 +241,7 @@ static QString startKernel = R"PYTHON(
 if __name__ == '__main__':
     import OpenCOR
 
-    OpenCOR.app.start()
+    OpenCOR.kernelApp.start()
     )PYTHON";
 
 //==============================================================================
