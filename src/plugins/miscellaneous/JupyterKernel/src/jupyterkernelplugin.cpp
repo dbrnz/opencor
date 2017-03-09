@@ -207,9 +207,12 @@ if __name__ == '__main__':
 
         import jupyter_opencor.server
         import multiprocessing as mp
-        ctx.set_executable(os.path.join(sys.exec_prefix, 'bin/python'))  ## .exe under windows...
 
         ctx = mp.get_context('spawn')
+        if os.name == 'nt':
+            ctx.set_executable(os.path.join(sys.exec_prefix, 'bin/python.exe'))
+        else:
+            ctx.set_executable(os.path.join(sys.exec_prefix, 'bin/python'))
         jupyter_connection, opencor_connection = ctx.Pipe()
 
         OpenCOR.serverProcess = ctx.Process(name='jupyter', target=jupyter_opencor.server.main, args=(opencor_connection,))
