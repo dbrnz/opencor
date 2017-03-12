@@ -1,148 +1,103 @@
 
-if (CMAKE_VERSION VERSION_LESS 2.8.3)
-    message(FATAL_ERROR "Qt 5 requires at least CMake version 2.8.3")
+####### Expanded from @PACKAGE_INIT@ by configure_package_config_file() (ECM variant) #######
+####### Any changes to this file will be overwritten by the next CMake run            #######
+####### The input file was Qt5WebKitConfig.cmake.in                                           #######
+
+get_filename_component(PACKAGE_PREFIX_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../" ABSOLUTE)
+
+macro(set_and_check _var _file)
+  set(${_var} "${_file}")
+  if(NOT EXISTS "${_file}")
+    message(FATAL_ERROR "File or directory ${_file} referenced by variable ${_var} does not exist !")
+  endif()
+endmacro()
+
+include(CMakeFindDependencyMacro OPTIONAL RESULT_VARIABLE _CMakeFindDependencyMacro_FOUND)
+
+if (NOT _CMakeFindDependencyMacro_FOUND)
+  macro(find_dependency dep)
+    if (NOT ${dep}_FOUND)
+
+      set(ecm_fd_version)
+      if (${ARGC} GREATER 1)
+        set(ecm_fd_version ${ARGV1})
+      endif()
+      set(ecm_fd_exact_arg)
+      if(${CMAKE_FIND_PACKAGE_NAME}_FIND_VERSION_EXACT)
+        set(ecm_fd_exact_arg EXACT)
+      endif()
+      set(ecm_fd_quiet_arg)
+      if(${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
+        set(ecm_fd_quiet_arg QUIET)
+      endif()
+      set(ecm_fd_required_arg)
+      if(${CMAKE_FIND_PACKAGE_NAME}_FIND_REQUIRED)
+        set(ecm_fd_required_arg REQUIRED)
+      endif()
+
+      find_package(${dep} ${ecm_fd_version}
+          ${ecm_fd_exact_arg}
+          ${ecm_fd_quiet_arg}
+          ${ecm_fd_required_arg}
+      )
+
+      if (NOT ${dep}_FOUND)
+        set(${CMAKE_FIND_PACKAGE_NAME}_NOT_FOUND_MESSAGE "${CMAKE_FIND_PACKAGE_NAME} could not be found because dependency ${dep} could not be found.")
+        set(${CMAKE_FIND_PACKAGE_NAME}_FOUND False)
+        return()
+      endif()
+
+      set(ecm_fd_version)
+      set(ecm_fd_required_arg)
+      set(ecm_fd_quiet_arg)
+      set(ecm_fd_exact_arg)
+    endif()
+  endmacro()
 endif()
 
-set(_qt5WebKit_install_prefix ${CMAKE_SOURCE_DIR}/src/3rdparty/QtWebKit)
 
-# For backwards compatibility only. Use Qt5WebKit_VERSION instead.
-set(Qt5WebKit_VERSION_STRING 5.6.2)
+macro(check_required_components _NAME)
+  foreach(comp ${${_NAME}_FIND_COMPONENTS})
+    if(NOT ${_NAME}_${comp}_FOUND)
+      if(${_NAME}_FIND_REQUIRED_${comp})
+        set(${_NAME}_FOUND FALSE)
+      endif()
+    endif()
+  endforeach()
+endmacro()
+
+####################################################################################
+
+find_dependency(Qt5Core    5.6.2 EXACT)
+find_dependency(Qt5Gui     5.6.2 EXACT)
+find_dependency(Qt5Network 5.6.2 EXACT)
+
+include("${CMAKE_CURRENT_LIST_DIR}/WebKitTargets.cmake")
+
+set(_Qt5WebKit_MODULE_DEPENDENCIES "Gui;Network;Core")
+set(Qt5WebKit_DEFINITIONS -DQT_WEBKIT_LIB)
+
+
+####### Expanded from QTWEBKIT_PACKAGE_FOOTER variable #######
 
 set(Qt5WebKit_LIBRARIES Qt5::WebKit)
+set(Qt5WebKit_VERSION_STRING ${Qt5WebKit_VERSION})
+set(Qt5WebKit_EXECUTABLE_COMPILE_FLAGS "")
+set(Qt5WebKit_PRIVATE_INCLUDE_DIRS "") # FIXME: Support private headers
 
-macro(_qt5_WebKit_check_file_exists file)
-    if(NOT EXISTS "${file}" )
-        message(FATAL_ERROR "The imported target \"Qt5::WebKit\" references the file
-   \"${file}\"
-but this file does not exist.  Possible reasons include:
-* The file was deleted, renamed, or moved to another location.
-* An install or uninstall procedure did not complete successfully.
-* The installation package was faulty and contained
-   \"${CMAKE_CURRENT_LIST_FILE}\"
-but not all the files it references.
-")
-    endif()
-endmacro()
+get_target_property(Qt5WebKit_INCLUDE_DIRS        Qt5::WebKit INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(Qt5WebKit_COMPILE_DEFINITIONS Qt5::WebKit INTERFACE_COMPILE_DEFINITIONS)
 
-macro(_populate_WebKit_target_properties Configuration LIB_LOCATION IMPLIB_LOCATION)
-    set_property(TARGET Qt5::WebKit APPEND PROPERTY IMPORTED_CONFIGURATIONS ${Configuration})
+foreach (_module_dep ${_Qt5WebKit_MODULE_DEPENDENCIES})
+    list(APPEND Qt5WebKit_INCLUDE_DIRS ${Qt5${_module_dep}_INCLUDE_DIRS})
+    list(APPEND Qt5WebKit_PRIVATE_INCLUDE_DIRS ${Qt5${_module_dep}_PRIVATE_INCLUDE_DIRS})
+    list(APPEND Qt5WebKit_DEFINITIONS ${Qt5${_module_dep}_DEFINITIONS})
+    list(APPEND Qt5WebKit_COMPILE_DEFINITIONS ${Qt5${_module_dep}_COMPILE_DEFINITIONS})
+    list(APPEND Qt5WebKit_EXECUTABLE_COMPILE_FLAGS ${Qt5${_module_dep}_EXECUTABLE_COMPILE_FLAGS})
+endforeach ()
+list(REMOVE_DUPLICATES Qt5WebKit_INCLUDE_DIRS)
+list(REMOVE_DUPLICATES Qt5WebKit_PRIVATE_INCLUDE_DIRS)
+list(REMOVE_DUPLICATES Qt5WebKit_DEFINITIONS)
+list(REMOVE_DUPLICATES Qt5WebKit_COMPILE_DEFINITIONS)
+list(REMOVE_DUPLICATES Qt5WebKit_EXECUTABLE_COMPILE_FLAGS)
 
-    set(imported_location "${_qt5WebKit_install_prefix}/lib/${LIB_LOCATION}")
-    _qt5_WebKit_check_file_exists(${imported_location})
-    set_target_properties(Qt5::WebKit PROPERTIES
-        "INTERFACE_LINK_LIBRARIES" "${_Qt5WebKit_LIB_DEPENDENCIES}"
-        "IMPORTED_LOCATION_${Configuration}" ${imported_location}
-        # For backward compatibility with CMake < 2.8.12
-        "IMPORTED_LINK_INTERFACE_LIBRARIES_${Configuration}" "${_Qt5WebKit_LIB_DEPENDENCIES}"
-    )
-
-endmacro()
-
-if (NOT TARGET Qt5::WebKit)
-
-    set(_Qt5WebKit_OWN_INCLUDE_DIRS
-      "${_qt5WebKit_install_prefix}/lib/QtWebKit.framework"
-      "${_qt5WebKit_install_prefix}/lib/QtWebKit.framework/Headers"
-    )
-    set(Qt5WebKit_PRIVATE_INCLUDE_DIRS
-        "${_qt5WebKit_install_prefix}/lib/QtWebKit.framework/Versions/5/Headers/5.6.2/"
-        "${_qt5WebKit_install_prefix}/lib/QtWebKit.framework/Versions/5/Headers/5.6.2/QtWebKit"
-    )
-
-    foreach(_dir ${_Qt5WebKit_OWN_INCLUDE_DIRS})
-        _qt5_WebKit_check_file_exists(${_dir})
-    endforeach()
-
-
-    set(Qt5WebKit_INCLUDE_DIRS ${_Qt5WebKit_OWN_INCLUDE_DIRS})
-
-    set(Qt5WebKit_DEFINITIONS -DQT_WEBKIT_LIB)
-    set(Qt5WebKit_COMPILE_DEFINITIONS QT_WEBKIT_LIB)
-    set(_Qt5WebKit_MODULE_DEPENDENCIES "Gui;Network;Core")
-
-
-    set(_Qt5WebKit_FIND_DEPENDENCIES_REQUIRED)
-    if (Qt5WebKit_FIND_REQUIRED)
-        set(_Qt5WebKit_FIND_DEPENDENCIES_REQUIRED REQUIRED)
-    endif()
-    set(_Qt5WebKit_FIND_DEPENDENCIES_QUIET)
-    if (Qt5WebKit_FIND_QUIETLY)
-        set(_Qt5WebKit_DEPENDENCIES_FIND_QUIET QUIET)
-    endif()
-    set(_Qt5WebKit_FIND_VERSION_EXACT)
-    if (Qt5WebKit_FIND_VERSION_EXACT)
-        set(_Qt5WebKit_FIND_VERSION_EXACT EXACT)
-    endif()
-
-    set(Qt5WebKit_EXECUTABLE_COMPILE_FLAGS "")
-
-    foreach(_module_dep ${_Qt5WebKit_MODULE_DEPENDENCIES})
-        if (NOT Qt5${_module_dep}_FOUND)
-            find_package(Qt5${_module_dep}
-                5.6.2 ${_Qt5WebKit_FIND_VERSION_EXACT}
-                ${_Qt5WebKit_DEPENDENCIES_FIND_QUIET}
-                ${_Qt5WebKit_FIND_DEPENDENCIES_REQUIRED}
-                PATHS "${CMAKE_CURRENT_LIST_DIR}/.." NO_DEFAULT_PATH
-            )
-        endif()
-
-        if (NOT Qt5${_module_dep}_FOUND)
-            set(Qt5WebKit_FOUND False)
-            return()
-        endif()
-
-        list(APPEND Qt5WebKit_INCLUDE_DIRS "${Qt5${_module_dep}_INCLUDE_DIRS}")
-        list(APPEND Qt5WebKit_PRIVATE_INCLUDE_DIRS "${Qt5${_module_dep}_PRIVATE_INCLUDE_DIRS}")
-        list(APPEND Qt5WebKit_DEFINITIONS ${Qt5${_module_dep}_DEFINITIONS})
-        list(APPEND Qt5WebKit_COMPILE_DEFINITIONS ${Qt5${_module_dep}_COMPILE_DEFINITIONS})
-        list(APPEND Qt5WebKit_EXECUTABLE_COMPILE_FLAGS ${Qt5${_module_dep}_EXECUTABLE_COMPILE_FLAGS})
-    endforeach()
-    list(REMOVE_DUPLICATES Qt5WebKit_INCLUDE_DIRS)
-    list(REMOVE_DUPLICATES Qt5WebKit_PRIVATE_INCLUDE_DIRS)
-    list(REMOVE_DUPLICATES Qt5WebKit_DEFINITIONS)
-    list(REMOVE_DUPLICATES Qt5WebKit_COMPILE_DEFINITIONS)
-    list(REMOVE_DUPLICATES Qt5WebKit_EXECUTABLE_COMPILE_FLAGS)
-
-    set(_Qt5WebKit_LIB_DEPENDENCIES "Qt5::Gui;Qt5::Network;Qt5::Core")
-
-
-    add_library(Qt5::WebKit SHARED IMPORTED)
-    set_property(TARGET Qt5::WebKit PROPERTY FRAMEWORK 1)
-
-    set_property(TARGET Qt5::WebKit PROPERTY
-      INTERFACE_INCLUDE_DIRECTORIES ${_Qt5WebKit_OWN_INCLUDE_DIRS})
-    set_property(TARGET Qt5::WebKit PROPERTY
-      INTERFACE_COMPILE_DEFINITIONS QT_WEBKIT_LIB)
-
-    _populate_WebKit_target_properties(RELEASE "QtWebKit.framework/QtWebKit" "" )
-
-
-
-    _populate_WebKit_target_properties(DEBUG "QtWebKit.framework/QtWebKit" "" )
-
-
-
-    file(GLOB pluginTargets "${CMAKE_CURRENT_LIST_DIR}/Qt5WebKit_*Plugin.cmake")
-
-    macro(_populate_WebKit_plugin_properties Plugin Configuration PLUGIN_LOCATION)
-        set_property(TARGET Qt5::${Plugin} APPEND PROPERTY IMPORTED_CONFIGURATIONS ${Configuration})
-
-        set(imported_location "${_qt5WebKit_install_prefix}/plugins/${PLUGIN_LOCATION}")
-        _qt5_WebKit_check_file_exists(${imported_location})
-        set_target_properties(Qt5::${Plugin} PROPERTIES
-            "IMPORTED_LOCATION_${Configuration}" ${imported_location}
-        )
-    endmacro()
-
-    if (pluginTargets)
-        foreach(pluginTarget ${pluginTargets})
-            include(${pluginTarget})
-        endforeach()
-    endif()
-
-
-
-
-_qt5_WebKit_check_file_exists("${CMAKE_CURRENT_LIST_DIR}/Qt5WebKitConfigVersion.cmake")
-
-endif()

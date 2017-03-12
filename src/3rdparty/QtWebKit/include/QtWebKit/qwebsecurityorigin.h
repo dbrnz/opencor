@@ -40,7 +40,7 @@ public:
         AllowSubdomains,
         DisallowSubdomains
     };
-
+    
     static QList<QWebSecurityOrigin> allOrigins();
     static void addLocalScheme(const QString& scheme);
     static void removeLocalScheme(const QString& scheme);
