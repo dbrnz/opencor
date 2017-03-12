@@ -21,6 +21,7 @@ limitations under the License.
 //==============================================================================
 
 #include "corecliutils.h"
+#include "pythonwrappercore.h"
 #include "pythonwrapperdatastore.h"
 #include "pythonwrapperplugin.h"
 #include "pythonwrappersinglecellview.h"
@@ -79,15 +80,13 @@ bool PythonWrapperPlugin::pluginInterfacesOk(const QString &pFileName,
 
 void PythonWrapperPlugin::initializePlugin()
 {
-// Create a Python module to access OpenCOR's objects
+    // Create a Python module to access OpenCOR's objects
 
     mOpenCORModule = PythonQt::self()->createModuleFromScript("OpenCOR");
 
-    auto pythonWrapperDataStore = new PythonWrapperDataStore();
-    pythonWrapperDataStore->initialise(mOpenCORModule);
-
-    auto pythonWrapperSingleCellView = new PythonWrapperSingleCellView();
-    pythonWrapperSingleCellView->initialise(mOpenCORModule);
+    mPythonWrapperCore = new PythonWrapperCore(mOpenCORModule);
+    mPythonWrapperDataStore = new PythonWrapperDataStore(mOpenCORModule);
+    mPythonWrapperSingleCellView = new PythonWrapperSingleCellView(mOpenCORModule);
 }
 
 //==============================================================================

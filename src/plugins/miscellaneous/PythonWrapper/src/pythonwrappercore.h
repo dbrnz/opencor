@@ -17,7 +17,7 @@ limitations under the License.
 *******************************************************************************/
 
 //==============================================================================
-// Python wrapper for DataStore classes
+// Python wrapper for Core plugin
 //==============================================================================
 
 #pragma once
@@ -28,60 +28,21 @@ limitations under the License.
 
 //==============================================================================
 
-#include <QList>
 #include <QObject>
 
 //==============================================================================
 
 namespace OpenCOR {
-
-//==============================================================================
-
-namespace DataStore {
-    class DataStoreArray;
-    class DataStoreVariable;
-};
-
-//==============================================================================
-
 namespace PythonWrapper {
 
 //==============================================================================
 
-class PythonWrapperDataStore : public QObject
+class PythonWrapperCore : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit PythonWrapperDataStore(PyObject *pModule, QObject *pParent=0);
-
-    static PyObject * newNumPyArray(DataStore::DataStoreArray *pDataStoreArray);
-    static PyObject * newNumPyArray(DataStore::DataStoreVariable *pDataStoreVariable);
-
-private:
-    PyObject * variablesList(QList<DataStore::DataStoreVariable *> pVariables) const;
-
-public slots:
-    PyObject * values(OpenCOR::DataStore::DataStoreVariable *pDataStoreVariable) const;
-};
-
-//==============================================================================
-
-class PythonWrapperNumPy : public QObject
-{
-    Q_OBJECT
-
-public:
-    explicit PythonWrapperNumPy(DataStore::DataStoreArray *pDataStoreArray, qulonglong pSize=0);
-    ~PythonWrapperNumPy();
-
-    PyObject * numpyArray() const;
-    PyObject * pythonObject() const;
-
-private:
-    DataStore::DataStoreArray *mArray;
-    PyObject *mNumPyArray;
-    PyObject *mPythonObject;
+    explicit PythonWrapperCore(PyObject *pModule, QObject *pParent=0);
 };
 
 //==============================================================================
@@ -92,4 +53,3 @@ private:
 //==============================================================================
 // End of file
 //==============================================================================
-
