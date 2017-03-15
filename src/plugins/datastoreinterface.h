@@ -65,7 +65,7 @@ class DataStoreVariable : public QObject
     Q_OBJECT
 
 public:
-    explicit DataStoreVariable(const qulonglong &pCapacity = 0, double *pValuePtr = 0);
+    explicit DataStoreVariable(const qulonglong &pCapacity = 0, double *pNextValuePtr = 0);
     ~DataStoreVariable();
 
     void createArray(const qulonglong &pCapacity);
@@ -87,10 +87,8 @@ public:
 
     void setUnit(const QString &pUnit);
 
-    qulonglong size() const;
-
-    void clearValuePtr();
-    void setValuePtr(double *pValuePtr);
+    void clearNextValuePtr();
+    void setNextValuePtr(double *pNextValuePtr);
 
     void addValue();
     void addValue(const double &pValue);
@@ -106,8 +104,11 @@ public slots:
 
     QString unit() const;
 
+    qulonglong size() const;
+
     double nextValue() const;
     void setNextValue(const double &pValue);
+
     double value(const qulonglong &pPosition) const;
 
 private:
@@ -122,7 +123,7 @@ private:
     qulonglong mSize;
 
     DataStoreArray *mArray;
-    double *mValuePtr;
+    double *mNextValuePtr;
     double *mValues;
 };
 
@@ -134,8 +135,8 @@ private:
 class DataStoreVariables : public QList<DataStoreVariable *>
 {
 public:
-    void clearValuePtrs();
-    void setValuePtrs(double *pValuePtrs);
+    void clearNextValuePtrs();
+    void setNextValuePtrs(double *pNextValuePtrs);
 };
 
 //==============================================================================
@@ -172,8 +173,8 @@ public:
     DataStoreVariable * addVoi();
 
     DataStoreVariables variables();
-    DataStoreVariable * addVariable(double *pValuePtr = 0);
-    DataStoreVariables addVariables(const int &pCount, double *pValuePtrs);
+    DataStoreVariable * addVariable(double *pNextValuePtr = 0);
+    DataStoreVariables addVariables(const int &pCount, double *pNextValuePtrs);
 
     void addValues(const double &pVoiValue);
 
