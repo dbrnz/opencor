@@ -103,7 +103,7 @@ void SimulationSupportPlugin::pluginsInitialized(const Plugins &pLoadedPlugins)
         SolverInterface *solverInterface = qobject_cast<SolverInterface *>(plugin->instance());
 
         if (solverInterface)
-            mSolverInterfaces << solverInterface;
+            instance()->mSolverInterfaces << solverInterface;
     }
 }
 
