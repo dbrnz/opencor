@@ -34,9 +34,10 @@ limitations under the License.
 #include "simulationexperimentviewinformationsolverswidget.h"
 #include "simulationexperimentviewinformationwidget.h"
 #include "simulationexperimentviewplugin.h"
-#include "simulationexperimentviewsimulation.h"
 #include "simulationexperimentviewsimulationwidget.h"
 #include "simulationexperimentviewwidget.h"
+#include "simulationsupportplugin.h"
+#include "simulationsupportsimulation.h"
 #include "toolbarwidget.h"
 #include "usermessagewidget.h"
 
@@ -87,11 +88,12 @@ namespace SimulationExperimentView {
 
 SimulationExperimentViewSimulationWidget::SimulationExperimentViewSimulationWidget(SimulationExperimentViewPlugin *pPlugin,
                                                                                    const QString &pFileName,
-                                                                                   QWidget *pParent) :
-    Widget(pParent),
+                                                                                   SimulationExperimentViewWidget *pViewWidget) :
+    Widget(pViewWidget),
     mPlugin(pPlugin),
     mFileName(pFileName),
     mDataStoreInterfaces(QMap<QAction *, DataStoreInterface *>()),
+    mSolverInterfaces(SimulationSupport::SimulationSupportPlugin::instance()->solverInterfaces()),
     mCellmlBasedViewPlugins(QMap<QAction *, Plugin *>()),
     mProgress(-1),
     mLockedDevelopmentMode(false),
@@ -99,7 +101,7 @@ SimulationExperimentViewSimulationWidget::SimulationExperimentViewSimulationWidg
     mCellmlFile(0),
     mSedmlFile(0),
     mCombineArchive(0),
-    mFileType(SimulationExperimentViewWidget::CellmlFile),
+    mFileType(SimulationSupport::CellmlFile),
     mSedmlFileIssues(SEDMLSupport::SedmlFileIssues()),
     mCombineArchiveIssues(COMBINESupport::CombineArchiveIssues()),
     mErrorType(General),
@@ -316,7 +318,7 @@ SimulationExperimentViewSimulationWidget::SimulationExperimentViewSimulationWidg
 
     // Create our contents widget
 
-    mContentsWidget = new SimulationExperimentViewContentsWidget(pPlugin, this, this);
+    mContentsWidget = new SimulationExperimentViewContentsWidget(pViewWidget, this, this);
 
     mContentsWidget->setObjectName("Contents");
 
@@ -448,8 +450,7 @@ SimulationExperimentViewSimulationWidget::SimulationExperimentViewSimulationWidg
                                                mSedmlFileIssues,
                                                mCombineArchiveIssues);
 
-    mSimulation = new SimulationExperimentViewSimulation(mCellmlFile?mCellmlFile->runtime(true):0,
-                                                         pPlugin->solverInterfaces());
+    mSimulation = new SimulationSupport::SimulationSupportSimulation(mCellmlFile?mCellmlFile->runtime(true):0);
 
     connect(mSimulation, SIGNAL(running(const bool &)),
             this, SLOT(simulationRunning(const bool &)));
@@ -468,7 +469,7 @@ SimulationExperimentViewSimulationWidget::SimulationExperimentViewSimulationWidg
     // is readable/writable and of CellML type
 
     mDevelopmentModeAction->setEnabled(   Core::FileManager::instance()->isReadableAndWritable(pFileName)
-                                       && (mFileType == SimulationExperimentViewWidget::CellmlFile));
+                                       && (mFileType == SimulationSupport::CellmlFile));
 
     // Some further initialisations that are done as part of retranslating the
     // GUI (so that they can be updated when changing languages)
@@ -484,10 +485,10 @@ SimulationExperimentViewSimulationWidget::~SimulationExperimentViewSimulationWid
 
     delete mSimulation;
 
-    if (mFileType != SimulationExperimentViewWidget::CellmlFile)
+    if (mFileType != SimulationSupport::CellmlFile)
         delete mCellmlFile;
 
-    if (mFileType != SimulationExperimentViewWidget::SedmlFile)
+    if (mFileType != SimulationSupport::SedmlFile)
         delete mSedmlFile;
 }
 
@@ -621,8 +622,8 @@ void SimulationExperimentViewSimulationWidget::updateSimulationMode()
     mSimulationDataExportAction->setEnabled(    mSimulationDataExportDropDownMenu->actions().count()
                                             &&  mSimulation->results()->size()
                                             && !simulationModeEnabled);
-    mCellmlOpenAction->setEnabled(mFileType != SimulationExperimentViewWidget::CellmlFile);
-    mSedmlExportAction->setEnabled(    (mFileType == SimulationExperimentViewWidget::CellmlFile)
+    mCellmlOpenAction->setEnabled(mFileType != SimulationSupport::CellmlFile);
+    mSedmlExportAction->setEnabled(    (mFileType == SimulationSupport::CellmlFile)
                                    &&  mSimulation->results()->size()
                                    && !simulationModeEnabled);
 
@@ -989,7 +990,7 @@ void SimulationExperimentViewSimulationWidget::initialize(const bool &pReloading
     //       that all the other events have been properly handled...
 
     if (    validSimulationEnvironment
-        && (mFileType != SimulationExperimentViewWidget::CellmlFile)) {
+        && (mFileType != SimulationSupport::CellmlFile)) {
         QTimer::singleShot(0, this, SLOT(furtherInitialize()));
     }
 }
@@ -1078,7 +1079,7 @@ bool SimulationExperimentViewSimulationWidget::save(const QString &pFileName)
 
     QString importedParameters = QString();
 
-    if (   (mFileType == SimulationExperimentViewWidget::CellmlFile)
+    if (   (mFileType == SimulationSupport::CellmlFile)
         && mDevelopmentModeAction->isChecked()) {
         ObjRef<iface::cellml_api::CellMLComponentSet> components = mCellmlFile->model()->localComponents();
         QMap<Core::Property *, CellMLSupport::CellmlFileRuntimeParameter *> parameters = mContentsWidget->informationWidget()->parametersWidget()->parameters();
@@ -1104,16 +1105,16 @@ bool SimulationExperimentViewSimulationWidget::save(const QString &pFileName)
     // Now, we can effectively save our given file and let the user know if some
     // parameter values couldn't be saved
 
-    bool res = (mFileType == SimulationExperimentViewWidget::CellmlFile)?
+    bool res = (mFileType == SimulationSupport::CellmlFile)?
                    mCellmlFile->save(pFileName):
-                   (mFileType == SimulationExperimentViewWidget::SedmlFile)?
+                   (mFileType == SimulationSupport::SedmlFile)?
                        mSedmlFile->save(pFileName):
                        mCombineArchive->save(pFileName);
 
     if (res) {
-        mFileName = (mFileType == SimulationExperimentViewWidget::CellmlFile)?
+        mFileName = (mFileType == SimulationSupport::CellmlFile)?
                         mCellmlFile->fileName():
-                        (mFileType == SimulationExperimentViewWidget::SedmlFile)?
+                        (mFileType == SimulationSupport::SedmlFile)?
                             mSedmlFile->fileName():
                             mCombineArchive->fileName();
 
@@ -1134,7 +1135,7 @@ void SimulationExperimentViewSimulationWidget::filePermissionsChanged()
     // track of its checked status or recheck it, as necessary
 
      if (Core::FileManager::instance()->isReadableAndWritable(mFileName)) {
-         mDevelopmentModeAction->setEnabled(mFileType == SimulationExperimentViewWidget::CellmlFile);
+         mDevelopmentModeAction->setEnabled(mFileType == SimulationSupport::CellmlFile);
          mDevelopmentModeAction->setChecked(mLockedDevelopmentMode);
      } else {
          mLockedDevelopmentMode = mDevelopmentModeAction->isChecked();
@@ -1225,7 +1226,7 @@ SEDMLSupport::SedmlFile * SimulationExperimentViewSimulationWidget::sedmlFile() 
 
 //==============================================================================
 
-SimulationExperimentViewWidget::FileType SimulationExperimentViewSimulationWidget::fileType() const
+SimulationSupport::FileType SimulationExperimentViewSimulationWidget::fileType() const
 {
     // Return our file type
 
@@ -1234,7 +1235,7 @@ SimulationExperimentViewWidget::FileType SimulationExperimentViewSimulationWidge
 
 //==============================================================================
 
-SimulationExperimentViewSimulation * SimulationExperimentViewSimulationWidget::simulation() const
+SimulationSupport::SimulationSupportSimulation * SimulationExperimentViewSimulationWidget::simulation() const
 {
     // Return our simulation
 
@@ -2143,7 +2144,7 @@ bool SimulationExperimentViewSimulationWidget::doFurtherInitialize()
     Core::Properties solverProperties = Core::Properties();
     QString kisaoId = QString::fromStdString(algorithm->getKisaoID());
 
-    foreach (SolverInterface *solverInterface, mPlugin->solverInterfaces()) {
+    foreach (SolverInterface *solverInterface, mSolverInterfaces) {
         if (!solverInterface->id(kisaoId).compare(solverInterface->solverName())) {
             usedSolverInterface = solverInterface;
             solverProperties = solverData->solversProperties().value(solverInterface->solverName());
@@ -2277,7 +2278,7 @@ bool SimulationExperimentViewSimulationWidget::doFurtherInitialize()
             mustHaveNlaSolver = true;
             nlaSolverName = QString::fromStdString(node.getAttrValue(node.getAttrIndex(SEDMLSupport::NlaSolverName.toStdString())));
 
-            foreach (SolverInterface *solverInterface, mPlugin->solverInterfaces()) {
+            foreach (SolverInterface *solverInterface, mSolverInterfaces) {
                 if (!nlaSolverName.compare(solverInterface->solverName())) {
                     informationWidget->solversWidget()->nlaSolverData()->solversListProperty()->setValue(nlaSolverName);
 
@@ -2777,7 +2778,7 @@ void SimulationExperimentViewSimulationWidget::graphsUpdated(OpenCOR::GraphPanel
         //       indeed refer to a file that has not yet been activated and
         //       therefore doesn't yet have a simulation associated with it...
 
-        SimulationExperimentViewSimulation *simulation = mPlugin->viewWidget()->simulation(graph->fileName());
+        SimulationSupport::SimulationSupportSimulation *simulation = mPlugin->viewWidget()->simulation(graph->fileName());
 
         updateGraphData(graph, simulation?simulation->results()->size():0);
 
@@ -2861,7 +2862,7 @@ bool SimulationExperimentViewSimulationWidget::updatePlot(GraphPanelWidget::Grap
 
     foreach (GraphPanelWidget::GraphPanelPlotGraph *graph, pPlot->graphs()) {
         if (graph->isValid() && graph->isSelected()) {
-            SimulationExperimentViewSimulation *simulation = mPlugin->viewWidget()->simulation(graph->fileName());
+            SimulationSupport::SimulationSupportSimulation *simulation = mPlugin->viewWidget()->simulation(graph->fileName());
             double startingPoint = simulation->data()->startingPoint();
             double endingPoint = simulation->data()->endingPoint();
 
@@ -2942,7 +2943,7 @@ bool SimulationExperimentViewSimulationWidget::updatePlot(GraphPanelWidget::Grap
 
 //==============================================================================
 
-double * SimulationExperimentViewSimulationWidget::dataPoints(SimulationExperimentViewSimulation *pSimulation,
+double * SimulationExperimentViewSimulationWidget::dataPoints(SimulationSupport::SimulationSupportSimulation *pSimulation,
                                                               CellMLSupport::CellmlFileRuntimeParameter *pParameter) const
 {
     // Return the array of data points associated with the given parameter
@@ -2975,7 +2976,7 @@ void SimulationExperimentViewSimulationWidget::updateGraphData(GraphPanelWidget:
     // Update our graph's data
 
     if (pGraph->isValid()) {
-        SimulationExperimentViewSimulation *simulation = mPlugin->viewWidget()->simulation(pGraph->fileName());
+        SimulationSupport::SimulationSupportSimulation *simulation = mPlugin->viewWidget()->simulation(pGraph->fileName());
 
         pGraph->setRawSamples(dataPoints(simulation, static_cast<CellMLSupport::CellmlFileRuntimeParameter *>(pGraph->parameterX())),
                               dataPoints(simulation, static_cast<CellMLSupport::CellmlFileRuntimeParameter *>(pGraph->parameterY())),
@@ -3035,7 +3036,7 @@ void SimulationExperimentViewSimulationWidget::updateSimulationResults(Simulatio
     //       SimulationExperimentViewSimulationWidget::simulationDataModified()),
     //       resulting in some time overhead, so we check things here instead...
 
-    SimulationExperimentViewSimulation *simulation = pSimulationWidget->simulation();
+    SimulationSupport::SimulationSupportSimulation *simulation = pSimulationWidget->simulation();
 
     if (simulation == mSimulation)
         checkSimulationDataModified(simulation->data()->isModified());
@@ -3200,41 +3201,6 @@ void SimulationExperimentViewSimulationWidget::updateSimulationResults(Simulatio
                 emit mPlugin->viewWidget()->updateFileTabIcon(mPlugin->viewName(), mFileName, fileTabIcon());
             }
         }
-    }
-}
-
-//==============================================================================
-
-QIcon SimulationExperimentViewSimulationWidget::parameterIcon(const CellMLSupport::CellmlFileRuntimeParameter::ParameterType &pParameterType)
-{
-    // Return an icon that illustrates the type of a parameter
-
-    static const QIcon VoiIcon              = QIcon(":/SimulationExperimentView/voi.png");
-    static const QIcon ConstantIcon         = QIcon(":/SimulationExperimentView/constant.png");
-    static const QIcon ComputedConstantIcon = QIcon(":/SimulationExperimentView/computedConstant.png");
-    static const QIcon RateIcon             = QIcon(":/SimulationExperimentView/rate.png");
-    static const QIcon StateIcon            = QIcon(":/SimulationExperimentView/state.png");
-    static const QIcon AlgebraicIcon        = QIcon(":/SimulationExperimentView/algebraic.png");
-    static const QIcon ErrorNodeIcon        = QIcon(":/oxygen/emblems/emblem-important.png");
-
-    switch (pParameterType) {
-    case CellMLSupport::CellmlFileRuntimeParameter::Voi:
-        return VoiIcon;
-    case CellMLSupport::CellmlFileRuntimeParameter::Constant:
-        return ConstantIcon;
-    case CellMLSupport::CellmlFileRuntimeParameter::ComputedConstant:
-        return ComputedConstantIcon;
-    case CellMLSupport::CellmlFileRuntimeParameter::Rate:
-        return RateIcon;
-    case CellMLSupport::CellmlFileRuntimeParameter::State:
-        return StateIcon;
-    case CellMLSupport::CellmlFileRuntimeParameter::Algebraic:
-        return AlgebraicIcon;
-    default:
-        // Not a relevant type, so return an error node icon
-        // Note: we should never reach this point...
-
-        return ErrorNodeIcon;
     }
 }
 

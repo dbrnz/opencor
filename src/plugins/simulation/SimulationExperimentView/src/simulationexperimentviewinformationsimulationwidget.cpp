@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "cellmlfileruntime.h"
 #include "simulationexperimentviewinformationsimulationwidget.h"
-#include "simulationexperimentviewsimulation.h"
+#include "simulationsupportsimulation.h"
 
 //==============================================================================
 
@@ -58,7 +58,7 @@ void SimulationExperimentViewInformationSimulationWidget::retranslateUi()
 
 //==============================================================================
 
-void SimulationExperimentViewInformationSimulationWidget::initialize(SimulationExperimentViewSimulation *pSimulation)
+void SimulationExperimentViewInformationSimulationWidget::initialize(SimulationSupport::SimulationSupportSimulation *pSimulation)
 {
     // Iniialise the unit of our different properties
 

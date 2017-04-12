@@ -52,13 +52,18 @@ namespace GraphPanelWidget {
 
 //==============================================================================
 
+namespace SimulationSupport {
+    class SimulationSupportSimulation;
+}   // namespace SimulationSupport
+
+//==============================================================================
+
 namespace SimulationExperimentView {
 
 //==============================================================================
 
-class SimulationExperimentViewPlugin;
-class SimulationExperimentViewSimulation;
 class SimulationExperimentViewSimulationWidget;
+class SimulationExperimentViewWidget;
 
 //==============================================================================
 
@@ -68,13 +73,13 @@ class SimulationExperimentViewInformationGraphsWidget : public QStackedWidget,
     Q_OBJECT
 
 public:
-    explicit SimulationExperimentViewInformationGraphsWidget(SimulationExperimentViewPlugin *pPlugin,
+    explicit SimulationExperimentViewInformationGraphsWidget(SimulationExperimentViewWidget *pViewWidget,
                                                              SimulationExperimentViewSimulationWidget *pSimulationWidget,
                                                              QWidget *pParent);
 
     virtual void retranslateUi();
 
-    void initialize(SimulationExperimentViewSimulation *pSimulation);
+    void initialize(SimulationSupport::SimulationSupportSimulation *pSimulation);
     void finalize();
 
     void updateGui();
@@ -90,7 +95,7 @@ public:
     void setColumnWidth(const int &pIndex, const int &pColumnWidth);
 
 private:
-    SimulationExperimentViewPlugin *mPlugin;
+    SimulationExperimentViewWidget *mViewWidget;
     SimulationExperimentViewSimulationWidget *mSimulationWidget;
 
     QMap<Core::PropertyEditorWidget *, GraphPanelWidget::GraphPanelWidget *> mGraphPanels;

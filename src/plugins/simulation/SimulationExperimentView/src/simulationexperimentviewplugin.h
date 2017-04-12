@@ -30,7 +30,6 @@ limitations under the License.
 #include "i18ninterface.h"
 #include "plugininfo.h"
 #include "plugininterface.h"
-#include "solverinterface.h"
 #include "viewinterface.h"
 
 //==============================================================================
@@ -73,7 +72,6 @@ public:
 
     SimulationExperimentViewWidget * viewWidget() const;
 
-    SolverInterfaces solverInterfaces() const;
     DataStoreInterfaces dataStoreInterfaces() const;
 
     Plugins cellmlEditingViewPlugins() const;
@@ -85,7 +83,6 @@ public:
 private:
     SimulationExperimentViewWidget *mViewWidget;
 
-    SolverInterfaces mSolverInterfaces;
     DataStoreInterfaces mDataStoreInterfaces;
     Plugins mCellmlEditingViewPlugins;
     Plugins mCellmlSimulationViewPlugins;

@@ -36,7 +36,7 @@ namespace SimulationExperimentView {
 
 //==============================================================================
 
-SimulationExperimentViewContentsWidget::SimulationExperimentViewContentsWidget(SimulationExperimentViewPlugin *pPlugin,
+SimulationExperimentViewContentsWidget::SimulationExperimentViewContentsWidget(SimulationExperimentViewWidget *pViewWidget,
                                                                                SimulationExperimentViewSimulationWidget *pSimulationWidget,
                                                                                QWidget *pParent) :
     Core::SplitterWidget(pParent)
@@ -48,7 +48,7 @@ SimulationExperimentViewContentsWidget::SimulationExperimentViewContentsWidget(S
 
     // Create our information widget
 
-    mInformationWidget = new SimulationExperimentViewInformationWidget(pPlugin, pSimulationWidget, this);
+    mInformationWidget = new SimulationExperimentViewInformationWidget(pViewWidget, pSimulationWidget, this);
 
     mInformationWidget->setObjectName("Information");
 

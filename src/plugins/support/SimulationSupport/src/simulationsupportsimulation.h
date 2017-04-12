@@ -17,7 +17,7 @@ limitations under the License.
 *******************************************************************************/
 
 //==============================================================================
-// Simulation Experiment view simulation
+// Simulation Support simulation
 //==============================================================================
 
 #pragma once
@@ -25,7 +25,7 @@ limitations under the License.
 //==============================================================================
 
 #include "datastoreinterface.h"
-#include "simulationexperimentviewsimulationworker.h"
+#include "simulationsupportsimulationworker.h"
 #include "solverinterface.h"
 
 //==============================================================================
@@ -44,26 +44,27 @@ namespace CellMLSupport {
 
 //==============================================================================
 
-namespace SimulationExperimentView {
+namespace SimulationSupport {
 
 //==============================================================================
 
-class SimulationExperimentViewSimulation;
+class SimulationSupportPlugin;
+class SimulationSupportSimulation;
 
 //==============================================================================
 
-class SimulationExperimentViewSimulationData : public QObject
+class SimulationSupportSimulationData : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit SimulationExperimentViewSimulationData(SimulationExperimentViewSimulation *pSimulation,
-                                                    const SolverInterfaces &pSolverInterfaces);
-    ~SimulationExperimentViewSimulationData();
+    explicit SimulationSupportSimulationData(SimulationSupportSimulation *pSimulation,
+                                             const SolverInterfaces &pSolverInterfaces);
+    ~SimulationSupportSimulationData();
 
     void update();
 
-    SimulationExperimentViewSimulation * simulation() const;
+    SimulationSupportSimulation * simulation() const;
 
     double * constants() const;
     double * rates() const;
@@ -120,7 +121,7 @@ public:
     void checkForModifications();
 
 private:
-    SimulationExperimentViewSimulation *mSimulation;
+    SimulationSupportSimulation *mSimulation;
 
     CellMLSupport::CellmlFileRuntime *mRuntime;
 
@@ -165,13 +166,13 @@ signals:
 
 //==============================================================================
 
-class SimulationExperimentViewSimulationResults : public QObject
+class SimulationSupportSimulationResults : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit SimulationExperimentViewSimulationResults(SimulationExperimentViewSimulation *pSimulation);
-    ~SimulationExperimentViewSimulationResults();
+    explicit SimulationSupportSimulationResults(SimulationSupportSimulation *pSimulation);
+    ~SimulationSupportSimulationResults();
 
     void update();
 
@@ -191,7 +192,7 @@ public:
     double * algebraic(const int &pIndex) const;
 
 private:
-    SimulationExperimentViewSimulation *mSimulation;
+    SimulationSupportSimulation *mSimulation;
 
     CellMLSupport::CellmlFileRuntime *mRuntime;
 
@@ -212,23 +213,22 @@ private:
 
 //==============================================================================
 
-class SimulationExperimentViewSimulation : public QObject
+class SimulationSupportSimulation : public QObject
 {
     Q_OBJECT
 
-    friend class SimulationExperimentViewSimulationWorker;
+    friend class SimulationSupportSimulationWorker;
 
 public:
-    explicit SimulationExperimentViewSimulation(CellMLSupport::CellmlFileRuntime *pRuntime,
-                                                const SolverInterfaces &pSolverInterfaces);
-    ~SimulationExperimentViewSimulation();
+    explicit SimulationSupportSimulation(CellMLSupport::CellmlFileRuntime *pRuntime);
+    ~SimulationSupportSimulation();
 
     CellMLSupport::CellmlFileRuntime * runtime() const;
 
     QString fileName() const;
 
-    SimulationExperimentViewSimulationData * data() const;
-    SimulationExperimentViewSimulationResults * results() const;
+    SimulationSupportSimulationData * data() const;
+    SimulationSupportSimulationResults * results() const;
 
     void update(CellMLSupport::CellmlFileRuntime *pRuntime);
 
@@ -252,14 +252,12 @@ public:
     bool reset();
 
 private:
-    SimulationExperimentViewSimulationWorker *mWorker;
+    SimulationSupportSimulationWorker *mWorker;
 
     CellMLSupport::CellmlFileRuntime *mRuntime;
 
-    SolverInterfaces mSolverInterfaces;
-
-    SimulationExperimentViewSimulationData *mData;
-    SimulationExperimentViewSimulationResults *mResults;
+    SimulationSupportSimulationData *mData;
+    SimulationSupportSimulationResults *mResults;
 
     bool simulationSettingsOk(const bool &pEmitSignal = true);
 
@@ -273,7 +271,7 @@ signals:
 
 //==============================================================================
 
-}   // namespace SimulationExperimentView
+}   // namespace SimulationSupport
 }   // namespace OpenCOR
 
 //==============================================================================

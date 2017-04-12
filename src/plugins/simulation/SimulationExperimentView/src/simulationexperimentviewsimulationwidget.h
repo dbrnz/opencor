@@ -29,6 +29,7 @@ limitations under the License.
 #include "graphpanelplotwidget.h"
 #include "sedmlfileissue.h"
 #include "simulationexperimentviewwidget.h"
+#include "simulationsupport.h"
 #include "widget.h"
 
 //==============================================================================
@@ -91,13 +92,18 @@ namespace SEDMLSupport {
 
 //==============================================================================
 
+namespace SimulationSupport {
+    class SimulationSupportSimulation;
+}   // namespace SimulationSupport
+
+//==============================================================================
+
 namespace SimulationExperimentView {
 
 //==============================================================================
 
 class SimulationExperimentViewContentsWidget;
 class SimulationExperimentViewPlugin;
-class SimulationExperimentViewSimulation;
 
 //==============================================================================
 
@@ -108,7 +114,7 @@ class SimulationExperimentViewSimulationWidget : public Core::Widget
 public:
     explicit SimulationExperimentViewSimulationWidget(SimulationExperimentViewPlugin *pPlugin,
                                                       const QString &pFileName,
-                                                      QWidget *pParent);
+                                                      SimulationExperimentViewWidget *pViewWidget);
     ~SimulationExperimentViewSimulationWidget();
 
     virtual void retranslateUi();
@@ -133,9 +139,9 @@ public:
 
     SEDMLSupport::SedmlFile * sedmlFile() const;
 
-    SimulationExperimentViewWidget::FileType fileType() const;
+    SimulationSupport::FileType fileType() const;
 
-    SimulationExperimentViewSimulation *simulation() const;
+    SimulationSupport::SimulationSupportSimulation *simulation() const;
 
     void updateGui(const bool &pCheckVisibility = false);
     void updateSimulationResults(SimulationExperimentViewSimulationWidget *pSimulationWidget,
@@ -143,8 +149,6 @@ public:
                                  const bool &pClearGraphs);
 
     void resetSimulationProgress();
-
-    static QIcon parameterIcon(const CellMLSupport::CellmlFileRuntimeParameter::ParameterType &pParameterType);
 
 private:
     enum ErrorType {
@@ -159,9 +163,11 @@ private:
 
     QMap<QAction *, DataStoreInterface *> mDataStoreInterfaces;
 
+    const SolverInterfaces mSolverInterfaces;
+
     QMap<QAction *, Plugin *> mCellmlBasedViewPlugins;
 
-    SimulationExperimentViewSimulation *mSimulation;
+    SimulationSupport::SimulationSupportSimulation *mSimulation;
 
     Core::ProgressBarWidget *mProgressBarWidget;
 
@@ -207,7 +213,7 @@ private:
     SEDMLSupport::SedmlFile *mSedmlFile;
     COMBINESupport::CombineArchive *mCombineArchive;
 
-    SimulationExperimentViewWidget::FileType mFileType;
+    SimulationSupport::FileType mFileType;
 
     SEDMLSupport::SedmlFileIssues mSedmlFileIssues;
     COMBINESupport::CombineArchiveIssues mCombineArchiveIssues;
@@ -245,7 +251,7 @@ private:
     bool updatePlot(GraphPanelWidget::GraphPanelPlotWidget *pPlot,
                     const bool &pForceReplot = false);
 
-    double * dataPoints(SimulationExperimentViewSimulation *pSimulation,
+    double * dataPoints(SimulationSupport::SimulationSupportSimulation *pSimulation,
                         CellMLSupport::CellmlFileRuntimeParameter *pParameter) const;
 
     void updateGraphData(GraphPanelWidget::GraphPanelPlotGraph *pGraph,

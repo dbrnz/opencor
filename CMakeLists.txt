@@ -367,6 +367,8 @@ SET(PLUGINS
 
     support/PMRSupport
 
+    support/SimulationSupport
+
     # Selectable plugins
 
     dataStore/BioSignalMLDataStore

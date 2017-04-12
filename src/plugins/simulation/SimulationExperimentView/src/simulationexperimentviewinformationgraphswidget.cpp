@@ -26,9 +26,10 @@ limitations under the License.
 #include "graphpanelwidget.h"
 #include "simulationexperimentviewinformationgraphswidget.h"
 #include "simulationexperimentviewplugin.h"
-#include "simulationexperimentviewsimulation.h"
 #include "simulationexperimentviewsimulationwidget.h"
 #include "simulationexperimentviewwidget.h"
+#include "simulationsupport.h"
+#include "simulationsupportsimulation.h"
 
 //==============================================================================
 
@@ -45,12 +46,12 @@ namespace SimulationExperimentView {
 
 //==============================================================================
 
-SimulationExperimentViewInformationGraphsWidget::SimulationExperimentViewInformationGraphsWidget(SimulationExperimentViewPlugin *pPlugin,
+SimulationExperimentViewInformationGraphsWidget::SimulationExperimentViewInformationGraphsWidget(SimulationExperimentViewWidget *pViewWidget,
                                                                                                  SimulationExperimentViewSimulationWidget *pSimulationWidget,
                                                                                                  QWidget *pParent) :
     QStackedWidget(pParent),
     Core::CommonWidget(this),
-    mPlugin(pPlugin),
+    mViewWidget(pViewWidget),
     mSimulationWidget(pSimulationWidget),
     mGraphPanels(QMap<Core::PropertyEditorWidget *, GraphPanelWidget::GraphPanelWidget *>()),
     mPropertyEditors(QMap<GraphPanelWidget::GraphPanelWidget *, Core::PropertyEditorWidget *>()),
@@ -129,7 +130,7 @@ void SimulationExperimentViewInformationGraphsWidget::retranslateUi()
 
 //==============================================================================
 
-void SimulationExperimentViewInformationGraphsWidget::initialize(SimulationExperimentViewSimulation *pSimulation)
+void SimulationExperimentViewInformationGraphsWidget::initialize(SimulationSupport::SimulationSupportSimulation *pSimulation)
 {
     // Populate our parameters context menu
 
@@ -628,7 +629,7 @@ void SimulationExperimentViewInformationGraphsWidget::populateParametersContextM
 
         // Add the current parameter to the 'current' component menu
 
-        QAction *parameterAction = componentMenu->addAction(SimulationExperimentViewSimulationWidget::parameterIcon(parameter->type()),
+        QAction *parameterAction = componentMenu->addAction(SimulationSupport::parameterIcon(parameter->type()),
                                                             parameter->formattedName());
 
         // Create a connection to handle the parameter value update
@@ -755,7 +756,7 @@ void SimulationExperimentViewInformationGraphsWidget::updateGraphInfo(Core::Prop
     //       assignment...
 
     bool graphOk = true;
-    CellMLSupport::CellmlFileRuntime *runtime = mPlugin->viewWidget()->runtime(fileName);
+    CellMLSupport::CellmlFileRuntime *runtime = mViewWidget->runtime(fileName);
     CellMLSupport::CellmlFileRuntimeParameter *oldParameterX = static_cast<CellMLSupport::CellmlFileRuntimeParameter *>(graph->parameterX());
     CellMLSupport::CellmlFileRuntimeParameter *oldParameterY = static_cast<CellMLSupport::CellmlFileRuntimeParameter *>(graph->parameterY());
 
@@ -854,7 +855,7 @@ void SimulationExperimentViewInformationGraphsWidget::updateGraphsInfo(Core::Pro
 
     QStringList modelListValues = QStringList();
 
-    foreach (const QString &fileName, mPlugin->viewWidget()->fileNames()) {
+    foreach (const QString &fileName, mViewWidget->fileNames()) {
         Core::File *file = Core::FileManager::instance()->file(fileName);
         QString fileNameOrUrl = file->isLocal()?fileName:file->url();
 

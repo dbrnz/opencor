@@ -17,15 +17,15 @@ limitations under the License.
 *******************************************************************************/
 
 //==============================================================================
-// Simulation Experiment view contents widget
+// Simulation Experiment view simulation worker
 //==============================================================================
 
 #pragma once
 
 //==============================================================================
 
-#include "corecliutils.h"
-#include "splitterwidget.h"
+#include <QObject>
+#include <QWaitCondition>
 
 //==============================================================================
 
@@ -33,50 +33,77 @@ namespace OpenCOR {
 
 //==============================================================================
 
-namespace GraphPanelWidget {
-    class GraphPanelsWidget;
-}   // namespace GraphPanelWidget
+namespace CellMLSupport {
+    class CellmlFileRuntime;
+}   // namespace CellMLSupport
 
 //==============================================================================
 
-namespace SimulationExperimentView {
+namespace SimulationSupport {
 
 //==============================================================================
 
-class SimulationExperimentViewInformationWidget;
-class SimulationExperimentViewSimulationWidget;
-class SimulationExperimentViewWidget;
+class SimulationSupportSimulation;
 
 //==============================================================================
 
-class SimulationExperimentViewContentsWidget : public Core::SplitterWidget
+class SimulationSupportSimulationWorker : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit SimulationExperimentViewContentsWidget(SimulationExperimentViewWidget *pViewWidget,
-                                                    SimulationExperimentViewSimulationWidget *pSimulationWidget,
-                                                    QWidget *pParent);
+    explicit SimulationSupportSimulationWorker(SimulationSupportSimulation *pSimulation,
+                                                      SimulationSupportSimulationWorker *&pSelf);
 
-    virtual void retranslateUi();
+    bool isRunning() const;
+    bool isPaused() const;
 
-    SimulationExperimentViewInformationWidget * informationWidget() const;
-    GraphPanelWidget::GraphPanelsWidget * graphPanelsWidget() const;
+    double currentPoint() const;
+
+    bool run();
+    bool pause();
+    bool resume();
+    bool stop();
+
+    bool reset();
 
 private:
-    SimulationExperimentViewInformationWidget *mInformationWidget;
-    GraphPanelWidget::GraphPanelsWidget *mGraphPanelsWidget;
+    QThread *mThread;
+
+    SimulationSupportSimulation *mSimulation;
+
+    CellMLSupport::CellmlFileRuntime *mRuntime;
+
+    double mCurrentPoint;
+
+    bool mPaused;
+    bool mStopped;
+
+    bool mReset;
+
+    QWaitCondition mPausedCondition;
+
+    bool mError;
+
+    SimulationSupportSimulationWorker *&mSelf;
 
 signals:
-    void splitterMoved(const QIntList &pSizes);
+    void running(const bool &pIsResuming);
+    void paused();
+
+    void finished(const qint64 &pElapsedTime);
+
+    void error(const QString &pMessage);
 
 private slots:
-    void emitSplitterMoved();
+    void started();
+
+    void emitError(const QString &pMessage);
 };
 
 //==============================================================================
 
-}   // namespace SimulationExperimentView
+}   // namespace SimulationSupport
 }   // namespace OpenCOR
 
 //==============================================================================

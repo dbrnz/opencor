@@ -22,8 +22,8 @@ limitations under the License.
 
 #include "cellmlfileruntime.h"
 #include "corecliutils.h"
-#include "simulationexperimentviewsimulation.h"
-#include "simulationexperimentviewsimulationworker.h"
+#include "simulationsupportsimulation.h"
+#include "simulationsupportsimulationworker.h"
 
 //==============================================================================
 
@@ -34,12 +34,12 @@ limitations under the License.
 //==============================================================================
 
 namespace OpenCOR {
-namespace SimulationExperimentView {
+namespace SimulationSupport {
 
 //==============================================================================
 
-SimulationExperimentViewSimulationWorker::SimulationExperimentViewSimulationWorker(SimulationExperimentViewSimulation *pSimulation,
-                                                                                   SimulationExperimentViewSimulationWorker *&pSelf) :
+SimulationSupportSimulationWorker::SimulationSupportSimulationWorker(SimulationSupportSimulation *pSimulation,
+                                                                     SimulationSupportSimulationWorker *&pSelf) :
     mSimulation(pSimulation),
     mRuntime(pSimulation->runtime()),
     mCurrentPoint(0.0),
@@ -73,7 +73,7 @@ SimulationExperimentViewSimulationWorker::SimulationExperimentViewSimulationWork
 
 //==============================================================================
 
-bool SimulationExperimentViewSimulationWorker::isRunning() const
+bool SimulationSupportSimulationWorker::isRunning() const
 {
     // Return whether our thread is running
 
@@ -82,7 +82,7 @@ bool SimulationExperimentViewSimulationWorker::isRunning() const
 
 //==============================================================================
 
-bool SimulationExperimentViewSimulationWorker::isPaused() const
+bool SimulationSupportSimulationWorker::isPaused() const
 {
     // Return whether our thread is paused
 
@@ -91,7 +91,7 @@ bool SimulationExperimentViewSimulationWorker::isPaused() const
 
 //==============================================================================
 
-double SimulationExperimentViewSimulationWorker::currentPoint() const
+double SimulationSupportSimulationWorker::currentPoint() const
 {
     // Return our current point
 
@@ -102,7 +102,7 @@ double SimulationExperimentViewSimulationWorker::currentPoint() const
 
 //==============================================================================
 
-bool SimulationExperimentViewSimulationWorker::run()
+bool SimulationSupportSimulationWorker::run()
 {
     // Start our thread, but only if we are not already running
 
@@ -117,7 +117,7 @@ bool SimulationExperimentViewSimulationWorker::run()
 
 //==============================================================================
 
-bool SimulationExperimentViewSimulationWorker::pause()
+bool SimulationSupportSimulationWorker::pause()
 {
     // Pause ourselves, but only if we are currently running
 
@@ -134,7 +134,7 @@ bool SimulationExperimentViewSimulationWorker::pause()
 
 //==============================================================================
 
-bool SimulationExperimentViewSimulationWorker::resume()
+bool SimulationSupportSimulationWorker::resume()
 {
     // Resume ourselves, but only if are currently paused
 
@@ -151,7 +151,7 @@ bool SimulationExperimentViewSimulationWorker::resume()
 
 //==============================================================================
 
-bool SimulationExperimentViewSimulationWorker::stop()
+bool SimulationSupportSimulationWorker::stop()
 {
     // Check that we are either running or paused
 
@@ -178,7 +178,7 @@ bool SimulationExperimentViewSimulationWorker::stop()
 
 //==============================================================================
 
-bool SimulationExperimentViewSimulationWorker::reset()
+bool SimulationSupportSimulationWorker::reset()
 {
     // Check that we are either running or paused
 
@@ -195,7 +195,7 @@ bool SimulationExperimentViewSimulationWorker::reset()
 
 //==============================================================================
 
-void SimulationExperimentViewSimulationWorker::started()
+void SimulationSupportSimulationWorker::started()
 {
     // Let people know that we are running
 
@@ -444,7 +444,7 @@ void SimulationExperimentViewSimulationWorker::started()
 
 //==============================================================================
 
-void SimulationExperimentViewSimulationWorker::emitError(const QString &pMessage)
+void SimulationSupportSimulationWorker::emitError(const QString &pMessage)
 {
     // A solver error occurred, so keep track of it and let people know about it
 
@@ -455,7 +455,7 @@ void SimulationExperimentViewSimulationWorker::emitError(const QString &pMessage
 
 //==============================================================================
 
-}   // namespace SimulationExperimentView
+}   // namespace SimulationSupport
 }   // namespace OpenCOR
 
 //==============================================================================

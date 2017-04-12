@@ -17,66 +17,53 @@ limitations under the License.
 *******************************************************************************/
 
 //==============================================================================
-// Simulation Experiment view contents widget
+// Simulation support plugin
 //==============================================================================
 
 #pragma once
 
 //==============================================================================
 
-#include "corecliutils.h"
-#include "splitterwidget.h"
+#include "plugininfo.h"
+#include "plugininterface.h"
+#include "solverinterface.h"
 
 //==============================================================================
 
 namespace OpenCOR {
+namespace SimulationSupport {
 
 //==============================================================================
 
-namespace GraphPanelWidget {
-    class GraphPanelsWidget;
-}   // namespace GraphPanelWidget
+PLUGININFO_FUNC SimulationSupportPluginInfo();
 
 //==============================================================================
 
-namespace SimulationExperimentView {
-
-//==============================================================================
-
-class SimulationExperimentViewInformationWidget;
-class SimulationExperimentViewSimulationWidget;
-class SimulationExperimentViewWidget;
-
-//==============================================================================
-
-class SimulationExperimentViewContentsWidget : public Core::SplitterWidget
+class SimulationSupportPlugin : public QObject,
+                                public PluginInterface
 {
     Q_OBJECT
 
+    Q_PLUGIN_METADATA(IID "OpenCOR.SimulationSupportPlugin" FILE "simulationsupportplugin.json")
+
+    Q_INTERFACES(OpenCOR::PluginInterface)
+
 public:
-    explicit SimulationExperimentViewContentsWidget(SimulationExperimentViewWidget *pViewWidget,
-                                                    SimulationExperimentViewSimulationWidget *pSimulationWidget,
-                                                    QWidget *pParent);
+    explicit SimulationSupportPlugin();
 
-    virtual void retranslateUi();
+    #include "plugininterface.inl"
 
-    SimulationExperimentViewInformationWidget * informationWidget() const;
-    GraphPanelWidget::GraphPanelsWidget * graphPanelsWidget() const;
+    static SimulationSupportPlugin * instance();
+
+    SolverInterfaces solverInterfaces() const;
 
 private:
-    SimulationExperimentViewInformationWidget *mInformationWidget;
-    GraphPanelWidget::GraphPanelsWidget *mGraphPanelsWidget;
-
-signals:
-    void splitterMoved(const QIntList &pSizes);
-
-private slots:
-    void emitSplitterMoved();
+    SolverInterfaces mSolverInterfaces;
 };
 
 //==============================================================================
 
-}   // namespace SimulationExperimentView
+}   // namespace SimulationSupport
 }   // namespace OpenCOR
 
 //==============================================================================

@@ -33,12 +33,17 @@ namespace OpenCOR {
 
 //==============================================================================
 
+namespace SimulationSupport {
+    class SimulationSupportSimulation;
+}   // namespace SimulationSupport
+
+//==============================================================================
+
 namespace SimulationExperimentView {
 
 //==============================================================================
 
 class SimulationExperimentViewPlugin;
-class SimulationExperimentViewSimulation;
 
 //==============================================================================
 
@@ -73,13 +78,12 @@ class SimulationExperimentViewInformationSolversWidget : public Core::PropertyEd
     Q_OBJECT
 
 public:
-    explicit SimulationExperimentViewInformationSolversWidget(SimulationExperimentViewPlugin *pPlugin,
-                                                              QWidget *pParent);
+    explicit SimulationExperimentViewInformationSolversWidget(QWidget *pParent);
     ~SimulationExperimentViewInformationSolversWidget();
 
     virtual void retranslateUi();
 
-    void initialize(SimulationExperimentViewSimulation *pSimulation);
+    void initialize(SimulationSupport::SimulationSupportSimulation *pSimulation);
 
     QStringList odeSolvers() const;
     QStringList daeSolvers() const;

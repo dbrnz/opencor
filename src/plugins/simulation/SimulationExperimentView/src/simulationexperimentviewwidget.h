@@ -28,23 +28,26 @@ limitations under the License.
 #include "combinearchive.h"
 #include "corecliutils.h"
 #include "sedmlfile.h"
+#include "simulationsupport.h"
 #include "viewwidget.h"
 
 //==============================================================================
 
-namespace libsedml {
-    class SedAlgorithm;
-}   // namespace libsedml
+namespace OpenCOR {
 
 //==============================================================================
 
-namespace OpenCOR {
+namespace SimulationSupport {
+    class SimulationSupportSimulation;
+}   // namespace SimulationSupport
+
+//==============================================================================
+
 namespace SimulationExperimentView {
 
 //==============================================================================
 
 class SimulationExperimentViewPlugin;
-class SimulationExperimentViewSimulation;
 class SimulationExperimentViewSimulationWidget;
 
 //==============================================================================
@@ -54,12 +57,6 @@ class SimulationExperimentViewWidget : public Core::ViewWidget
     Q_OBJECT
 
 public:
-    enum FileType {
-        CellmlFile,
-        SedmlFile,
-        CombineArchive
-    };
-
     explicit SimulationExperimentViewWidget(SimulationExperimentViewPlugin *pPlugin,
                                             QWidget *pParent);
 
@@ -68,7 +65,7 @@ public:
 
     virtual void retranslateUi();
 
-    bool isIndirectRemoteFile(const QString &pFileName);
+//    bool isIndirectRemoteFile(const QString &pFileName);
 
     void initialize(const QString &pFileName);
     void finalize(const QString &pFileName);
@@ -87,7 +84,7 @@ public:
     QStringList fileNames() const;
 
     SimulationExperimentViewSimulationWidget * simulationWidget(const QString &pFileName) const;
-    SimulationExperimentViewSimulation * simulation(const QString &pFileName) const;
+    SimulationSupport::SimulationSupportSimulation * simulation(const QString &pFileName) const;
     CellMLSupport::CellmlFileRuntime * runtime(const QString &pFileName) const;
 
     virtual QWidget * widget(const QString &pFileName);
@@ -101,7 +98,7 @@ public:
                              CellMLSupport::CellmlFile *&pCellmlFile,
                              SEDMLSupport::SedmlFile *&pSedmlFile,
                              COMBINESupport::CombineArchive *&pCombineArchive,
-                             FileType &pFileType,
+                             SimulationSupport::FileType &pFileType,
                              SEDMLSupport::SedmlFileIssues &pSedmlFileIssues,
                              COMBINESupport::CombineArchiveIssues &pCombineArchiveIssues,
                              bool *pIsDirectOrIndirectRemoteFile = 0);
@@ -131,24 +128,6 @@ private:
     QMap<QString, QString> mLocallyManagedSedmlFiles;
 
     void updateContentsInformationGui(SimulationExperimentViewSimulationWidget *pSimulationWidget);
-
-    bool sedmlAlgorithmSupported(const libsedml::SedAlgorithm *pSedmlAlgorithm,
-                                 SEDMLSupport::SedmlFileIssues &pSedmlFileIssues) const;
-    bool sedmlFileSupported(SEDMLSupport::SedmlFile *pSedmlFile,
-                            SEDMLSupport::SedmlFileIssues &pSedmlFileIssues) const;
-
-    bool combineArchiveSupported(COMBINESupport::CombineArchive *pCombineArchive,
-                                 COMBINESupport::CombineArchiveIssues &pCombineArchiveIssues) const;
-
-    void retrieveCellmlFile(const QString &pFileName,
-                            CellMLSupport::CellmlFile *&pCellmlFile,
-                            SEDMLSupport::SedmlFile *pSedmlFile,
-                            const FileType &pFileType,
-                            SEDMLSupport::SedmlFileIssues &pSedmlFileIssues,
-                            bool *pIsDirectOrIndirectRemoteFile);
-    void retrieveSedmlFile(SEDMLSupport::SedmlFile *&pSedmlFile,
-                           COMBINESupport::CombineArchive *pCombineArchive,
-                           COMBINESupport::CombineArchiveIssues &pCombineArchiveIssues);
 
 private slots:
     void simulationWidgetSplitterMoved(const QIntList &pSizes);

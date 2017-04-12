@@ -58,7 +58,6 @@ PLUGININFO_FUNC SimulationExperimentViewPluginInfo()
 //==============================================================================
 
 SimulationExperimentViewPlugin::SimulationExperimentViewPlugin() :
-    mSolverInterfaces(SolverInterfaces()),
     mDataStoreInterfaces(DataStoreInterfaces()),
     mCellmlEditingViewPlugins(Plugins()),
     mCellmlSimulationViewPlugins(Plugins()),
@@ -216,13 +215,6 @@ void SimulationExperimentViewPlugin::pluginsInitialized(const Plugins &pLoadedPl
     // as well as the file types supported by the SEDMLSupport plugin
 
     foreach (Plugin *plugin, pLoadedPlugins) {
-        // Look for a solver
-
-        SolverInterface *solverInterface = qobject_cast<SolverInterface *>(plugin->instance());
-
-        if (solverInterface)
-            mSolverInterfaces << solverInterface;
-
         // Look for a data store
 
         DataStoreInterface *dataStoreInterface = qobject_cast<DataStoreInterface *>(plugin->instance());
@@ -385,15 +377,6 @@ SimulationExperimentViewWidget * SimulationExperimentViewPlugin::viewWidget() co
     // Return our view widget
 
     return mViewWidget;
-}
-
-//==============================================================================
-
-SolverInterfaces SimulationExperimentViewPlugin::solverInterfaces() const
-{
-    // Return our solver interfaces
-
-    return mSolverInterfaces;
 }
 
 //==============================================================================

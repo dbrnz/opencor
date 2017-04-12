@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/SimulationExperimentView">
+    <qresource prefix="/SimulationSupport">
         <file>algebraic.png</file>
         <file>blank.png</file>
         <file>computedConstant.png</file>

@@ -17,93 +17,60 @@ limitations under the License.
 *******************************************************************************/
 
 //==============================================================================
-// Simulation Experiment view simulation worker
+// Simulation Support functions
 //==============================================================================
 
 #pragma once
 
 //==============================================================================
 
-#include <QObject>
-#include <QWaitCondition>
+#include "cellmlfile.h"
+#include "cellmlfileruntime.h"
+#include "combinearchive.h"
+#include "corecliutils.h"
+#include "sedmlfile.h"
+#include "solverinterface.h"
+
+//==============================================================================
+
+#include <QIcon>
+#include <QString>
+
+//==============================================================================
+
+namespace libsedml {
+    class SedAlgorithm;
+}   // namespace libsedml
 
 //==============================================================================
 
 namespace OpenCOR {
+namespace SimulationSupport {
 
 //==============================================================================
 
-namespace CellMLSupport {
-    class CellmlFileRuntime;
-}   // namespace CellMLSupport
-
-//==============================================================================
-
-namespace SimulationExperimentView {
-
-//==============================================================================
-
-class SimulationExperimentViewSimulation;
-
-//==============================================================================
-
-class SimulationExperimentViewSimulationWorker : public QObject
-{
-    Q_OBJECT
-
-public:
-    explicit SimulationExperimentViewSimulationWorker(SimulationExperimentViewSimulation *pSimulation,
-                                                      SimulationExperimentViewSimulationWorker *&pSelf);
-
-    bool isRunning() const;
-    bool isPaused() const;
-
-    double currentPoint() const;
-
-    bool run();
-    bool pause();
-    bool resume();
-    bool stop();
-
-    bool reset();
-
-private:
-    QThread *mThread;
-
-    SimulationExperimentViewSimulation *mSimulation;
-
-    CellMLSupport::CellmlFileRuntime *mRuntime;
-
-    double mCurrentPoint;
-
-    bool mPaused;
-    bool mStopped;
-
-    bool mReset;
-
-    QWaitCondition mPausedCondition;
-
-    bool mError;
-
-    SimulationExperimentViewSimulationWorker *&mSelf;
-
-signals:
-    void running(const bool &pIsResuming);
-    void paused();
-
-    void finished(const qint64 &pElapsedTime);
-
-    void error(const QString &pMessage);
-
-private slots:
-    void started();
-
-    void emitError(const QString &pMessage);
+enum FileType {
+    CellmlFile,
+    SedmlFile,
+    CombineArchive
 };
 
 //==============================================================================
 
-}   // namespace SimulationExperimentView
+QIcon parameterIcon(const CellMLSupport::CellmlFileRuntimeParameter::ParameterType &pParameterType);
+
+QString retrieveFileDetails(const QString &pFileName,
+                            CellMLSupport::CellmlFile *&pCellmlFile,
+                            SEDMLSupport::SedmlFile *&pSedmlFile,
+                            COMBINESupport::CombineArchive *&pCombineArchive,
+                            FileType &pFileType,
+                            SEDMLSupport::SedmlFileIssues &pSedmlFileIssues,
+                            COMBINESupport::CombineArchiveIssues &pCombineArchiveIssues,
+                            bool *pIsDirectOrIndirectRemoteFile = 0);
+
+//==============================================================================
+
+}   // namespace SimulationSupport
 }   // namespace OpenCOR
 
 //==============================================================================

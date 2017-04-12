@@ -29,11 +29,16 @@ limitations under the License.
 //==============================================================================
 
 namespace OpenCOR {
-namespace SimulationExperimentView {
 
 //==============================================================================
 
-class SimulationExperimentViewSimulation;
+namespace SimulationSupport {
+    class SimulationSupportSimulation;
+}   // namespace SimulationSupport
+
+//==============================================================================
+
+namespace SimulationExperimentView {
 
 //==============================================================================
 
@@ -46,7 +51,7 @@ public:
 
     virtual void retranslateUi();
 
-    void initialize(SimulationExperimentViewSimulation *pSimulation);
+    void initialize(SimulationSupport::SimulationSupportSimulation *pSimulation);
 
     Core::Property * startingPointProperty() const;
     Core::Property * endingPointProperty() const;

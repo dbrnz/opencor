@@ -24,7 +24,8 @@ limitations under the License.
 #include "corecliutils.h"
 #include "simulationexperimentviewinformationsolverswidget.h"
 #include "simulationexperimentviewplugin.h"
-#include "simulationexperimentviewsimulation.h"
+#include "simulationsupportplugin.h"
+#include "simulationsupportsimulation.h"
 
 //==============================================================================
 
@@ -82,8 +83,7 @@ QMap<QString, Core::Properties> SimulationExperimentViewInformationSolversWidget
 
 //==============================================================================
 
-SimulationExperimentViewInformationSolversWidget::SimulationExperimentViewInformationSolversWidget(SimulationExperimentViewPlugin *pPlugin,
-                                                                                                   QWidget *pParent) :
+SimulationExperimentViewInformationSolversWidget::SimulationExperimentViewInformationSolversWidget(QWidget *pParent) :
     PropertyEditorWidget(true, pParent),
     mDescriptions(QMap<Core::Property *, Descriptions>())
 {
@@ -93,9 +93,11 @@ SimulationExperimentViewInformationSolversWidget::SimulationExperimentViewInform
 
     // Add properties for our different solvers
 
-    mOdeSolverData = addSolverProperties(pPlugin->solverInterfaces(), Solver::Ode);
-    mDaeSolverData = addSolverProperties(pPlugin->solverInterfaces(), Solver::Dae);
-    mNlaSolverData = addSolverProperties(pPlugin->solverInterfaces(), Solver::Nla);
+    const SolverInterfaces solverInterfaces = SimulationSupport::SimulationSupportPlugin::instance()->solverInterfaces();
+
+    mOdeSolverData = addSolverProperties(solverInterfaces, Solver::Ode);
+    mDaeSolverData = addSolverProperties(solverInterfaces, Solver::Dae);
+    mNlaSolverData = addSolverProperties(solverInterfaces, Solver::Nla);
 
     // Show/hide the relevant properties
 
@@ -331,7 +333,7 @@ void SimulationExperimentViewInformationSolversWidget::setPropertiesUnit(Simulat
 
 //==============================================================================
 
-void SimulationExperimentViewInformationSolversWidget::initialize(SimulationExperimentViewSimulation *pSimulation)
+void SimulationExperimentViewInformationSolversWidget::initialize(SimulationSupport::SimulationSupportSimulation *pSimulation)
 {
     // Make sure that the CellML file runtime is valid
 
