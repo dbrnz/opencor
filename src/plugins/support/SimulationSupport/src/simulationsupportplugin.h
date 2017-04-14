@@ -51,7 +51,7 @@ class SimulationSupportPlugin : public QObject,
 public:
     explicit SimulationSupportPlugin();
 
-    #include "plugininterface.inl"
+#include "plugininterface.inl"
 
     static SimulationSupportPlugin * instance();
 

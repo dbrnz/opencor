@@ -20,12 +20,15 @@ limitations under the License.
 // Simulation Experiment view simulation widget
 //==============================================================================
 
+#include "cellmlfilemanager.h"
 #include "centralwidget.h"
+#include "combinefilemanager.h"
 #include "combinesupportplugin.h"
 #include "coreguiutils.h"
 #include "filemanager.h"
 #include "graphpanelswidget.h"
 #include "progressbarwidget.h"
+#include "sedmlfilemanager.h"
 #include "sedmlsupportplugin.h"
 #include "simulationexperimentviewcontentswidget.h"
 #include "simulationexperimentviewinformationgraphswidget.h"
@@ -110,7 +113,8 @@ SimulationExperimentViewSimulationWidget::SimulationExperimentViewSimulationWidg
     mCanUpdatePlotsForUpdatedGraphs(true),
     mNeedReloadView(false),
     mNeedUpdatePlots(false),
-    mOldDataSizes(QMap<GraphPanelWidget::GraphPanelPlotGraph *, qulonglong>())
+    mOldDataSizes(QMap<GraphPanelWidget::GraphPanelPlotGraph *, qulonglong>()),
+    mLocallyManagedCellmlFiles(QMap<QString, QString>())
 {
     // Create a tool bar
 
@@ -445,10 +449,8 @@ SimulationExperimentViewSimulationWidget::SimulationExperimentViewSimulationWidg
     // Create our simulation object and a few connections for it, after having
     // retrieved our file details
 
-    mPlugin->viewWidget()->retrieveFileDetails(pFileName, mCellmlFile, mSedmlFile,
-                                               mCombineArchive, mFileType,
-                                               mSedmlFileIssues,
-                                               mCombineArchiveIssues);
+    retrieveFileDetails(pFileName, mCellmlFile, mSedmlFile, mCombineArchive,
+                        mFileType, mSedmlFileIssues, mCombineArchiveIssues);
 
     mSimulation = new SimulationSupport::SimulationSupportSimulation(mCellmlFile?mCellmlFile->runtime(true):0);
 
@@ -703,10 +705,8 @@ void SimulationExperimentViewSimulationWidget::initialize(const bool &pReloading
     // Retrieve our file details and update our simulation object, if needed
 
     if (pReloadingView) {
-        mPlugin->viewWidget()->retrieveFileDetails(mFileName, mCellmlFile,
-                                                   mSedmlFile, mCombineArchive,
-                                                   mFileType, mSedmlFileIssues,
-                                                   mCombineArchiveIssues);
+        retrieveFileDetails(mFileName, mCellmlFile, mSedmlFile, mCombineArchive,
+                            mFileType, mSedmlFileIssues, mCombineArchiveIssues);
     }
 
     CellMLSupport::CellmlFileRuntime *cellmlFileRuntime = mCellmlFile?mCellmlFile->runtime(pReloadingView):0;
@@ -1006,6 +1006,17 @@ void SimulationExperimentViewSimulationWidget::finalize()
 
     informationWidget->graphsWidget()->finalize();
     informationWidget->parametersWidget()->finalize();
+
+    // Then, we ask our file manager to stop managing our locally managed CellML
+    // file, if any
+
+    QString cellmlFileName = mLocallyManagedCellmlFiles.value(mFileName);
+
+    if (!cellmlFileName.isEmpty()) {
+        Core::FileManager::instance()->unmanage(cellmlFileName);
+
+        mLocallyManagedCellmlFiles.remove(mFileName);
+    }
 }
 
 //==============================================================================
@@ -3259,6 +3270,28 @@ void SimulationExperimentViewSimulationWidget::dataStoreExportProgress(const dou
     // There has been some progress with our export, so update our busy widget
 
     Core::centralWidget()->setBusyWidgetProgress(pProgress);
+}
+
+//==============================================================================
+
+void SimulationExperimentViewSimulationWidget::retrieveFileDetails(const QString &pFileName,
+                                                                   CellMLSupport::CellmlFile *&pCellmlFile,
+                                                                   SEDMLSupport::SedmlFile *&pSedmlFile,
+                                                                   COMBINESupport::CombineArchive *&pCombineArchive,
+                                                                   SimulationSupport::FileType &pFileType,
+                                                                   SEDMLSupport::SedmlFileIssues &pSedmlFileIssues,
+                                                                   COMBINESupport::CombineArchiveIssues &pCombineArchiveIssues)
+{
+    Core::centralWidget()->showBusyWidget();
+
+    QString cellmlFileName = SimulationSupport::retrieveFileDetails(pFileName, pCellmlFile,
+                                                                    pSedmlFile, pCombineArchive, pFileType,
+                                                                    pSedmlFileIssues, pCombineArchiveIssues);
+
+    Core::centralWidget()->hideBusyWidget();
+
+    if (!cellmlFileName.isEmpty())
+            mLocallyManagedCellmlFiles.insert(pFileName, cellmlFileName);
 }
 
 //==============================================================================

@@ -65,8 +65,7 @@ QString retrieveFileDetails(const QString &pFileName,
                             COMBINESupport::CombineArchive *&pCombineArchive,
                             FileType &pFileType,
                             SEDMLSupport::SedmlFileIssues &pSedmlFileIssues,
-                            COMBINESupport::CombineArchiveIssues &pCombineArchiveIssues,
-                            bool *pIsDirectOrIndirectRemoteFile = 0);
+                            COMBINESupport::CombineArchiveIssues &pCombineArchiveIssues);
 
 //==============================================================================
 

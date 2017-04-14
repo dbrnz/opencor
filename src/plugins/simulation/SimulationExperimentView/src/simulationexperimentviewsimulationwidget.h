@@ -231,6 +231,8 @@ private:
 
     QMap<GraphPanelWidget::GraphPanelPlotGraph *, qulonglong> mOldDataSizes;
 
+    QMap<QString, QString> mLocallyManagedCellmlFiles;
+
     void reloadView();
 
     void output(const QString &pMessage);
@@ -279,6 +281,14 @@ private:
     bool createSedmlFile(const QString &pFileName, const QString &pModelSource);
 
     void checkSimulationDataModified(const bool &pIsModified);
+
+    void retrieveFileDetails(const QString &pFileName,
+                             CellMLSupport::CellmlFile *&pCellmlFile,
+                             SEDMLSupport::SedmlFile *&pSedmlFile,
+                             COMBINESupport::CombineArchive *&pCombineArchive,
+                             SimulationSupport::FileType &pFileType,
+                             SEDMLSupport::SedmlFileIssues &pSedmlFileIssues,
+                             COMBINESupport::CombineArchiveIssues &pCombineArchiveIssues);
 
 signals:
     void splitterMoved(const QIntList &pSizes);

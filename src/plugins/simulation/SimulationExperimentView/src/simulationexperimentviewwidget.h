@@ -65,8 +65,6 @@ public:
 
     virtual void retranslateUi();
 
-//    bool isIndirectRemoteFile(const QString &pFileName);
-
     void initialize(const QString &pFileName);
     void finalize(const QString &pFileName);
 
@@ -94,15 +92,6 @@ public:
     void checkSimulationResults(const QString &pFileName,
                                 const bool &pClearGraphs = false);
 
-    void retrieveFileDetails(const QString &pFileName,
-                             CellMLSupport::CellmlFile *&pCellmlFile,
-                             SEDMLSupport::SedmlFile *&pSedmlFile,
-                             COMBINESupport::CombineArchive *&pCombineArchive,
-                             SimulationSupport::FileType &pFileType,
-                             SEDMLSupport::SedmlFileIssues &pSedmlFileIssues,
-                             COMBINESupport::CombineArchiveIssues &pCombineArchiveIssues,
-                             bool *pIsDirectOrIndirectRemoteFile = 0);
-
 private:
     SimulationExperimentViewPlugin *mPlugin;
 
@@ -123,9 +112,6 @@ private:
 
     QMap<QString, qulonglong> mSimulationResultsSizes;
     QStringList mSimulationCheckResults;
-
-    QMap<QString, QString> mLocallyManagedCellmlFiles;
-    QMap<QString, QString> mLocallyManagedSedmlFiles;
 
     void updateContentsInformationGui(SimulationExperimentViewSimulationWidget *pSimulationWidget);
 

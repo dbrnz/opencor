@@ -20,12 +20,8 @@ limitations under the License.
 // Simulation Experiment view widget
 //==============================================================================
 
-#include "cellmlfilemanager.h"
 #include "collapsiblewidget.h"
-#include "centralwidget.h"
-#include "combinefilemanager.h"
 #include "filemanager.h"
-#include "sedmlfilemanager.h"
 #include "simulationexperimentviewcontentswidget.h"
 #include "simulationexperimentviewinformationgraphswidget.h"
 #include "simulationexperimentviewinformationparameterswidget.h"
@@ -69,8 +65,7 @@ SimulationExperimentViewWidget::SimulationExperimentViewWidget(SimulationExperim
     mSimulationWidgets(QMap<QString, SimulationExperimentViewSimulationWidget *>()),
     mFileNames(QStringList()),
     mSimulationResultsSizes(QMap<QString, qulonglong>()),
-    mSimulationCheckResults(QStringList()),
-    mLocallyManagedCellmlFiles(QMap<QString, QString>())
+    mSimulationCheckResults(QStringList())
 {
 }
 
@@ -143,41 +138,6 @@ void SimulationExperimentViewWidget::retranslateUi()
     foreach (SimulationExperimentViewSimulationWidget *simulationWidget, mSimulationWidgets)
         simulationWidget->retranslateUi();
 }
-
-//==============================================================================
-/*
-bool SimulationExperimentViewWidget::isIndirectRemoteFile(const QString &pFileName)
-{
-    // Return whether the given file is an indirect remote file by retrieving
-    // its details
-
-    Core::File *file = Core::FileManager::instance()->file(pFileName);
-
-    if (file->isLocal()) {
-        CellMLSupport::CellmlFile *cellmlFile = 0;
-        SEDMLSupport::SedmlFile *sedmlFile = 0;
-        COMBINESupport::CombineArchive *combineArchive = 0;
-        FileType fileType;
-        SEDMLSupport::SedmlFileIssues sedmlFileIssues;
-        COMBINESupport::CombineArchiveIssues combineArchiveIssues;
-        bool res = false;
-
-        retrieveFileDetails(pFileName, cellmlFile, sedmlFile, combineArchive,
-                            fileType, sedmlFileIssues, combineArchiveIssues,
-                            &res);
-
-        if (fileType != CellmlFile)
-            delete cellmlFile;
-
-        if (fileType != SedmlFile)
-            delete sedmlFile;
-
-        return res;
-    } else {
-        return false;
-    }
-}
-*/
 
 //==============================================================================
 
@@ -294,17 +254,6 @@ void SimulationExperimentViewWidget::finalize(const QString &pFileName)
 
         if (simulationWidget == mSimulationWidget)
             mSimulationWidget = 0;
-
-        // Finally, we ask our file manager to stop managing our locally managed
-        // CellML file, if any
-
-        QString cellmlFileName = mLocallyManagedCellmlFiles.value(pFileName);
-
-        if (!cellmlFileName.isEmpty()) {
-            Core::FileManager::instance()->unmanage(cellmlFileName);
-
-            mLocallyManagedCellmlFiles.remove(pFileName);
-        }
     }
 }
 
@@ -687,29 +636,6 @@ void SimulationExperimentViewWidget::updateContentsInformationGui(SimulationExpe
 
     for (int i = 0, iMax = mParametersWidgetColumnWidths.count(); i < iMax; ++i)
         pSimulationWidget->contentsWidget()->informationWidget()->parametersWidget()->setColumnWidth(i, mParametersWidgetColumnWidths[i]);
-}
-
-//==============================================================================
-
-void SimulationExperimentViewWidget::retrieveFileDetails(const QString &pFileName,
-                                                         CellMLSupport::CellmlFile *&pCellmlFile,
-                                                         SEDMLSupport::SedmlFile *&pSedmlFile,
-                                                         COMBINESupport::CombineArchive *&pCombineArchive,
-                                                         SimulationSupport::FileType &pFileType,
-                                                         SEDMLSupport::SedmlFileIssues &pSedmlFileIssues,
-                                                         COMBINESupport::CombineArchiveIssues &pCombineArchiveIssues,
-                                                         bool *pIsDirectOrIndirectRemoteFile)
-{
-    Core::centralWidget()->showBusyWidget();
-
-    QString cellmlFileName = SimulationSupport::retrieveFileDetails(pFileName,
-                             pCellmlFile, pSedmlFile, pCombineArchive, pFileType,
-                             pSedmlFileIssues, pCombineArchiveIssues, pIsDirectOrIndirectRemoteFile);
-
-    Core::centralWidget()->hideBusyWidget();
-
-    if (!cellmlFileName.isEmpty())
-        mLocallyManagedCellmlFiles.insert(pFileName, cellmlFileName);
 }
 
 //==============================================================================
