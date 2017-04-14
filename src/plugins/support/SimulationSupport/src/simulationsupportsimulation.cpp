@@ -166,7 +166,7 @@ double SimulationSupportSimulationData::startingPoint() const
 //==============================================================================
 
 void SimulationSupportSimulationData::setStartingPoint(const double &pStartingPoint,
-                                                              const bool &pRecompute)
+                                                       const bool &pRecompute)
 {
     // Set our starting point
 
@@ -275,7 +275,7 @@ Solver::Solver::Properties SimulationSupportSimulationData::odeSolverProperties(
 //==============================================================================
 
 void SimulationSupportSimulationData::addOdeSolverProperty(const QString &pName,
-                                                                  const QVariant &pValue)
+                                                           const QVariant &pValue)
 {
     if (!mRuntime)
         return;
@@ -332,7 +332,7 @@ Solver::Solver::Properties SimulationSupportSimulationData::daeSolverProperties(
 //==============================================================================
 
 void SimulationSupportSimulationData::addDaeSolverProperty(const QString &pName,
-                                                                  const QVariant &pValue)
+                                                           const QVariant &pValue)
 {
     if (!mRuntime)
         return;
@@ -364,7 +364,7 @@ QString SimulationSupportSimulationData::nlaSolverName() const
 //==============================================================================
 
 void SimulationSupportSimulationData::setNlaSolverName(const QString &pNlaSolverName,
-                                                              const bool &pReset)
+                                                       const bool &pReset)
 {
     if (!mRuntime)
         return;
@@ -398,8 +398,8 @@ Solver::Solver::Properties SimulationSupportSimulationData::nlaSolverProperties(
 //==============================================================================
 
 void SimulationSupportSimulationData::addNlaSolverProperty(const QString &pName,
-                                                                  const QVariant &pValue,
-                                                                  const bool &pReset)
+                                                           const QVariant &pValue,
+                                                           const bool &pReset)
 {
     if (!mRuntime)
         return;
@@ -493,7 +493,7 @@ void SimulationSupportSimulationData::reset(const bool &pInitialize)
 //==============================================================================
 
 void SimulationSupportSimulationData::recomputeComputedConstantsAndVariables(const double &pCurrentPoint,
-                                                                                    const bool &pInitialize)
+                                                                             const bool &pInitialize)
 {
     if (!mRuntime)
         return;
