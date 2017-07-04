@@ -1,18 +1,19 @@
 /*******************************************************************************
 
-Copyright The University of Auckland
+Copyright (C) The University of Auckland
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+OpenCOR is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+OpenCOR is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *******************************************************************************/
 
@@ -340,7 +341,7 @@ void CellmlAnnotationViewMetadataNormalViewDetailsWidget::genericLookUp(const QS
 {
     // Retrieve the RDF triple information
 
-    QStringList rdfTripleInformation = pRdfTripleInformation.split("|");
+    QStringList rdfTripleInformation = pRdfTripleInformation.split('|');
     QString qualifier = pRdfTripleInformation.isEmpty()?QString():rdfTripleInformation[0];
     QString resource = pRdfTripleInformation.isEmpty()?QString():rdfTripleInformation[1];
     QString id = pRdfTripleInformation.isEmpty()?QString():rdfTripleInformation[2];
@@ -558,7 +559,7 @@ void CellmlAnnotationViewMetadataNormalViewDetailsWidget::linkClicked()
 
         // Call our generic look up function
 
-        QStringList rdfTripleInformation = mLink.split("|");
+        QStringList rdfTripleInformation = mLink.split('|');
 
         genericLookUp(mLink,
                       (!rdfTripleInformation[0].compare(mTextContent))?
@@ -590,7 +591,7 @@ void CellmlAnnotationViewMetadataNormalViewDetailsWidget::linkHovered()
         if (textContent.isEmpty()) {
             linkToolTip = tr("Remove Term");
         } else {
-            QStringList rdfTripleInformation = link.split("|");
+            QStringList rdfTripleInformation = link.split('|');
 
             linkToolTip = (!rdfTripleInformation[0].compare(textContent))?
                               tr("Look Up Qualifier"):
@@ -625,7 +626,7 @@ void CellmlAnnotationViewMetadataNormalViewDetailsWidget::copy()
 {
     // Copy the qualifier or the URL of the resource or id to the clipboard
 
-    QStringList rdfTripleInformation = mLink.split("|");
+    QStringList rdfTripleInformation = mLink.split('|');
 
     if (!rdfTripleInformation[0].compare(mTextContent))
         QApplication::clipboard()->setText(mTextContent);

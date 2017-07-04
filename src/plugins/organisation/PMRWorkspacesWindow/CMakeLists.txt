@@ -26,9 +26,8 @@ ADD_PLUGIN(PMRWorkspacesWindow
     UIS
         src/pmrworkspaceswindownewworkspacedialog.ui
         src/pmrworkspaceswindowwindow.ui
-    INCLUDE_DIRS
-        src
     PLUGINS
         CellMLSupport
+        LibXDiff
         PMRSupport
 )

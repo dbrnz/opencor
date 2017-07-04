@@ -38,8 +38,6 @@ ADD_PLUGIN(SimulationExperimentView
         src/simulationexperimentviewplugin.h
         src/simulationexperimentviewsimulationwidget.h
         src/simulationexperimentviewwidget.h
-    INCLUDE_DIRS
-        src
     PLUGINS
         COMBINESupport
         GraphPanelWidget

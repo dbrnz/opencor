@@ -1,18 +1,19 @@
 /*******************************************************************************
 
-Copyright The University of Auckland
+Copyright (C) The University of Auckland
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+OpenCOR is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+OpenCOR is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *******************************************************************************/
 
@@ -446,19 +447,16 @@ static const double DblMaxAxis = 0.3*DBL_MAX;
 // Note: normally, we would use DBL_MAX, but this means that our maximum axis
 //       range would be 2*DBL_MAX, which would cause problems with QwtPlot (e.g.
 //       to create ticks), so instead we use a value that results in a range
-//       that we know will work...
+//       that we know works...
 
 static const double MinAxis = -DblMaxAxis;
 static const double MaxAxis =  DblMaxAxis;
 
 static const double MaxAxisRange = MaxAxis-MinAxis;
-static const double MinAxisRange = 1.0e-5;
-// Note: we use double precision (as opposed to single precision), however it
-//       would seem that, at times, Qwt switches between the two types of
-//       precisions. Indeed, if we are to zoom in too much then graphs may be
-//       rendered incorrectly. So, knowing that single precision corresponds to
-//       a 6-digit precision, we give ourselves a bit of a safety net and allow
-//       minimum axis range of 10^-5...
+static const double MinAxisRange = 1000*DBL_MIN;
+// Note: normally, we would use DBL_MIN, but this would cause problems with
+//       QwtPlot (e.g. to create ticks), so instead we use a value that results
+//       in a range that we know works...
 
 //==============================================================================
 

@@ -1,18 +1,19 @@
 /*******************************************************************************
 
-Copyright The University of Auckland
+Copyright (C) The University of Auckland
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+OpenCOR is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+OpenCOR is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *******************************************************************************/
 
@@ -33,15 +34,8 @@ limitations under the License.
 
 //==============================================================================
 
-void CliTests::cliTests()
+void CliTests::cliAboutTests()
 {
-    // Ask for OpenCOR's CLI help
-
-    QCOMPARE(OpenCOR::runCli(QStringList() << "-h"),
-             OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/help.out")));
-    QCOMPARE(OpenCOR::runCli(QStringList() << "-x"),
-             OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/help.out")));
-
     // Ask for the about information
     // Note: we only check the last line since the other ones are version, year
     //       and system dependent...
@@ -50,40 +44,87 @@ void CliTests::cliTests()
 
     QCOMPARE(QStringList() << output[output.count()-2] << QString(),
              OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/about.out")));
+}
 
+//==============================================================================
+
+void CliTests::cliCommandTests()
+{
+    // Try the command option with an unknown plugin
+
+    QCOMPARE(OpenCOR::runCli(QStringList() << "-c" << "Unknown"),
+             OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/unknown_plugin.out")));
+
+    // Try the command option with an unknown command
+
+#ifdef ENABLE_SAMPLE_PLUGINS
+    QCOMPARE(OpenCOR::runCli(QStringList() << "-c" << "::Unknown"),
+             OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/unknown_command_with_sample_tools.out")));
+#else
+    QCOMPARE(OpenCOR::runCli(QStringList() << "-c" << "::Unknown"),
+             OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/unknown_command_without_sample_tools.out")));
+#endif
+}
+
+//==============================================================================
+
+void CliTests::cliExcludeTests()
+{
+    // Exclude some plugins
+
+    QCOMPARE(OpenCOR::runCli(QStringList() << "-e" << "Core" << "FileBrowserWindow" << "Unknown"),
+             OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/exclude.out")));
+}
+
+//==============================================================================
+
+void CliTests::cliHelpTests()
+{
+    // Ask for OpenCOR's CLI help
+
+    QCOMPARE(OpenCOR::runCli(QStringList() << "-h"),
+             OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/help.out")));
+    QCOMPARE(OpenCOR::runCli(QStringList() << "-x"),
+             OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/help.out")));
+}
+
+//==============================================================================
+
+void CliTests::cliIncludeTests()
+{
+    // Include some plugins
+
+    QCOMPARE(OpenCOR::runCli(QStringList() << "-i" << "Core" << "FileBrowserWindow" << "Unknown"),
+             OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/include.out")));
+}
+
+//==============================================================================
+
+void CliTests::cliPluginsTests()
+{
     // List the CLI plugins
 
-#ifdef ENABLE_SAMPLES
+#ifdef ENABLE_SAMPLE_PLUGINS
     QCOMPARE(OpenCOR::runCli(QStringList() << "-p"),
              OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/plugins_with_sample_tools.out")));
 #else
     QCOMPARE(OpenCOR::runCli(QStringList() << "-p"),
              OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/plugins_without_sample_tools.out")));
 #endif
+}
 
+//==============================================================================
+
+void CliTests::cliStatusTests()
+{
     // List the status of all the plugins
 
-#ifdef ENABLE_SAMPLES
+#ifdef ENABLE_SAMPLE_PLUGINS
     QCOMPARE(OpenCOR::runCli(QStringList() << "-s"),
              OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/status_with_sample_tools.out")));
 #else
     QCOMPARE(OpenCOR::runCli(QStringList() << "-s"),
              OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/status_without_sample_tools.out")));
-#endif
-
-    // Try an unknown plugin
-
-    QCOMPARE(OpenCOR::runCli(QStringList() << "-c" << "UnknownPlugin"),
-             OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/unknown_plugin.out")));
-
-    // Try an unknown command
-
-#ifdef ENABLE_SAMPLES
-    QCOMPARE(OpenCOR::runCli(QStringList() << "-c" << "::UnknownCommand"),
-             OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/unknown_command_with_sample_tools.out")));
-#else
-    QCOMPARE(OpenCOR::runCli(QStringList() << "-c" << "::UnknownCommand"),
-             OpenCOR::fileContents(OpenCOR::fileName("src/plugins/miscellaneous/Core/tests/data/cli/unknown_command_without_sample_tools.out")));
 #endif
 }
 

@@ -1,18 +1,19 @@
 /*******************************************************************************
 
-Copyright The University of Auckland
+Copyright (C) The University of Auckland
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+OpenCOR is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+OpenCOR is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *******************************************************************************/
 
@@ -304,12 +305,13 @@ MainWindow::MainWindow(const QString &pApplicationDate) :
 MainWindow::~MainWindow()
 {
     // Finalise our plugins
-    // Note: we only need to test for our default interface since we want to
-    //       call the finalize method and this method is not overriden by any
-    //       other interface...
+    // Note: we do this in reverse to ensure that dependent objects are deleted
+    //       in the correct order...
 
-    foreach (Plugin *plugin, mLoadedPluginPlugins)
-        qobject_cast<PluginInterface *>(plugin->instance())->finalizePlugin();
+    for (auto plugin = mLoadedPluginPlugins.rbegin(), pluginEnd = mLoadedPluginPlugins.rend();
+         plugin != pluginEnd; ++plugin) {
+        qobject_cast<PluginInterface *>((*plugin)->instance())->finalizePlugin();
+    }
 
     // Delete our central widget
     // Note: if we don't have one, then nothing will happen...
@@ -864,7 +866,7 @@ void MainWindow::reorderViewWindowsMenu()
             // accentuated characters by non-accentuated ones, making the
             // sorting sensible
 
-            QString menuItemTitle = menuItemAction->text().remove("&").normalized(QString::NormalizationForm_KD);
+            QString menuItemTitle = menuItemAction->text().remove('&').normalized(QString::NormalizationForm_KD);
 
             for (int i = menuItemTitle.length()-1; i >= 0; --i) {
                 if (menuItemTitle[i].category() == QChar::Mark_NonSpacing)
@@ -1059,12 +1061,12 @@ void MainWindow::handleUrl(const QUrl &pUrl)
         //       leading forward slash. Indeed, an open files request looks like
         //       opencor://openFiles//home/user/file1|/home/user/file2...
 
-        handleArguments(urlArguments(pUrl).split("|"));
+        handleArguments(urlArguments(pUrl).split('|'));
     } else {
         // We are dealing with an action that OpenCOR itself can't handle, but
         // maybe one of its loaded plugins can
 
-        QString pluginName = actionName.split(".").first();
+        QString pluginName = actionName.split('.').first();
 
         foreach (Plugin *plugin, mLoadedPluginPlugins) {
             if (!plugin->name().compare(pluginName, Qt::CaseInsensitive)) {
@@ -1093,7 +1095,7 @@ void MainWindow::handleMessage(const QString &pMessage)
 
     showSelf();
 
-    handleArguments(pMessage.split("|"));
+    handleArguments(pMessage.split('|'));
 }
 
 //==============================================================================

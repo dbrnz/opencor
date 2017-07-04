@@ -1,18 +1,19 @@
 /*******************************************************************************
 
-Copyright The University of Auckland
+Copyright (C) The University of Auckland
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+OpenCOR is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+OpenCOR is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *******************************************************************************/
 
@@ -36,13 +37,13 @@ namespace CellMLSupport {
 
 //==============================================================================
 
-void CellmlFileRdfTriple::constructor(CellmlFile *pCellmlFile,
-                                      iface::rdf_api::Triple *pRdfTriple,
-                                      const Type &pType,
-                                      const ModelQualifier &pModelQualifier,
-                                      const BioQualifier &pBioQualifier,
-                                      const QString &pResource,
-                                      const QString &pId)
+CellmlFileRdfTriple::CellmlFileRdfTriple(CellmlFile *pCellmlFile,
+                                         iface::rdf_api::Triple *pRdfTriple,
+                                         const Type &pType,
+                                         const ModelQualifier &pModelQualifier,
+                                         const BioQualifier &pBioQualifier,
+                                         const QString &pResource,
+                                         const QString &pId)
 {
     mCellmlFile = pCellmlFile;
 
@@ -60,13 +61,10 @@ void CellmlFileRdfTriple::constructor(CellmlFile *pCellmlFile,
 //==============================================================================
 
 CellmlFileRdfTriple::CellmlFileRdfTriple(CellmlFile *pCellmlFile,
-                                         iface::rdf_api::Triple *pRdfTriple)
+                                         iface::rdf_api::Triple *pRdfTriple) :
+    CellmlFileRdfTriple(pCellmlFile, pRdfTriple, Unknown, ModelUnknown,
+                        BioUnknown, QString(), QString())
 {
-    // Construct ourselves
-
-    constructor(pCellmlFile, pRdfTriple, Unknown,
-                ModelUnknown, BioUnknown, QString(), QString());
-
     // Retrieve the RDF triple's subject, predicate and object information
 
     ObjRef<iface::rdf_api::Resource> subject = pRdfTriple->subject();
@@ -158,13 +156,10 @@ CellmlFileRdfTriple::CellmlFileRdfTriple(CellmlFile *pCellmlFile,
                                          const QString pSubject,
                                          const ModelQualifier &pModelQualifier,
                                          const QString &pResource,
-                                         const QString &pId)
+                                         const QString &pId) :
+    CellmlFileRdfTriple(pCellmlFile, 0, BioModelsDotNetQualifier,
+                        pModelQualifier, BioUnknown, pResource, pId)
 {
-    // Construct ourselves
-
-    constructor(pCellmlFile, 0, BioModelsDotNetQualifier,
-                pModelQualifier, BioUnknown, pResource, pId);
-
     // Create our RDF triple elements
 
     static const QRegularExpression ModelRegEx = QRegularExpression("^model:");
@@ -180,13 +175,10 @@ CellmlFileRdfTriple::CellmlFileRdfTriple(CellmlFile *pCellmlFile,
                                          const QString pSubject,
                                          const BioQualifier &pBioQualifier,
                                          const QString &pResource,
-                                         const QString &pId)
+                                         const QString &pId) :
+    CellmlFileRdfTriple(pCellmlFile, 0, BioModelsDotNetQualifier, ModelUnknown,
+                        pBioQualifier, pResource, pId)
 {
-    // Construct ourselves
-
-    constructor(pCellmlFile, 0, BioModelsDotNetQualifier,
-                ModelUnknown, pBioQualifier, pResource, pId);
-
     // Create our RDF triple elements
 
     static const QRegularExpression BioRegEx = QRegularExpression("^bio:");
@@ -270,7 +262,7 @@ QString CellmlFileRdfTriple::metadataId() const
 
     if (mSubject->type() == CellmlFileRdfTripleElement::UriReference) {
         QString uriReference = mSubject->uriReference();
-        int hashPosition = uriReference.lastIndexOf("#");
+        int hashPosition = uriReference.lastIndexOf('#');
 
         if (hashPosition != -1)
             return uriReference.right(uriReference.length()-hashPosition-1);
@@ -530,7 +522,7 @@ bool CellmlFileRdfTriple::decodeTerm(const QString &pTerm, QString &pResource,
         // The term is a MIRIAM URN, so retrieve its corresponding resource and
         // id
 
-        QStringList miriamUrnList = pTerm.split(":");
+        QStringList miriamUrnList = pTerm.split(':');
 
         pResource = Core::stringFromPercentEncoding(miriamUrnList[2]);
         pId = Core::stringFromPercentEncoding(miriamUrnList[3]);
@@ -543,7 +535,7 @@ bool CellmlFileRdfTriple::decodeTerm(const QString &pTerm, QString &pResource,
         QString identifiersDotOrgUri = pTerm;
         // Note: the above is because pTerm is a const, so we can't directly use
         //       QString::remove() on it...
-        QStringList identifiersDotOrgUriList = identifiersDotOrgUri.remove("http://identifiers.org/").split("/");
+        QStringList identifiersDotOrgUriList = identifiersDotOrgUri.remove("http://identifiers.org/").split('/');
 
         pResource = Core::stringFromPercentEncoding(identifiersDotOrgUriList[0]);
         pId = Core::stringFromPercentEncoding(identifiersDotOrgUriList[1]);

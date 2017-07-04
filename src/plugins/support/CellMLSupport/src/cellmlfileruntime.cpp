@@ -1,18 +1,19 @@
 /*******************************************************************************
 
-Copyright The University of Auckland
+Copyright (C) The University of Auckland
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+OpenCOR is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+OpenCOR is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *******************************************************************************/
 
@@ -22,6 +23,8 @@ limitations under the License.
 
 #ifdef _WIN32
     #define _SCL_SECURE_NO_WARNINGS
+
+    #define NOMINMAX
 #endif
 
 //==============================================================================
@@ -46,10 +49,10 @@ limitations under the License.
 
 //==============================================================================
 
-#include "llvmbegin.h"
+#include "llvmclangbegin.h"
     #include "llvm/ADT/StringRef.h"
     #include "llvm/Support/DynamicLibrary.h"
-#include "llvmend.h"
+#include "llvmclangend.h"
 
 //==============================================================================
 
@@ -164,7 +167,7 @@ QString CellmlFileRuntimeParameter::formattedComponentHierarchy() const
 {
     // Return a formatted version of our component hierarchy
 
-    return mComponentHierarchy.join(".");
+    return mComponentHierarchy.join('.');
 }
 
 //==============================================================================
@@ -636,8 +639,8 @@ QString CellmlFileRuntime::functionCode(const QString &pFunctionSignature,
 
         res += pFunctionBody;
 
-        if (!pFunctionBody.endsWith("\n"))
-            res += "\n";
+        if (!pFunctionBody.endsWith('\n'))
+            res += '\n';
 
         if (pHasDefines) {
             res += "\n"
@@ -992,7 +995,7 @@ void CellmlFileRuntime::update()
 
     static const QRegularExpression InitializationStatementRegEx = QRegularExpression("^(CONSTANTS|RATES|STATES)\\[\\d*\\] = [+-]?\\d*\\.?\\d+([eE][+-]?\\d+)?;$");
 
-    QStringList initConstsList = cleanCode(genericCodeInformation->initConstsString()).split("\n");
+    QStringList initConstsList = cleanCode(genericCodeInformation->initConstsString()).split('\n');
     QString initConsts = QString();
     QString compCompConsts = QString();
 
@@ -1008,31 +1011,31 @@ void CellmlFileRuntime::update()
 
     modelCode += functionCode("int initializeConstants(double *CONSTANTS, double *RATES, double *STATES)",
                               initConsts, true);
-    modelCode += "\n";
+    modelCode += '\n';
     modelCode += functionCode("int computeComputedConstants(double *CONSTANTS, double *RATES, double *STATES)",
                               compCompConsts, true);
-    modelCode += "\n";
+    modelCode += '\n';
 
     // Retrieve the body of the remaining functions
 
     if (mModelType == CellmlFileRuntime::Ode) {
         modelCode += functionCode("int computeOdeRates(double VOI, double *CONSTANTS, double *RATES, double *STATES, double *ALGEBRAIC)",
                                   cleanCode(mOdeCodeInformation->ratesString()));
-        modelCode += "\n";
+        modelCode += '\n';
         modelCode += functionCode("int computeOdeVariables(double VOI, double *CONSTANTS, double *RATES, double *STATES, double *ALGEBRAIC)",
                                   cleanCode(genericCodeInformation->variablesString()));
     } else {
         modelCode += functionCode("int computeDaeEssentialVariables(double VOI, double *CONSTANTS, double *RATES, double *OLDRATES, double *STATES, double *OLDSTATES, double *ALGEBRAIC, double *CONDVAR)",
                                   cleanCode(mDaeCodeInformation->essentialVariablesString()));
-        modelCode += "\n";
+        modelCode += '\n';
         modelCode += functionCode("int computeDaeResiduals(double VOI, double *CONSTANTS, double *RATES, double *OLDRATES, double *STATES, double *OLDSTATES, double *ALGEBRAIC, double *CONDVAR, double *resid)",
                                   cleanCode(mDaeCodeInformation->ratesString()));
-        modelCode += "\n";
+        modelCode += '\n';
         modelCode += functionCode("int computeDaeRootInformation(double VOI, double *CONSTANTS, double *RATES, double *OLDRATES, double *STATES, double *OLDSTATES, double *ALGEBRAIC, double *CONDVAR)",
                                   cleanCode(mDaeCodeInformation->rootInformationString()));
         modelCode += functionCode("int computeDaeStateInformation(double *SI)",
                                   cleanCode(mDaeCodeInformation->stateInformationString()));
-        modelCode += "\n";
+        modelCode += '\n';
         modelCode += functionCode("int computeDaeVariables(double VOI, double *CONSTANTS, double *RATES, double *STATES, double *ALGEBRAIC, double *CONDVAR)",
                                   cleanCode(genericCodeInformation->variablesString()));
     }

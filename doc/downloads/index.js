@@ -18,7 +18,7 @@ var jsonData = { "versions": [
                        }
                      ]
                    },
-                   { "major": 0, "minor": 0, "patch": 0, "day": 24, "month": 3, "year": 2017, "type": 2,
+                   { "major": 0, "minor": 0, "patch": 0, "day": 21, "month": 6, "year": 2017, "type": 2,
                      "platforms": [
                        { "name": "Windows", "supported": "Windows 7 and later",
                          "files": [
@@ -37,11 +37,8 @@ var jsonData = { "versions": [
                        }
                      ],
                      "changes": [
-                       { "change": "<strong>General:</strong> don't make our windows have a minimum size <a href=\"https://github.com/opencor/opencor/issues/1260\">#1260</a>)." },
-                       { "change": "<strong>File Handling interface:</strong> removed isIndirectRemoteFile() since it's not being used anymore <a href=\"https://github.com/opencor/opencor/issues/1267\">#1267</a>)." },
-                       { "change": "<strong>CellML Text view:</strong> the import of a CellML file is now always properly converted (see issue <a href=\"https://github.com/opencor/opencor/issues/1257\">#1257</a>)." },
-                       { "change": "<strong>Single Cell view:</strong> renamed the view to Simulation Experiment view (see issue <a href=\"https://github.com/opencor/opencor/issues/1256\">#1256</a>)." },
-                       { "change": "<strong>Third-party libraries:</strong> upgraded <a href=\"https://jquery.com/\">jQuery</a> to version 3.2.1 (see issue <a href=\"https://github.com/opencor/opencor/issues/1264\">#1264</a>)" }
+                       { "change": "<strong>General:</strong> provide an error message when a plugin is considered to be invalid (see issue <a href=\"https://github.com/opencor/opencor/issues/1347\">#1347</a>)." },
+                       { "change": "<strong>Third-party libraries:</strong> upgraded <a href=\"https://libgit2.github.com/\">libgit2</a> to version 0.26 (see issue <a href=\"https://github.com/opencor/opencor/issues/1340\">#1340</a>). Added <a href=\"http://code.qt.io/cgit/qt/qtcharts.git/tree/\">Qt Charts</a> as a package (see issue <a href=\"https://github.com/opencor/opencor/issues/1342\">#1342</a>)." }
                      ]
                    },
                    { "major": 0, "minor": 4, "patch": 1, "day": 20, "month": 5, "year": 2015, "type": 0,

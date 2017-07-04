@@ -1,18 +1,19 @@
 /*******************************************************************************
 
-Copyright The University of Auckland
+Copyright (C) The University of Auckland
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+OpenCOR is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+OpenCOR is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *******************************************************************************/
 
@@ -85,10 +86,12 @@ void CellmlAnnotationViewCellmlElementItemDelegate::paint(QPainter *pPainter,
 
 //==============================================================================
 
-void CellmlAnnotationViewCellmlElementItem::constructor(const bool &pCategory,
-                                                        const Type &pType,
-                                                        iface::cellml_api::CellMLElement *pElement,
-                                                        const int &pNumber)
+CellmlAnnotationViewCellmlElementItem::CellmlAnnotationViewCellmlElementItem(const bool &pCategory,
+                                                                             const Type &pType,
+                                                                             const QString &pText,
+                                                                             iface::cellml_api::CellMLElement *pElement,
+                                                                             const int &pNumber) :
+    QStandardItem(pText)
 {
     // Some initialisations
 
@@ -104,12 +107,8 @@ void CellmlAnnotationViewCellmlElementItem::constructor(const bool &pCategory,
 
 CellmlAnnotationViewCellmlElementItem::CellmlAnnotationViewCellmlElementItem(const bool &pError,
                                                                              const QString &pText) :
-    QStandardItem(pText)
+    CellmlAnnotationViewCellmlElementItem(false, pError?Error:Warning, pText, 0, -1)
 {
-    // Constructor for either an error or a warning
-
-    constructor(false, pError?Error:Warning, 0, -1);
-
     // Disable the item and use its text as a tooltip (in case it's too long and
     // doesn't fit within the allocated space we have)
     // Note: the item will get 're-enabled' by our item delegate...
@@ -126,12 +125,8 @@ CellmlAnnotationViewCellmlElementItem::CellmlAnnotationViewCellmlElementItem(con
 
 CellmlAnnotationViewCellmlElementItem::CellmlAnnotationViewCellmlElementItem(const Type &pType,
                                                                              const QString &pText) :
-    QStandardItem(pText)
+    CellmlAnnotationViewCellmlElementItem(true, pType, pText, 0, -1)
 {
-    // Constructor for a category
-
-    constructor(true, pType, 0, -1);
-
     // Use its text as a tooltip (in case it's too long and doesn't fit within
     // the allocated space we have)
 
@@ -147,12 +142,8 @@ CellmlAnnotationViewCellmlElementItem::CellmlAnnotationViewCellmlElementItem(con
 CellmlAnnotationViewCellmlElementItem::CellmlAnnotationViewCellmlElementItem(const Type &pType,
                                                                              iface::cellml_api::CellMLElement *pElement,
                                                                              const int pNumber) :
-    QStandardItem()
+    CellmlAnnotationViewCellmlElementItem(false, pType, QString(), pElement, pNumber)
 {
-    // Constructor for a CellML element
-
-    constructor(false, pType, pElement, pNumber);
-
     // Set the text for some types
 
     enum {
@@ -1019,7 +1010,7 @@ void CellmlAnnotationViewCellmlListWidget::indexExpandAll(const QModelIndex &pIn
     //       a call to expand() is quite expensive, so the fewer of those we
     //       make the better...
 
-    if (pIndex.child(0, 0).isValid()) {
+    if (pIndex.model()->index(0, 0, pIndex).isValid()) {
         mTreeViewWidget->expand(pIndex);
 
         QStandardItem *item = mTreeViewModel->itemFromIndex(pIndex);
@@ -1036,7 +1027,7 @@ void CellmlAnnotationViewCellmlListWidget::indexCollapseAll(const QModelIndex &p
     // Recursively collapse all the CellML elements below the current one
     // Note: see the note in indexExpandAll() above...
 
-    if (pIndex.child(0, 0).isValid()) {
+    if (pIndex.model()->index(0, 0, pIndex).isValid()) {
         QStandardItem *item = mTreeViewModel->itemFromIndex(pIndex);
 
         for (int i = 0, iMax = item->rowCount(); i < iMax; ++i)
@@ -1054,7 +1045,7 @@ bool CellmlAnnotationViewCellmlListWidget::indexIsAllExpanded(const QModelIndex 
     // are expanded
     // Note: see the note in indexExpandAll() above...
 
-    if (pIndex.child(0, 0).isValid()) {
+    if (pIndex.model()->index(0, 0, pIndex).isValid()) {
         QStandardItem *item = mTreeViewModel->itemFromIndex(pIndex);
 
         for (int i = 0, iMax = item->rowCount(); i < iMax; ++i)

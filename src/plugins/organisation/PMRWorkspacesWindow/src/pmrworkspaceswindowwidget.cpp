@@ -1,18 +1,19 @@
 /*******************************************************************************
 
-Copyright The University of Auckland
+Copyright (C) The University of Auckland
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+OpenCOR is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+OpenCOR is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *******************************************************************************/
 
@@ -62,13 +63,16 @@ namespace PMRWorkspacesWindow {
 
 //==============================================================================
 
-void PmrWorkspacesWindowItem::constructor(const Type &pType,
-                                          Core::TreeViewWidget *pTreeViewWidget,
-                                          PmrWorkspacesWindowProxyModel *pTreeViewProxyModel,
-                                          PMRSupport::PmrWorkspace *pWorkspace,
-                                          PMRSupport::PmrWorkspaceFileNode *pFileNode,
-                                          const QIcon &pCollapsedIcon,
-                                          const QIcon &pExpandedIcon)
+PmrWorkspacesWindowItem::PmrWorkspacesWindowItem(const Type &pType,
+                                                 Core::TreeViewWidget *pTreeViewWidget,
+                                                 PmrWorkspacesWindowProxyModel *pTreeViewProxyModel,
+                                                 PMRSupport::PmrWorkspace *pWorkspace,
+                                                 PMRSupport::PmrWorkspaceFileNode *pFileNode,
+                                                 const QIcon &pIcon,
+                                                 const QString &pText,
+                                                 const QIcon &pCollapsedIcon,
+                                                 const QIcon &pExpandedIcon) :
+    QStandardItem(pIcon, pText)
 {
     // Some initialisations
 
@@ -93,12 +97,10 @@ PmrWorkspacesWindowItem::PmrWorkspacesWindowItem(const Type &pType,
                                                  PMRSupport::PmrWorkspace *pWorkspace,
                                                  const QIcon &pCollapsedIcon,
                                                  const QIcon &pExpandedIcon) :
-    QStandardItem(pCollapsedIcon, pWorkspace->name())
+    PmrWorkspacesWindowItem(pType, pTreeViewWidget, pTreeViewProxyModel,
+                            pWorkspace, 0, pCollapsedIcon, pWorkspace->name(),
+                            pCollapsedIcon, pExpandedIcon)
 {
-    // Construct our object
-
-    constructor(pType, pTreeViewWidget, pTreeViewProxyModel,
-                pWorkspace, 0, pCollapsedIcon, pExpandedIcon);
 }
 
 //==============================================================================
@@ -110,12 +112,10 @@ PmrWorkspacesWindowItem::PmrWorkspacesWindowItem(const Type &pType,
                                                  PMRSupport::PmrWorkspaceFileNode *pFileNode,
                                                  const QIcon &pCollapsedIcon,
                                                  const QIcon &pExpandedIcon) :
-    QStandardItem(pCollapsedIcon, pFileNode->name())
+    PmrWorkspacesWindowItem(pType, pTreeViewWidget, pTreeViewProxyModel,
+                            pWorkspace, pFileNode, pCollapsedIcon,
+                            pFileNode->name(), pCollapsedIcon, pExpandedIcon)
 {
-    // Construct our object
-
-    constructor(pType, pTreeViewWidget, pTreeViewProxyModel,
-                pWorkspace, pFileNode, pCollapsedIcon, pExpandedIcon);
 }
 
 //==============================================================================
@@ -126,12 +126,10 @@ PmrWorkspacesWindowItem::PmrWorkspacesWindowItem(const Type &pType,
                                                  PMRSupport::PmrWorkspace *pWorkspace,
                                                  PMRSupport::PmrWorkspaceFileNode *pFileNode,
                                                  const QIcon &pIcon) :
-    QStandardItem(pIcon, pFileNode->name())
+    PmrWorkspacesWindowItem(pType, pTreeViewWidget, pTreeViewProxyModel,
+                            pWorkspace, pFileNode, pIcon, pFileNode->name(),
+                            QIcon(), QIcon())
 {
-    // Construct our object
-
-    constructor(pType, pTreeViewWidget, pTreeViewProxyModel,
-                pWorkspace, pFileNode, QIcon(), QIcon());
 }
 
 //==============================================================================
@@ -654,7 +652,7 @@ void PmrWorkspacesWindowWidget::reset(const QString &pPmrUrl)
 
 //==============================================================================
 
-void PmrWorkspacesWindowWidget::updateGui()
+void PmrWorkspacesWindowWidget::updateGui(const bool &pForceUserMessageVisibility)
 {
     // Determine the message to be displayed, if any
 
@@ -676,7 +674,8 @@ void PmrWorkspacesWindowWidget::updateGui()
 
     // Show/hide our user message widget
 
-    mUserMessageWidget->setVisible(!mUserMessageWidget->text().isEmpty());
+    mUserMessageWidget->setVisible(    pForceUserMessageVisibility
+                                   || !mUserMessageWidget->text().isEmpty());
 }
 
 //==============================================================================
@@ -765,7 +764,8 @@ void PmrWorkspacesWindowWidget::initialize(const PMRSupport::PmrWorkspaces &pWor
     foreach (PMRSupport::PmrWorkspace *workspace, workspaceManager->workspaces())
         addWorkspace(workspace);
 
-    updateGui();
+    updateGui(   (pWorkspaces == PMRSupport::PmrWorkspaces())
+              && pErrorMessage.isEmpty() && !pAuthenticated);
 
     mInitialized = true;
 }

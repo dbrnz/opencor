@@ -1,18 +1,19 @@
 /*******************************************************************************
 
-Copyright The University of Auckland
+Copyright (C) The University of Auckland
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+OpenCOR is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+OpenCOR is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *******************************************************************************/
 
@@ -65,33 +66,37 @@ void TextEditorWidget::keyPressEvent(QKeyEvent *pEvent)
 {
     // Check some key combinations
 
-    if (   !(pEvent->modifiers() & Qt::ShiftModifier)
-        && !(pEvent->modifiers() & Qt::ControlModifier)
-        && !(pEvent->modifiers() & Qt::AltModifier)
-        && !(pEvent->modifiers() & Qt::MetaModifier)) {
-        // None of the modifiers is selected
+    bool noModifiers =    !(pEvent->modifiers() & Qt::ShiftModifier)
+                       && !(pEvent->modifiers() & Qt::ControlModifier)
+                       && !(pEvent->modifiers() & Qt::AltModifier)
+                       && !(pEvent->modifiers() & Qt::MetaModifier);
 
-        if (pEvent->key() == Qt::Key_Up) {
-            // The user wants to go to the previous property
+    if (noModifiers && (pEvent->key() == Qt::Key_Escape)) {
+        // The user wants to go cancel the editing
 
-            emit goToPreviousPropertyRequested();
+        emit cancelEditingRequested();
 
-            // Accept the event
+        // Accept the event
 
-            pEvent->accept();
-        } else if (pEvent->key() == Qt::Key_Down) {
-            // The user wants to go to the next property
+        pEvent->accept();
+    } else if (noModifiers && (   (pEvent->key() == Qt::Key_Up)
+                               || (pEvent->key() == Qt::Key_Backtab))) {
+        // The user wants to go to the previous property
 
-            emit goToNextPropertyRequested();
+        emit goToPreviousPropertyRequested();
 
-            // Accept the event
+        // Accept the event
 
-            pEvent->accept();
-        } else {
-            // Default handling of the event
+        pEvent->accept();
+    } else if (noModifiers && (   (pEvent->key() == Qt::Key_Down)
+                               || (pEvent->key() == Qt::Key_Tab))) {
+        // The user wants to go to the next property
 
-            QLineEdit::keyPressEvent(pEvent);
-        }
+        emit goToNextPropertyRequested();
+
+        // Accept the event
+
+        pEvent->accept();
     } else {
         // Default handling of the event
 
@@ -136,33 +141,37 @@ void ListEditorWidget::keyPressEvent(QKeyEvent *pEvent)
 {
     // Check some key combinations
 
-    if (   !(pEvent->modifiers() & Qt::ShiftModifier)
-        && !(pEvent->modifiers() & Qt::ControlModifier)
-        && !(pEvent->modifiers() & Qt::AltModifier)
-        && !(pEvent->modifiers() & Qt::MetaModifier)) {
-        // None of the modifiers is selected
+    bool noModifiers =    !(pEvent->modifiers() & Qt::ShiftModifier)
+                       && !(pEvent->modifiers() & Qt::ControlModifier)
+                       && !(pEvent->modifiers() & Qt::AltModifier)
+                       && !(pEvent->modifiers() & Qt::MetaModifier);
 
-        if (pEvent->key() == Qt::Key_Up) {
-            // The user wants to go to the previous property
+    if (noModifiers && (pEvent->key() == Qt::Key_Escape)) {
+        // The user wants to go cancel the editing
 
-            emit goToPreviousPropertyRequested();
+        emit cancelEditingRequested();
 
-            // Accept the event
+        // Accept the event
 
-            pEvent->accept();
-        } else if (pEvent->key() == Qt::Key_Down) {
-            // The user wants to go to the next property
+        pEvent->accept();
+    } else if (noModifiers && (   (pEvent->key() == Qt::Key_Up)
+                               || (pEvent->key() == Qt::Key_Backtab))) {
+        // The user wants to go to the previous property
 
-            emit goToNextPropertyRequested();
+        emit goToPreviousPropertyRequested();
 
-            // Accept the event
+        // Accept the event
 
-            pEvent->accept();
-        } else {
-            // Default handling of the event
+        pEvent->accept();
+    } else if (noModifiers && (   (pEvent->key() == Qt::Key_Down)
+                               || (pEvent->key() == Qt::Key_Tab))) {
+        // The user wants to go to the next property
 
-            QComboBox::keyPressEvent(pEvent);
-        }
+        emit goToNextPropertyRequested();
+
+        // Accept the event
+
+        pEvent->accept();
     } else {
         // Default handling of the event
 
@@ -350,6 +359,9 @@ QWidget * PropertyItemDelegate::createEditor(QWidget *pParent,
     }
 
     // Propagate a few signals
+
+    connect(editor, SIGNAL(cancelEditingRequested()),
+            this, SIGNAL(cancelEditingRequested()));
 
     connect(editor, SIGNAL(goToPreviousPropertyRequested()),
             this, SIGNAL(goToPreviousPropertyRequested()));
@@ -1042,8 +1054,10 @@ void Property::updateToolTip()
 
 //==============================================================================
 
-void PropertyEditorWidget::constructor(const bool &pShowUnits,
-                                       const bool &pAutoUpdateHeight)
+PropertyEditorWidget::PropertyEditorWidget(const bool &pShowUnits,
+                                           const bool &pAutoUpdateHeight,
+                                           QWidget *pParent) :
+    TreeViewWidget(pParent)
 {
     // Some initialisations
 
@@ -1062,6 +1076,7 @@ void PropertyEditorWidget::constructor(const bool &pShowUnits,
     // Customise ourselves
 
     setRootIsDecorated(false);
+    setTabKeyNavigation(true);
 
     // Create and set our data model
 
@@ -1084,6 +1099,9 @@ void PropertyEditorWidget::constructor(const bool &pShowUnits,
             this, SLOT(editorOpened(QWidget *)));
     connect(propertyItemDelegate, SIGNAL(closeEditor(QWidget *, QAbstractItemDelegate::EndEditHint)),
             this, SLOT(editorClosed()));
+
+    connect(propertyItemDelegate, SIGNAL(cancelEditingRequested()),
+            this, SLOT(cancelEditing()));
 
     connect(propertyItemDelegate, SIGNAL(goToPreviousPropertyRequested()),
             this, SLOT(goToPreviousProperty()));
@@ -1116,35 +1134,17 @@ void PropertyEditorWidget::constructor(const bool &pShowUnits,
 
 //==============================================================================
 
-PropertyEditorWidget::PropertyEditorWidget(const bool &pShowUnits,
-                                           const bool &pAutoUpdateHeight,
-                                           QWidget *pParent) :
-    TreeViewWidget(pParent)
-{
-    // Construct our object
-
-    constructor(pShowUnits, pAutoUpdateHeight);
-}
-
-//==============================================================================
-
 PropertyEditorWidget::PropertyEditorWidget(const bool &pAutoUpdateHeight,
                                            QWidget *pParent) :
-    TreeViewWidget(pParent)
+    PropertyEditorWidget(true, pAutoUpdateHeight, pParent)
 {
-    // Construct our object
-
-    constructor(true, pAutoUpdateHeight);
 }
 
 //==============================================================================
 
 PropertyEditorWidget::PropertyEditorWidget(QWidget *pParent) :
-    TreeViewWidget(pParent)
+    PropertyEditorWidget(true, false, pParent)
 {
-    // Construct our object
-
-    constructor();
 }
 
 //==============================================================================
@@ -1490,14 +1490,22 @@ void PropertyEditorWidget::keyPressEvent(QKeyEvent *pEvent)
 {
     // Check some key combinations
 
-    if (   (pEvent->modifiers() & Qt::ControlModifier)
-        && (pEvent->key() == Qt::Key_A)) {
+    bool noModifiers =    !(pEvent->modifiers() & Qt::ShiftModifier)
+                       && !(pEvent->modifiers() & Qt::ControlModifier)
+                       && !(pEvent->modifiers() & Qt::AltModifier)
+                       && !(pEvent->modifiers() & Qt::MetaModifier);
+    bool controlModifier =    !(pEvent->modifiers() & Qt::ShiftModifier)
+                           &&  (pEvent->modifiers() & Qt::ControlModifier)
+                           && !(pEvent->modifiers() & Qt::AltModifier)
+                           && !(pEvent->modifiers() & Qt::MetaModifier);
+
+    if (controlModifier && (pEvent->key() == Qt::Key_A)) {
         // The user wants to select everything which we don't want to allow,
         // so just accept the event...
 
         pEvent->accept();
-    } else if (   (pEvent->key() == Qt::Key_Return)
-               || (pEvent->key() == Qt::Key_Enter)) {
+    } else if (noModifiers && (   (pEvent->key() == Qt::Key_Return)
+                               || (pEvent->key() == Qt::Key_Enter))) {
         // The user wants to start/stop editing the property
 
         if (mPropertyEditor) {
@@ -1511,47 +1519,38 @@ void PropertyEditorWidget::keyPressEvent(QKeyEvent *pEvent)
             //       would have to use currentIndex().row(), so we might as well
             //       use the latter all the time...
 
-            editProperty(property(currentIndex()));
+            editProperty(currentProperty());
         }
 
         // Accept the event
 
         pEvent->accept();
-    } else if (pEvent->key() == Qt::Key_Escape) {
+    } else if (noModifiers && (pEvent->key() == Qt::Key_Escape)) {
         // The user wants to cancel the editing
 
-        finishEditing(false);
+        cancelEditing();
 
         // Accept the event
 
         pEvent->accept();
-    } else if (   !(pEvent->modifiers() & Qt::ShiftModifier)
-               && !(pEvent->modifiers() & Qt::ControlModifier)
-               && !(pEvent->modifiers() & Qt::AltModifier)
-               && !(pEvent->modifiers() & Qt::MetaModifier)) {
-        // None of the modifiers is selected
+    } else if (noModifiers && (   (pEvent->key() == Qt::Key_Up)
+                               || (pEvent->key() == Qt::Key_Backtab))) {
+        // The user wants to go the previous property
 
-        if (pEvent->key() == Qt::Key_Up) {
-            // The user wants to go the previous property
+        goToPreviousProperty();
 
-            goToPreviousProperty();
+        // Accept the event
 
-            // Accept the event
+        pEvent->accept();
+    } else if (noModifiers && (   (pEvent->key() == Qt::Key_Down)
+                               || (pEvent->key() == Qt::Key_Tab))) {
+        // The user wants to go to the next property
 
-            pEvent->accept();
-        } else if (pEvent->key() == Qt::Key_Down) {
-            // The user wants to go to the next property
+        goToNextProperty();
 
-            goToNextProperty();
+        // Accept the event
 
-            // Accept the event
-
-            pEvent->accept();
-        } else {
-            // Default handling of the event
-
-            TreeViewWidget::keyPressEvent(pEvent);
-        }
+        pEvent->accept();
     } else {
         // Default handling of the event
 
@@ -1607,7 +1606,7 @@ void PropertyEditorWidget::mousePressEvent(QMouseEvent *pEvent)
     mRightClicking = pEvent->button() == Qt::RightButton;
 
     if (mRightClicking)
-        finishEditing(false);
+        cancelEditing();
     else if (newProperty && (newProperty != oldProperty))
         editProperty(newProperty);
 }
@@ -1905,6 +1904,20 @@ void PropertyEditorWidget::finishEditing(const bool &pCommitData)
     // The user wants to finish the editing
 
     editProperty(0, pCommitData);
+}
+
+//==============================================================================
+
+void PropertyEditorWidget::cancelEditing()
+{
+    // The user wants to cancel the editing, i.e. finish the editing without
+    // committing the editor's data
+    // Note: we temporarily disable tab key navigation since otherwise it will
+    //       get us to the next property, which we don't want...
+
+    setTabKeyNavigation(false);
+        finishEditing(false);
+    setTabKeyNavigation(true);
 }
 
 //==============================================================================

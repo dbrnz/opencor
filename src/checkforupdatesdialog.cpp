@@ -1,18 +1,19 @@
 /*******************************************************************************
 
-Copyright The University of Auckland
+Copyright (C) The University of Auckland
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+OpenCOR is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+OpenCOR is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *******************************************************************************/
 
@@ -152,7 +153,7 @@ bool CheckForUpdatesEngine::hasNewerOfficialVersion() const
     // Return whether we have a newer official version
 
     foreach (const QString &newerVersion, mNewerVersions) {
-        if (!newerVersion.contains("-"))
+        if (!newerVersion.contains('-'))
             return true;
     }
 
@@ -161,8 +162,11 @@ bool CheckForUpdatesEngine::hasNewerOfficialVersion() const
 
 //==============================================================================
 
-void CheckForUpdatesDialog::constructor(const QString &pApplicationDate,
-                                        CheckForUpdatesEngine *pEngine)
+CheckForUpdatesDialog::CheckForUpdatesDialog(QSettings *pSettings,
+                                             const QString &pApplicationDate,
+                                             CheckForUpdatesEngine *pEngine,
+                                             QWidget *pParent) :
+    Dialog(pSettings, pParent)
 {
     // We are not yet initialised
 
@@ -201,22 +205,16 @@ void CheckForUpdatesDialog::constructor(const QString &pApplicationDate,
 CheckForUpdatesDialog::CheckForUpdatesDialog(QSettings *pSettings,
                                              const QString &pApplicationDate,
                                              QWidget *pParent) :
-    Dialog(pSettings, pParent)
+    CheckForUpdatesDialog(pSettings, pApplicationDate, 0, pParent)
 {
-    // Construct our dialog
-
-    constructor(pApplicationDate, 0);
 }
 
 //==============================================================================
 
 CheckForUpdatesDialog::CheckForUpdatesDialog(QSettings *pSettings,
                                              CheckForUpdatesEngine *pEngine) :
-    Dialog(pSettings, 0)
+    CheckForUpdatesDialog(pSettings, QString(), pEngine, 0)
 {
-    // Construct our dialog
-
-    constructor(QString(), pEngine);
 }
 
 //==============================================================================
@@ -253,7 +251,7 @@ void CheckForUpdatesDialog::updateGui()
                 QString version = QString();
 
                 foreach (const QString &newerVersion, mEngine->newerVersions()) {
-                    if (newerVersion.contains("-")) {
+                    if (newerVersion.contains('-')) {
                         version = newerVersion;
 
                         break;
@@ -263,7 +261,7 @@ void CheckForUpdatesDialog::updateGui()
                 if (version.isEmpty())
                     version = mEngine->newerVersions().first();
 
-                if (version.contains("-"))
+                if (version.contains('-'))
                     mGui->statusLabel->setText(snapshotInformation.arg(WhatIsNewUrl+"latest", version));
                 else
                     mGui->statusLabel->setText(versionInformation.arg(WhatIsNewUrl+version, qAppName(), version));
@@ -277,7 +275,7 @@ void CheckForUpdatesDialog::updateGui()
             QString version = QString();
 
             foreach (const QString &newerVersion, mEngine->newerVersions()) {
-                if (!newerVersion.contains("-")) {
+                if (!newerVersion.contains('-')) {
                     version = newerVersion;
 
                     break;

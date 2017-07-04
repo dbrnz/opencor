@@ -1,18 +1,19 @@
 /*******************************************************************************
 
-Copyright The University of Auckland
+Copyright (C) The University of Auckland
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+OpenCOR is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+OpenCOR is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *******************************************************************************/
 
@@ -40,7 +41,7 @@ limitations under the License.
 #include <QSettings>
 #include <QVariant>
 
-#ifdef Q_OS_WIN
+#if defined(Q_OS_WIN) && defined(USE_PREBUILT_QTWEBKIT_PACKAGE)
     #include <QWebSettings>
 #endif
 
@@ -87,7 +88,8 @@ int main(int pArgC, char *pArgV[])
     //          used to generate the CLI version of OpenCOR...
     // Note #2: on macOS, if we were to try to open the OpenCOR bundle from the
     //          command line, then we would get an error message similar to:
-    //              LSOpenURLsWithRole() failed with error -10810 for the file [SomePath]/OpenCOR.app.
+    //              LSOpenURLsWithRole() failed with error -10810 for the file
+    //              [SomePath]/OpenCOR.app.
     //          Fortunately, when double clicking on the OpenCOR bundle or
     //          opening it from the command line, a special argument in the form
     //          of -psn_0_1234567 is passed to OpenCOR, so we can use that to
@@ -136,18 +138,6 @@ int main(int pArgC, char *pArgV[])
         //       the GUI version of OpenCOR this time...
     }
 
-    // Make sure that we always use indirect rendering on Linux
-    // Note: indeed, depending on which plugins are selected, OpenCOR may need
-    //       LLVM. If that's the case, and in case the user's video card uses a
-    //       driver that relies on LLVM (e.g. Gallium3D and Mesa 3D), then there
-    //       may be a conflict between the version of LLVM used by OpenCOR and
-    //       the one used by the video card. One way to address this issue is by
-    //       using indirect rendering...
-
-#ifdef Q_OS_LINUX
-    qputenv("LIBGL_ALWAYS_INDIRECT", "1");
-#endif
-
     // Initialise the plugins path
 
     OpenCOR::initPluginsPath(pArgV[0]);
@@ -168,7 +158,7 @@ int main(int pArgC, char *pArgV[])
 
     appArguments.removeFirst();
 
-    QString arguments = appArguments.join("|");
+    QString arguments = appArguments.join('|');
 
     if (guiApp->isRunning()) {
         guiApp->sendMessage(arguments);
@@ -304,17 +294,19 @@ int main(int pArgC, char *pArgV[])
 
     delete win;
 
-    // We use QtWebKit, and QWebPage in particular, which results in some leak
-    // messages being generated on Windows when leaving OpenCOR. This is because
-    // an object cache is shared between all QWebPage instances. So to destroy a
-    // QWebPage instance doesn't clear the cache, hence the leak messages.
-    // However, those messages are 'only' warnings, so we can safely live with
-    // them. Still, it doesn't look 'good', so we clear the memory caches, thus
-    // avoiding those leak messages...
-    // Note: the below must absolutely be done after calling guiApp->exec() and
-    //       before deleting guiApp...
+    // Clear QtWebKit's memory caches
+    // Note #1: indeed, our use of QtWebKit (and QWebPage in particular) may
+    //          result in some leak-related messages when leaving OpenCOR on
+    //          Windows. This is because an object cache is shared between all
+    //          of our QWebPage instances. So to destroy a QWebPage instance
+    //          doesn't clear the cache, hence the leak-related messages. Those
+    //          messages are 'only' warnings, so we could safely ignore them.
+    //          Still, they don't look 'good', hence we clear QtWebKit's memory
+    //          caches so as to avoid them...
+    // Note #2: the below must absolutely be done after calling guiApp->exec()
+    //          and before deleting guiApp...
 
-#ifdef Q_OS_WIN
+#if defined(Q_OS_WIN) && defined(USE_PREBUILT_QTWEBKIT_PACKAGE)
     QWebSettings::clearMemoryCaches();
 #endif
 

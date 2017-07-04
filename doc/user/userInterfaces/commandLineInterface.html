@@ -23,21 +23,16 @@
         </div>
 
         <pre>$ ./OpenCOR -h
-Usage: OpenCOR [-a|--about] [-c|--command [&lt;plugin&gt;::]&lt;command&gt; &lt;options&gt;] [-h|--help] [-p|--plugins] [-r|--reset] [-s|--status] [-v|--version] [&lt;files&gt;]
+Usage: OpenCOR [-a|--about] [-c|--command [&lt;plugin&gt;::]&lt;command&gt; &lt;options&gt;] [-e|--exclude &lt;plugins&gt;] [-h|--help] [-i|--include &lt;plugins&gt;] [-p|--plugins] [-r|--reset] [-s|--status] [-v|--version] [&lt;files&gt;]
  -a, --about     Display some information about OpenCOR
  -c, --command   Send a command to one or all the <a href="https://en.wikipedia.org/wiki/Command-line_interface">CLI</a> plugins
+ -e, --exclude   Exclude the given plugin(s)
  -h, --help      Display this help information
+ -i, --include   Include the given plugin(s)
  -p, --plugins   Display all the <a href="https://en.wikipedia.org/wiki/Command-line_interface">CLI</a> plugins
  -r, --reset     Reset all your settings
  -s, --status    Display the status of all the plugins
  -v, --version   Display the version of OpenCOR</pre>
-
-        <div class="section">
-            Version
-        </div>
-
-        <pre>$ ./OpenCOR -v
-OpenCOR Version 0.5</pre>
 
         <div class="section">
             About
@@ -49,37 +44,6 @@ macOS Sierra (10.12)
 Copyright 2011-2016
 
 OpenCOR is a cross-platform modelling environment, which can be used to organise, edit, simulate and analyse CellML files.</pre>
-
-        <div class="section">
-            Plugins
-        </div>
-
-        <pre>$ ./OpenCOR -p
-The following <a href="https://en.wikipedia.org/wiki/Command-line_interface">CLI</a> plugins are available:
- - <a href="../plugins/editing/CellMLTextView.html">CellMLTextView</a>: a plugin to edit CellML files using the CellML Text format.
- - <a href="../plugins/tools/CellMLTools.html">CellMLTools</a>: a plugin to access various CellML-related tools.</pre>
-
-        <div class="section">
-            Status
-        </div>
-
-        <pre>$ ./OpenCOR -s
-The following plugins are available:
- - CellMLAPI: the plugin is loaded and fully functional.
- - CellMLEditingView: the plugin is loaded and fully functional.
- - CellMLSupport: the plugin is loaded and fully functional.
- - <a href="../plugins/editing/CellMLTextView.html">CellMLTextView</a>: the plugin is loaded and fully functional.
- - <a href="../plugins/tools/CellMLTools.html">CellMLTools</a>: the plugin is loaded and fully functional.
- - Compiler: the plugin is loaded and fully functional.
- - Core: the plugin is loaded and fully functional.
- - EditingView: the plugin is loaded and fully functional.
- - EditorWidget: the plugin is loaded and fully functional.
- - LLVM: the plugin is loaded and fully functional.
- - MathMLViewerWidget: the plugin is loaded and fully functional.
- - QScintilla: the plugin is loaded and fully functional.
- - QScintillaSupport: the plugin is loaded and fully functional.
- - Qwt: the plugin is loaded and fully functional.
- - StandardSupport: the plugin is loaded and fully functional.</pre>
 
         <div class="section">
             Command
@@ -103,11 +67,67 @@ Commands supported by <a href="../plugins/tools/CellMLTools.html">CellMLTools</a
       cellml_1_0: to export a CellML 1.1 file to CellML 1.0</pre>
 
         <div class="section">
+            Exclude
+        </div>
+
+        <pre>$ ./OpenCOR -e Core HelpWindow Unknown
+ - Core: cannot be directly excluded.
+ - HelpWindow: excluded from the GUI version of OpenCOR.
+ - Unknown: unknown plugin.</pre>
+
+        <div class="section">
+            Include
+        </div>
+
+        <pre>$ ./OpenCOR -e Core HelpWindow Unknown
+ - Core: cannot be directly included.
+ - HelpWindow: included to the GUI version of OpenCOR.
+ - Unknown: unknown plugin.</pre>
+
+        <div class="section">
+            Plugins
+        </div>
+
+        <pre>$ ./OpenCOR -p
+The following <a href="https://en.wikipedia.org/wiki/Command-line_interface">CLI</a> plugins are available:
+ - <a href="../plugins/editing/CellMLTextView.html">CellMLTextView</a>: a plugin to edit CellML files using the CellML Text format.
+ - <a href="../plugins/tools/CellMLTools.html">CellMLTools</a>: a plugin to access various CellML-related tools.</pre>
+
+        <div class="section">
             Reset
         </div>
 
         <pre>$ ./OpenCOR -r
 All your settings have been reset.</pre>
+
+        <div class="section">
+            Status
+        </div>
+
+        <pre>$ ./OpenCOR -s
+The following plugins are available:
+ - CellMLAPI: the plugin is loaded and fully functional.
+ - CellMLEditingView: the plugin is loaded and fully functional.
+ - CellMLSupport: the plugin is loaded and fully functional.
+ - <a href="../plugins/editing/CellMLTextView.html">CellMLTextView</a>: the plugin is loaded and fully functional.
+ - <a href="../plugins/tools/CellMLTools.html">CellMLTools</a>: the plugin is loaded and fully functional.
+ - Compiler: the plugin is loaded and fully functional.
+ - Core: the plugin is loaded and fully functional.
+ - EditingView: the plugin is loaded and fully functional.
+ - EditorWidget: the plugin is loaded and fully functional.
+ - LLVMClang: the plugin is loaded and fully functional.
+ - MathMLViewerWidget: the plugin is loaded and fully functional.
+ - QScintilla: the plugin is loaded and fully functional.
+ - QScintillaSupport: the plugin is loaded and fully functional.
+ - Qwt: the plugin is loaded and fully functional.
+ - StandardSupport: the plugin is loaded and fully functional.</pre>
+
+        <div class="section">
+            Version
+        </div>
+
+        <pre>$ ./OpenCOR -v
+OpenCOR Version 0.5</pre>
 
         <script type="text/javascript">
             copyright("../..");

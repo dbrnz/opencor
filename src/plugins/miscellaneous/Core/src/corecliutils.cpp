@@ -1,18 +1,19 @@
 /*******************************************************************************
 
-Copyright The University of Auckland
+Copyright (C) The University of Auckland
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+OpenCOR is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+OpenCOR is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *******************************************************************************/
 
@@ -658,7 +659,7 @@ QString newFileName(const QString &pFileName, const QString &pExtra,
         fileCanonicalPath += QDir::separator();
 
     if (!fileCompleteSuffix.isEmpty())
-        fileCompleteSuffix.prepend(".");
+        fileCompleteSuffix.prepend('.');
 
     static const QString Space = " ";
     static const QString Hyphen = "-";
@@ -752,7 +753,7 @@ bool sortSerialisedAttributes(const QString &pSerialisedAttribute1,
     // Determine which of the two serialised attributes should be first based on
     // the attribute name, i.e. ignoring the "=<AttributeValue>" bit
 
-    return pSerialisedAttribute1.left(pSerialisedAttribute1.indexOf("=")).compare(pSerialisedAttribute2.left(pSerialisedAttribute2.indexOf("=")), Qt::CaseInsensitive) < 0;
+    return pSerialisedAttribute1.left(pSerialisedAttribute1.indexOf('=')).compare(pSerialisedAttribute2.left(pSerialisedAttribute2.indexOf('=')), Qt::CaseInsensitive) < 0;
 }
 
 //==============================================================================
@@ -821,7 +822,7 @@ void cleanDomElement(QDomElement &pDomElement,
 
         QString elementAttributes = QString("Element%1Attributes").arg(++attributeNumber, ULLONG_WIDTH, 10, QChar('0'));
 
-        pElementsAttributes.insert(elementAttributes, serialisedAttributes.join(" ").toUtf8());
+        pElementsAttributes.insert(elementAttributes, serialisedAttributes.join(' ').toUtf8());
 
         // Add a new attribute to the element
         // Note: this attribute, once serialised by QDomDocument::save(), will
