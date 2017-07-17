@@ -258,6 +258,8 @@ void SimulationExperimentViewSimulationWorker::started()
     if (odeSolver) {
         odeSolver->setProperties(mSimulation->data()->odeSolverProperties());
 
+        odeSolver->mConstantsCount = mSimulation->data()->constantVariables().count();
+
         odeSolver->initialize(mCurrentPoint,
                               mRuntime->statesCount(),
                               mSimulation->data()->constants(),
@@ -265,6 +267,9 @@ void SimulationExperimentViewSimulationWorker::started()
                               mSimulation->data()->states(),
                               mSimulation->data()->algebraic(),
                               mRuntime->computeOdeRates());
+
+
+
     } else {
         daeSolver->setProperties(mSimulation->data()->daeSolverProperties());
 

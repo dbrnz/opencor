@@ -82,6 +82,8 @@ public:
 
     virtual void solve(double &pVoi, const double &pVoiEnd) const = 0;
 
+    int mConstantsCount;
+
 protected:
     int mRatesStatesCount;
 

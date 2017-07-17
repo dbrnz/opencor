@@ -4,6 +4,12 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
 
 PROJECT(OpenCOR)
 
+include_directories(/usr/local/Cellar/python3/3.5.0/Frameworks/Python.framework/Versions/3.5/Headers)
+include_directories(/usr/local/lib/python3.5/site-packages/numpy/core/include)
+
+
+
+
 # Our options
 
 OPTION(ENABLE_SAMPLE_PLUGINS "Enable the sample plugins to be built" OFF)
@@ -822,6 +828,7 @@ SET(PLUGINS
 
     simulation/SimulationExperimentView
 
+    solver/CVODESSolver
     solver/CVODESolver
     solver/ForwardEulerSolver
     solver/FourthOrderRungeKuttaSolver
