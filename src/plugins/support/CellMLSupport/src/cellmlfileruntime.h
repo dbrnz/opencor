@@ -30,8 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //==============================================================================
 
+#include <QIcon>
 #include <QList>
-#include <QObject>
 #ifdef Q_OS_WIN
     #include <QSet>
     #include <QVector>
@@ -104,8 +104,9 @@ public:
 
     QString formattedUnit(const QString &pVoiUnit) const;
 
-    void setType(ParameterType);
-    ParameterType getType();
+    QIcon icon() const;
+
+    void setType(ParameterType pType);
 
 private:
     QString mName;

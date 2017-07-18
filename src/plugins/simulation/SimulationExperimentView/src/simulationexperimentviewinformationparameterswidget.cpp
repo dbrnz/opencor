@@ -372,7 +372,7 @@ void SimulationExperimentViewInformationParametersWidget::populateModel(CellMLSu
         property->setEditable(   (parameter->type() == CellMLSupport::CellmlFileRuntimeParameter::Constant)
                               || (parameter->type() == CellMLSupport::CellmlFileRuntimeParameter::State));
 
-        property->setIcon(SimulationExperimentViewSimulationWidget::parameterIcon(parameter->type()));
+        property->setIcon(parameter->icon());
 
         property->setName(parameter->formattedName(), false);
         property->setUnit(parameter->formattedUnit(pRuntime->variableOfIntegration()->unit()), false);
@@ -491,7 +491,7 @@ void SimulationExperimentViewInformationParametersWidget::populateContextMenu(Ce
 
         // Add the current parameter to the 'current' component menu
 
-        QAction *parameterAction = componentMenu->addAction(SimulationExperimentViewSimulationWidget::parameterIcon(parameter->type()),
+        QAction *parameterAction = componentMenu->addAction(parameter->icon(),
                                                             parameter->formattedName());
 
         // Create a connection to handle the graph requirement against our
@@ -566,6 +566,7 @@ void SimulationExperimentViewInformationParametersWidget::emitGraphRequired()
                        mParameters.value(currentProperty()));
 }
 
+//==============================================================================
 
 // This function is called emitFragGradients in analogy to emitGraphRequired, though this code doesn't emit any signal.
 // I don't know whether it's bad practice or not to have SLOTS which don't emit a signal. In any case, the point is for
@@ -574,19 +575,15 @@ void SimulationExperimentViewInformationParametersWidget::emitGraphRequired()
 
 void SimulationExperimentViewInformationParametersWidget::emitFlagGradients()
 {
+    CellMLSupport::CellmlFileRuntimeParameter *parameter = mParameters.value(currentProperty());
 
-    CellMLSupport::CellmlFileRuntimeParameter* foo = mParameters.value(currentProperty());
-
-    if(foo->getType()==CellMLSupport::CellmlFileRuntimeParameter::Constant){
-        foo->setType(CellMLSupport::CellmlFileRuntimeParameter::ConstantWithGradient);
-        currentProperty()->setIcon(SimulationExperimentViewSimulationWidget::parameterIcon(CellMLSupport::CellmlFileRuntimeParameter::ConstantWithGradient));
+    if (parameter->type() == CellMLSupport::CellmlFileRuntimeParameter::Constant) {
+        parameter->setType(CellMLSupport::CellmlFileRuntimeParameter::ConstantWithGradient);
+        currentProperty()->setIcon(parameter->icon());
+    } else if (parameter->type() == CellMLSupport::CellmlFileRuntimeParameter::ConstantWithGradient) {
+        parameter->setType(CellMLSupport::CellmlFileRuntimeParameter::Constant);
+        currentProperty()->setIcon(parameter->icon());
     }
-    else if(foo->getType()==CellMLSupport::CellmlFileRuntimeParameter::ConstantWithGradient){
-        foo->setType(CellMLSupport::CellmlFileRuntimeParameter::Constant);
-        currentProperty()->setIcon(SimulationExperimentViewSimulationWidget::parameterIcon(CellMLSupport::CellmlFileRuntimeParameter::Constant));
-    }
-
-    //emit?
 }
 
 //==============================================================================

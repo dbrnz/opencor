@@ -59,18 +59,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace OpenCOR {
 namespace CellMLSupport {
 
-
-
-
-void CellmlFileRuntimeParameter::setType(ParameterType p){
-    this->mType=p;
-}
-
-CellmlFileRuntimeParameter::ParameterType CellmlFileRuntimeParameter::getType(){
-    return this->mType;
-}
-
-
 //==============================================================================
 
 CellmlFileRuntimeParameter::CellmlFileRuntimeParameter(const QString &pName,
@@ -157,6 +145,17 @@ CellmlFileRuntimeParameter::ParameterType CellmlFileRuntimeParameter::type() con
 
 //==============================================================================
 
+
+void CellmlFileRuntimeParameter::setType(const CellmlFileRuntimeParameter::ParameterType pType)
+{
+    // Set our type
+
+    mType = pType;
+}
+
+
+//==============================================================================
+
 int CellmlFileRuntimeParameter::index() const
 {
     // Return our index
@@ -207,6 +206,44 @@ QString CellmlFileRuntimeParameter::formattedUnit(const QString &pVoiUnit) const
     }
 
     return mUnit+perVoiUnitDegree;
+}
+
+//==============================================================================
+
+QIcon CellmlFileRuntimeParameter::icon() const
+{
+    // Return an icon that illustrates the type of a parameter
+
+    static const QIcon VoiIcon              = QIcon(":/CellMLSupport/voi.png");
+    static const QIcon ConstantIcon         = QIcon(":/CellMLSupport/constant.png");
+    static const QIcon ConstantWithGradientIcon = QIcon(":/CellMLSupport/constantWithGradient.png");
+    static const QIcon ComputedConstantIcon = QIcon(":/CellMLSupport/computedConstant.png");
+    static const QIcon RateIcon             = QIcon(":/CellMLSupport/rate.png");
+    static const QIcon StateIcon            = QIcon(":/CellMLSupport/state.png");
+    static const QIcon AlgebraicIcon        = QIcon(":/CellMLSupport/algebraic.png");
+    static const QIcon ErrorNodeIcon        = QIcon(":/oxygen/emblems/emblem-important.png");
+
+    switch (mType) {
+    case Voi:
+        return VoiIcon;
+    case Constant:
+        return ConstantIcon;
+    case ConstantWithGradient:
+        return ConstantWithGradientIcon;
+    case ComputedConstant:
+        return ComputedConstantIcon;
+    case Rate:
+        return RateIcon;
+    case State:
+        return StateIcon;
+    case Algebraic:
+        return AlgebraicIcon;
+    default:
+        // Not a relevant type, so return an error node icon
+        // Note: we should never reach this point...
+
+        return ErrorNodeIcon;
+    }
 }
 
 //==============================================================================
@@ -302,7 +339,6 @@ bool CellmlFileRuntime::needNlaSolver() const
 
 //==============================================================================
 
-
 //constantsCount now counts the number of Constants rather than relying on a stored value,
 //since the number of Constants may now change (by conversion to or from ConstantWithGradients)
 
@@ -310,55 +346,56 @@ int CellmlFileRuntime::constantsCount() const
 {
     // Return the number of constants in the model
 
-    int count=0;
-    foreach(CellmlFileRuntimeParameter* parameter , parameters()){
-        if(parameter->getType()==CellmlFileRuntimeParameter::Constant)
+    int count = 0;
+
+    foreach (CellmlFileRuntimeParameter* parameter, parameters()) {
+        if (parameter->type() == CellmlFileRuntimeParameter::Constant)
             count++;
     }
 
     return count;
 }
+
+//==============================================================================
 
 int CellmlFileRuntime::constantWithGradientsCount() const
 {
     // Return the number of constants in the model
 
-    int count=0;
-    foreach(CellmlFileRuntimeParameter* parameter , parameters()){
-        if(parameter->getType()==CellmlFileRuntimeParameter::ConstantWithGradient)
+    int count = 0;
+
+    foreach (CellmlFileRuntimeParameter* parameter, parameters()) {
+        if (parameter->type() == CellmlFileRuntimeParameter::ConstantWithGradient)
             count++;
     }
 
     return count;
 }
 
+//==============================================================================
 
-int* CellmlFileRuntime::make_plist() const
+int *CellmlFileRuntime::make_plist() const
 {
     // Return the number of constants in the model
 
     int num = constantWithGradientsCount();
 
-    int* plist = (int*) malloc(num*sizeof(int));
+    int *plist = (int*) malloc(num*sizeof(int));
+    int plist_index = 0;
+    int array_index = 1; // plist uses the notion that the first array index starts at 1.
 
-    int plist_index=0;
-    int array_index=1; // plist uses the notion that the first array index starts at 1.
-    foreach(CellmlFileRuntimeParameter* parameter , parameters()){
-        if(parameter->getType()==CellmlFileRuntimeParameter::Constant){
+    foreach (CellmlFileRuntimeParameter* parameter , parameters()) {
+        if (parameter->type() == CellmlFileRuntimeParameter::Constant) {
             array_index++;
-        }
-        if(parameter->getType()==CellmlFileRuntimeParameter::ConstantWithGradient){
+        } else if (parameter->type() == CellmlFileRuntimeParameter::ConstantWithGradient) {
             plist[plist_index]=array_index;
             array_index++;
             plist_index++;
         }
-
     }
 
     return plist;
 }
-
-
 
 //==============================================================================
 

@@ -1,12 +1,5 @@
 <RCC>
     <qresource prefix="/SimulationExperimentView">
-        <file>algebraic.png</file>
         <file>blank.png</file>
-        <file>computedConstant.png</file>
-        <file>constant.png</file>
-        <file>rate.png</file>
-        <file>state.png</file>
-        <file>voi.png</file>
-        <file>constantWithGradient.png</file>
     </qresource>
 </RCC>
