@@ -82,6 +82,11 @@ public:
 
     virtual void solve(double &pVoi, const double &pVoiEnd) const = 0;
 
+    //three new constants used to separate the Constants from the ConstantWithGradients.
+    //mPlist stores which indices in the full list of constants need to have their gradients calculated.
+    //Note that mPlist stores indices starting at 1, so the first element of the list of constants has index 1.
+    int* mPlist;
+    int mConstantWithGradientsCount;
     int mConstantsCount;
 
 protected:

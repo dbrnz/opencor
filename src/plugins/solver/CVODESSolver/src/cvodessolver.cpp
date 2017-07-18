@@ -193,8 +193,7 @@ void CvodesSolver::initialize(const double &pVoiStart,
                              ComputeRatesFunction pComputeRates)
 {
 
-
-    NS = this->mConstantsCount;
+    NS = this->mConstantWithGradientsCount;
 
 
     if (!mSolver) {
@@ -433,9 +432,6 @@ void CvodesSolver::initialize(const double &pVoiStart,
 
 
 
-        int* plist = (int*) malloc(NS * sizeof(int));
-        for (int is=0;is<NS;is++) plist[is]=is;
-
         realtype* pbar = (realtype*) malloc(NS * sizeof(realtype));
         for (int is=0;is<NS;is++) pbar[is]=1;
 
@@ -451,7 +447,7 @@ void CvodesSolver::initialize(const double &pVoiStart,
 
         CVodeSetSensDQMethod(mSolver, CV_CENTERED, ZERO);
 
-        CVodeSetSensParams(mSolver, pConstants, pbar, plist);
+        CVodeSetSensParams(mSolver, pConstants, pbar, this->mPlist);
 
 
 

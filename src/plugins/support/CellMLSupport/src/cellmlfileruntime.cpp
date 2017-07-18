@@ -302,12 +302,63 @@ bool CellmlFileRuntime::needNlaSolver() const
 
 //==============================================================================
 
+
+//constantsCount now counts the number of Constants rather than relying on a stored value,
+//since the number of Constants may now change (by conversion to or from ConstantWithGradients)
+
 int CellmlFileRuntime::constantsCount() const
 {
     // Return the number of constants in the model
 
-    return mConstantsCount;
+    int count=0;
+    foreach(CellmlFileRuntimeParameter* parameter , parameters()){
+        if(parameter->getType()==CellmlFileRuntimeParameter::Constant)
+            count++;
+    }
+
+    return count;
 }
+
+int CellmlFileRuntime::constantWithGradientsCount() const
+{
+    // Return the number of constants in the model
+
+    int count=0;
+    foreach(CellmlFileRuntimeParameter* parameter , parameters()){
+        if(parameter->getType()==CellmlFileRuntimeParameter::ConstantWithGradient)
+            count++;
+    }
+
+    return count;
+}
+
+
+int* CellmlFileRuntime::make_plist() const
+{
+    // Return the number of constants in the model
+
+    int num = constantWithGradientsCount();
+
+    int* plist = (int*) malloc(num*sizeof(int));
+
+    int plist_index=0;
+    int array_index=1; // plist uses the notion that the first array index starts at 1.
+    foreach(CellmlFileRuntimeParameter* parameter , parameters()){
+        if(parameter->getType()==CellmlFileRuntimeParameter::Constant){
+            array_index++;
+        }
+        if(parameter->getType()==CellmlFileRuntimeParameter::ConstantWithGradient){
+            plist[plist_index]=array_index;
+            array_index++;
+            plist_index++;
+        }
+
+    }
+
+    return plist;
+}
+
+
 
 //==============================================================================
 

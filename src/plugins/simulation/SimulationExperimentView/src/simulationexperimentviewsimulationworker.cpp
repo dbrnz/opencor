@@ -258,7 +258,12 @@ void SimulationExperimentViewSimulationWorker::started()
     if (odeSolver) {
         odeSolver->setProperties(mSimulation->data()->odeSolverProperties());
 
-        odeSolver->mConstantsCount = mSimulation->data()->constantVariables().count();
+        // We use mRuntime->constantsCount() because mSimulation->data()->constantVariables().count() will
+        // count both constantWithGradients and plain Constant
+        odeSolver->mConstantsCount = mRuntime->constantsCount();
+        odeSolver->mConstantWithGradientsCount = mRuntime->constantWithGradientsCount();
+        odeSolver->mPlist = mRuntime->make_plist();
+
 
         odeSolver->initialize(mCurrentPoint,
                               mRuntime->statesCount(),

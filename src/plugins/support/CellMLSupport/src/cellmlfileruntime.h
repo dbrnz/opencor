@@ -160,7 +160,9 @@ public:
     bool needDaeSolver() const;
     bool needNlaSolver() const;
 
+    int* make_plist() const;
     int constantsCount() const;
+    int constantWithGradientsCount() const;
     int statesCount() const;
     int ratesCount() const;
     int algebraicCount() const;
