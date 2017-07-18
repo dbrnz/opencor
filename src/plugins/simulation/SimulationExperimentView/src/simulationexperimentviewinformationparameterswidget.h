@@ -95,6 +95,8 @@ private slots:
     void propertyChanged(Core::Property *pProperty);
 
     void emitGraphRequired();
+    void emitFlagGradients();
+
 };
 
 //==============================================================================

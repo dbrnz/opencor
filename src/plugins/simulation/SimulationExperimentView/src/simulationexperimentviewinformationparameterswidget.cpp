@@ -406,6 +406,15 @@ void SimulationExperimentViewInformationParametersWidget::populateContextMenu(Ce
 
     retranslateContextMenu();
 
+
+    //Add menu item: flag parameter to calculate gradients for it.
+    QAction *flagAction = mContextMenu->addAction(QString());
+    mContextMenu->actions()[(mVoiAccessible?0:-1)+2]->setText(tr("Toggle gradient calculation for this parameter"));
+
+    //Add the action for handling flagging the parameter to calculate its gradients.
+    connect(flagAction, SIGNAL(triggered(bool)),this,SLOT(emitFlagGradients()));
+
+
     // Create a connection to handle the graph requirement against our variable
     // of integration, and keep track of the parameter associated with our first
     // main menu item
@@ -416,6 +425,9 @@ void SimulationExperimentViewInformationParametersWidget::populateContextMenu(Ce
 
         mParameterActions.insert(voiAction, pRuntime->variableOfIntegration());
     }
+
+
+
 
     // Populate our context menu with the parameters
 
@@ -552,6 +564,29 @@ void SimulationExperimentViewInformationParametersWidget::emitGraphRequired()
 
     emit graphRequired(mParameterActions.value(qobject_cast<QAction *>(sender())),
                        mParameters.value(currentProperty()));
+}
+
+
+// This function is called emitFragGradients in analogy to emitGraphRequired, though this code doesn't emit any signal.
+// I don't know whether it's bad practice or not to have SLOTS which don't emit a signal. In any case, the point is for
+// selecting "Toggle gradient calculations" when right clicking a parameter to toggle the parameter type between a Constant
+// and a ConstantWithGradient. That functionality works with the given code.
+
+void SimulationExperimentViewInformationParametersWidget::emitFlagGradients()
+{
+
+    CellMLSupport::CellmlFileRuntimeParameter* foo = mParameters.value(currentProperty());
+
+    if(foo->getType()==CellMLSupport::CellmlFileRuntimeParameter::Constant){
+        foo->setType(CellMLSupport::CellmlFileRuntimeParameter::ConstantWithGradient);
+        currentProperty()->setIcon(SimulationExperimentViewSimulationWidget::parameterIcon(CellMLSupport::CellmlFileRuntimeParameter::ConstantWithGradient));
+    }
+    else if(foo->getType()==CellMLSupport::CellmlFileRuntimeParameter::ConstantWithGradient){
+        foo->setType(CellMLSupport::CellmlFileRuntimeParameter::Constant);
+        currentProperty()->setIcon(SimulationExperimentViewSimulationWidget::parameterIcon(CellMLSupport::CellmlFileRuntimeParameter::Constant));
+    }
+
+    //emit?
 }
 
 //==============================================================================

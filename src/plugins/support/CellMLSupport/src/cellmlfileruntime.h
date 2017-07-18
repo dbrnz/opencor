@@ -72,6 +72,7 @@ public:
     enum ParameterType {
         Voi,
         Constant,
+        ConstantWithGradient,
         ComputedConstant,
         Rate,
         State,
@@ -102,6 +103,9 @@ public:
     QString fullyFormattedName() const;
 
     QString formattedUnit(const QString &pVoiUnit) const;
+
+    void setType(ParameterType);
+    ParameterType getType();
 
 private:
     QString mName;

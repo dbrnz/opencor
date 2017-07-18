@@ -3229,6 +3229,8 @@ QIcon SimulationExperimentViewSimulationWidget::parameterIcon(const CellMLSuppor
     static const QIcon RateIcon             = QIcon(":/SimulationExperimentView/rate.png");
     static const QIcon StateIcon            = QIcon(":/SimulationExperimentView/state.png");
     static const QIcon AlgebraicIcon        = QIcon(":/SimulationExperimentView/algebraic.png");
+    static const QIcon ConstantWithGradientIcon         = QIcon(":/SimulationExperimentView/constantWithGradient.png");
+
     static const QIcon ErrorNodeIcon        = QIcon(":/oxygen/emblems/emblem-important.png");
 
     switch (pParameterType) {
@@ -3244,6 +3246,8 @@ QIcon SimulationExperimentViewSimulationWidget::parameterIcon(const CellMLSuppor
         return StateIcon;
     case CellMLSupport::CellmlFileRuntimeParameter::Algebraic:
         return AlgebraicIcon;
+    case CellMLSupport::CellmlFileRuntimeParameter::ConstantWithGradient:
+        return ConstantWithGradientIcon;
     default:
         // Not a relevant type, so return an error node icon
         // Note: we should never reach this point...

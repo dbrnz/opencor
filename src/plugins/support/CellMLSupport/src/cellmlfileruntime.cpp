@@ -59,6 +59,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace OpenCOR {
 namespace CellMLSupport {
 
+
+
+
+void CellmlFileRuntimeParameter::setType(ParameterType p){
+    this->mType=p;
+}
+
+CellmlFileRuntimeParameter::ParameterType CellmlFileRuntimeParameter::getType(){
+    return this->mType;
+}
+
+
 //==============================================================================
 
 CellmlFileRuntimeParameter::CellmlFileRuntimeParameter(const QString &pName,
