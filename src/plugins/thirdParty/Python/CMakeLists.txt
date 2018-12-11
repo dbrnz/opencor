@@ -91,33 +91,30 @@ if(WIN32)
     )
 endif()
 
-if(NOT APPLE)
-    # On Windows and Linux, we bundle SQLite3 with Python
-    # Note: it is statically linked on macOS...
+# We bundle SQLite3 with Python
 
-    set(SQLITE3_SHARED_LIBRARY ${CMAKE_SHARED_LIBRARY_PREFIX}sqlite3${CMAKE_SHARED_LIBRARY_SUFFIX})
+set(SQLITE3_SHARED_LIBRARY ${CMAKE_SHARED_LIBRARY_PREFIX}sqlite3${CMAKE_SHARED_LIBRARY_SUFFIX})
+
+list(APPEND EXTERNAL_BINARIES
+    ${SQLITE3_SHARED_LIBRARY}
+)
+
+list(APPEND SHA1_FILES
+    ${LIBRARY_DIR}/${SQLITE3_SHARED_LIBRARY}
+)
+
+if(WIN32)
+    # On Windows, we also need the import library
+
+    set(SQLITE3_IMPORT_LIBRARY ${CMAKE_IMPORT_LIBRARY_PREFIX}sqlite3${CMAKE_IMPORT_LIBRARY_SUFFIX})
 
     list(APPEND EXTERNAL_BINARIES
-        ${SQLITE3_SHARED_LIBRARY}
+        ${SQLITE3_IMPORT_LIBRARY}
     )
 
     list(APPEND SHA1_FILES
-        ${LIBRARY_DIR}/${SQLITE3_SHARED_LIBRARY}
+        ${LIBRARY_DIR}/${SQLITE3_IMPORT_LIBRARY}
     )
-
-    if(WIN32)
-        # On Windows, we also need the import library
-
-        set(SQLITE3_IMPORT_LIBRARY ${CMAKE_IMPORT_LIBRARY_PREFIX}sqlite3${CMAKE_IMPORT_LIBRARY_SUFFIX})
-
-        list(APPEND EXTERNAL_BINARIES
-            ${SQLITE3_IMPORT_LIBRARY}
-        )
-
-        list(APPEND SHA1_FILES
-            ${LIBRARY_DIR}/${SQLITE3_IMPORT_LIBRARY}
-        )
-    endif()
 endif()
 
 # Add headers, scripts and libraries to the package archive
@@ -194,7 +191,8 @@ else()
     # Jupyter and IPython require SQLite3
 
     if(WIN32)
-        set(SQLITE3_VERSION "3170000")
+        set(SQLITE3_VERSION "3260000")
+        set(SQLITE3_YEAR 2018)
         set(SQLITE3_LIBRARY_DIR ${PROJECT_BINARY_DIR}/sqlite3)
 
         if(NOT EXISTS ${SQLITE3_LIBRARY_DIR}/sqlite-amalgamation-${SQLITE3_VERSION}/sqlite3.h)
@@ -202,7 +200,7 @@ else()
 
             message("Downloading ${SQLITE3_SOURCES_ZIP}...")
 
-            file(DOWNLOAD https://sqlite.org/2017/${SQLITE3_SOURCES_ZIP} ${SQLITE3_LIBRARY_DIR}/zips/${SQLITE3_SOURCES_ZIP}
+            file(DOWNLOAD https://sqlite.org/${SQLITE3_YEAR}/${SQLITE3_SOURCES_ZIP} ${SQLITE3_LIBRARY_DIR}/zips/${SQLITE3_SOURCES_ZIP}
                  SHOW_PROGRESS)
 
             execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf zips/${SQLITE3_SOURCES_ZIP}
@@ -216,7 +214,7 @@ else()
 
             message("Downloading ${SQLITE3_DLL_ZIP}...")
 
-            file(DOWNLOAD https://sqlite.org/2017/${SQLITE3_DLL_ZIP} ${SQLITE3_LIBRARY_DIR}/zips/${SQLITE3_DLL_ZIP}
+            file(DOWNLOAD https://sqlite.org/${SQLITE3_YEAR}/${SQLITE3_DLL_ZIP} ${SQLITE3_LIBRARY_DIR}/zips/${SQLITE3_DLL_ZIP}
                  SHOW_PROGRESS)
 
             execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf zips/${SQLITE3_DLL_ZIP} --format=zip
@@ -234,9 +232,7 @@ else()
         set(SQLITE3_INCLUDE_DIR /usr/local/opt/sqlite3/include)
         set(SQLITE3_LIBRARY_DIR /usr/local/opt/sqlite3/lib)
 
-        # Link to SQLite3's static version, so that we don't have to bundle it
-
-        set(SQLITE3_IMPORT_LIBRARY libsqlite3.a)
+        set(SQLITE3_IMPORT_LIBRARY libsqlite3.dylib)
     else()
         set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
@@ -246,17 +242,15 @@ else()
         get_filename_component(SQLITE3_IMPORT_LIBRARY ${SQLITE3_LIBRARY} NAME)
     endif()
 
-    if(NOT APPLE)
-        # Copy SQLite3's library to the plugin's external binaries directory
+    # Copy SQLite3's library to the plugin's external binaries directory
 
-        file(MAKE_DIRECTORY ${EXTERNAL_BINARIES_DIR})
+    file(MAKE_DIRECTORY ${EXTERNAL_BINARIES_DIR})
 
-        execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${SQLITE3_LIBRARY_DIR}/${SQLITE3_SHARED_LIBRARY}
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${SQLITE3_LIBRARY_DIR}/${SQLITE3_SHARED_LIBRARY}
+                                                     ${EXTERNAL_BINARIES_DIR})
+    if(WIN32)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${SQLITE3_LIBRARY_DIR}/${SQLITE3_IMPORT_LIBRARY}
                                                          ${EXTERNAL_BINARIES_DIR})
-        if(WIN32)
-            execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${SQLITE3_LIBRARY_DIR}/${SQLITE3_IMPORT_LIBRARY}
-                                                             ${EXTERNAL_BINARIES_DIR})
-        endif()
     endif()
 
     # The type of build
