@@ -3,21 +3,21 @@ project(PythonPlugin)
 # Name and version of our package
 
 set(PACKAGE_NAME Python)
-set(PACKAGE_VERSION 3.5.2)
+set(PACKAGE_VERSION 3.6.7)
 
 # Package release tag
 
-set(RELEASE_TAG v3.5.2_devel)
+set(RELEASE_TAG opencor_0.7)
 
 # Version of our library
 
-set(MAJOR_MINOR_LIBRARY_VERSION "3.5")
-set(LIBRARY_VERSION "${MAJOR_MINOR_LIBRARY_VERSION}.2")
-set(NUMERIC_LIBRARY_VERSION 35)
+set(MAJOR_MINOR_LIBRARY_VERSION "3.6")
+set(LIBRARY_VERSION "${MAJOR_MINOR_LIBRARY_VERSION}.7")
+set(NUMERIC_LIBRARY_VERSION 36)
 
 # Git tag of our Python sources
 
-set(GIT_TAG "opencor")
+set(GIT_TAG "opencor_v${PACKAGE_VERSION}")
 
 # Git tags of Python package installers
 
@@ -143,36 +143,40 @@ if(USE_PREBUILT_PYTHON_PACKAGE)
     if(WIN32)
         if(RELEASE_MODE)
             retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
-                                  ${RELATIVE_PROJECT_SOURCE_DIR} 0de2d253e3313881819abf3c8151826bf29e956c
+                                  ${RELATIVE_PROJECT_SOURCE_DIR} ec7373ae5233bb92f382b6d12d5d6e6d56bbe050
                                   RELEASE_TAG ${RELEASE_TAG}
                                   SHA1_FILES ${SHA1_FILES}
-                                  SHA1_VALUES b1be278f738a9711bd5b40cf30a707af74b90ec2
-                                              4bf8513c6d031c6056bbca2286ea2834be96d807
-                                              11e62b05b8508cb6785e014cc2f96e8532146a61
-                                              3f54413d619bdc17271c9dc6b9cf0b2ed5df4e17
-                                              981012b78a22e0470f2d5acc349ac6745cc986c0)
+                                  SHA1_VALUES 23ddd9c51ca63b61835f3d7297f07bae949325d9
+                                              b9f7b41ec5fe7e35993570abcc54d9d44a857916
+                                              b123e9feb25db85bea90b5a0da4d72c87192ff86
+                                              b7d6af3bf86bd014d9b0e5a66e20a09d558c4200
+                                              08ea162e1bd8988d7cad3eecbf972a687ac9c942)
         else()
             retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
-                                  ${RELATIVE_PROJECT_SOURCE_DIR} 1651cf41ba9aca0767eecdea908d34217ec653ce
+                                  ${RELATIVE_PROJECT_SOURCE_DIR} 9de307a998fe20dcf30a5d0a03f51263d080063d
+                                  RELEASE_TAG ${RELEASE_TAG}
                                   SHA1_FILES ${SHA1_FILES}
-                                  SHA1_VALUES eaec9798ba6c5a1bf4b1cc161b6c7dfc59d1ea80
-                                              6e79fbfa322c9c56189932c9d6007b9e1f55d3af
-                                              c0d0bd4c50ad3f0760b95696d50abe9336ecfe6c
-                                              3f54413d619bdc17271c9dc6b9cf0b2ed5df4e17
-                                              41e1905467d98d2f0ddfdb273795dfac9e3402f7)
+                                  SHA1_VALUES 71a90592b4641e5a3a3a9ff57e52b15b0743d1b9
+                                              79a5baf01bcca3da87e14f62f9be0c3e6307c458
+                                              8d60528ed3a6a0f8d22717c9fbff1415e42a430a
+                                              b7d6af3bf86bd014d9b0e5a66e20a09d558c4200
+                                              a9556de447357f2b08f438065648940616979f34)
         endif()
     elseif(APPLE)
         retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
-                              ${RELATIVE_PROJECT_SOURCE_DIR} e3452e617fa525ee46c42ba3fcbb5bff88b6ba97
+                              ${RELATIVE_PROJECT_SOURCE_DIR} 1bba7e90b9a4ef224f847a59ade5e022954a3e33
+                              RELEASE_TAG ${RELEASE_TAG}
                               SHA1_FILES ${SHA1_FILES}
-                              SHA1_VALUES c5dbf4f4ff5355481cec920ab09bcab2257408e0
-                                          c1faf41d91676096de6e3d5ac9f2f6cd0177eed0)
+                              SHA1_VALUES ea1289b99f582deaa168d3bdd5acf1e6d2f6d05c
+                                          12200def60253ee3ce887e89644582acbeb69e41
+                                          61d98076e7104c3c103993d8f8415677e511d601)
     else()
         retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
-                              ${RELATIVE_PROJECT_SOURCE_DIR} f6c20cf56a3adbe2cc2d4003e90ddf17f3068c83
+                              ${RELATIVE_PROJECT_SOURCE_DIR} 9f7310491bb2253503058a03ca41883219b341c3
+                              RELEASE_TAG ${RELEASE_TAG}
                               SHA1_FILES ${SHA1_FILES}
-                              SHA1_VALUES 15c502637e33f86db2ad9f8bc7b14b24a5c76844
-                                          67b894553bdf5156219d52a9f1656bc1168d23a3
+                              SHA1_VALUES 1d2787e89a833706875e85480a1feb91372a84d4
+                                          27976f74de0ee7727d35145bef173386ab8c4b7e
                                           81aa5a7f1370dab5bd5c5f4e7d94c71c9c57f834)
     endif()
 else()
