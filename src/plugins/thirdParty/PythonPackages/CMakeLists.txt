@@ -8,7 +8,7 @@ set(PACKAGE_VERSION ${PYTHON_VERSION})
 # Package repository and release tag
 
 set(PACKAGE_REPOSITORY python)
-set(RELEASE_TAG v${PYTHON_VERSION}_devel)
+set(RELEASE_TAG opencor_0.7)
 
 # The versions of the Python packages we bundle
 
@@ -85,11 +85,11 @@ if(USE_PREBUILT_PYTHON_PACKAGES_PACKAGE)
     if(WIN32)
         if(RELEASE_MODE)
             retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
-                                  ${RELATIVE_PROJECT_SOURCE_DIR} 652416df79cc3df5f658ce5960fb3bafe51fca6d
+                                  ${RELATIVE_PROJECT_SOURCE_DIR} 5975403178fcc267f31d175c8f88c0e245423fc1
                                   PACKAGE_REPOSITORY ${PACKAGE_REPOSITORY}
                                   RELEASE_TAG ${RELEASE_TAG}
                                   SHA1_FILES ${SHA1_FILES}
-                                  SHA1_VALUES bd2befaf0efacb2d4ee4957ab58a4315290ec804)
+                                  SHA1_VALUES ac42fa50a3829373b2449e6ac539ca57d4acf869)
         else()
             retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
                                   ${RELATIVE_PROJECT_SOURCE_DIR} 077f8f0f162fe54d1d4743b4ad43869d3683b8c7
@@ -100,18 +100,18 @@ if(USE_PREBUILT_PYTHON_PACKAGES_PACKAGE)
         endif()
     elseif(APPLE)
         retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
-                              ${RELATIVE_PROJECT_SOURCE_DIR} 5746debc970cb333effb9b002e9045c443222031
+                              ${RELATIVE_PROJECT_SOURCE_DIR} bebc6390b5eabd5201f155a05c85d789d82d7e0b
                               PACKAGE_REPOSITORY ${PACKAGE_REPOSITORY}
                               RELEASE_TAG ${RELEASE_TAG}
                               SHA1_FILES ${SHA1_FILES}
-                              SHA1_VALUES 13f1ca249d663cd76ea70873b659fa2a0c90e6bc)
+                              SHA1_VALUES aa1791899711fdd9533e3408feacfd1b7a4bc34d)
     else()
         retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
-                              ${RELATIVE_PROJECT_SOURCE_DIR} 406e903965be368081c1bb6e77776ef938ba7564
+                              ${RELATIVE_PROJECT_SOURCE_DIR} 35885194e5e0a68f3680b0ba67a31189ecb1e2f8
                               PACKAGE_REPOSITORY ${PACKAGE_REPOSITORY}
                               RELEASE_TAG ${RELEASE_TAG}
                               SHA1_FILES ${SHA1_FILES}
-                              SHA1_VALUES 33fb4135c8ec6fcd725bd1478dadab322ff8c012)
+                              SHA1_VALUES 203a37159e930ad2d43bc845d839b1dc3cc7f017)
     endif()
 else()
     # Install Python packages using pip
