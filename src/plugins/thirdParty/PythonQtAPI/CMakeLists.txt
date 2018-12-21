@@ -25,8 +25,8 @@ set(FULL_LOCAL_EXTERNAL_PACKAGE_DIR ${PROJECT_SOURCE_DIR}/${LOCAL_EXTERNAL_PACKA
 # Name of our package's shared libraries (and of their import libraries, if any)
 
 if(WIN32)
-    set(SHARED_LIBRARY PythonQt${MAJOR_LIBRARY_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
-    set(IMPORT_LIBRARY PythonQt${MAJOR_LIBRARY_VERSION}${CMAKE_IMPORT_LIBRARY_SUFFIX})
+    set(SHARED_LIBRARY PythonQt${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(IMPORT_LIBRARY PythonQt${CMAKE_IMPORT_LIBRARY_SUFFIX})
 else()
     if(APPLE)
         set(SHARED_LIBRARY ${CMAKE_SHARED_LIBRARY_PREFIX}PythonQt${MAJOR_LIBRARY_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX})
@@ -67,11 +67,11 @@ if(USE_PREBUILT_PYTHONQT_PACKAGE)
     if(WIN32)
         if(RELEASE_MODE)
             retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
-                                  ${RELATIVE_PROJECT_SOURCE_DIR} f34cc0b62f6278b6d868a1b58ba047cb383425ce
+                                  ${RELATIVE_PROJECT_SOURCE_DIR} a87e5052e18b10779a908b8207a597e06f98c0f7
                                   RELEASE_TAG ${RELEASE_TAG}
                                   SHA1_FILES ${SHA1_FILES}
-                                  SHA1_VALUES 842bf2909de590a095dd6a22599e40902b2cc10d
-                                              4da8ffd18a26e5b52cfe0ac5f8054617e2aa9386)
+                                  SHA1_VALUES 73c8ff1465ae876e7e8b41ca828d68f30bc01b54
+                                              10e29200e0b9c51381435d7c67c9e440e45a9ec1)
         endif()
     elseif(APPLE)
         retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
@@ -81,10 +81,10 @@ if(USE_PREBUILT_PYTHONQT_PACKAGE)
                               SHA1_VALUES db5365de3f4927cbf4ce516a1002840c42a99363)
     else()
         retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
-                              ${RELATIVE_PROJECT_SOURCE_DIR} 0909c215c1fc19a40ffe47741f3d9ac592c6051a
+                              ${RELATIVE_PROJECT_SOURCE_DIR} 46d9cfd8cd0929caccbf36c5474947a3126e8b7b
                               RELEASE_TAG ${RELEASE_TAG}
                               SHA1_FILES ${SHA1_FILES}
-                              SHA1_VALUES de354e780acce6d43719e45ca13f213d40e2f780)
+                              SHA1_VALUES 00e0a8677ec74d25ef1b8fd3f6afbdf70e33ac54)
     endif()
 else()
     # Set platform specific configuration options and tool names
