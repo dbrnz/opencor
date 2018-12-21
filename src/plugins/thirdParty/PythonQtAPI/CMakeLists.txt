@@ -3,11 +3,11 @@ project(PythonQtAPIPlugin)
 # Name and version of our package
 
 set(PACKAGE_NAME PythonQt)
-set(PACKAGE_VERSION "3.2.1")
+set(PACKAGE_VERSION "3.2.2")
 
 # Release tag of our packaged library
 
-set(RELEASE_TAG opencor-v3.2.1)
+set(RELEASE_TAG opencor_0.7)
 
 # Version of our library
 
@@ -16,7 +16,7 @@ set(LIBRARY_VERSION "${MAJOR_LIBRARY_VERSION}.2.0")
 
 # Git tag for our library
 
-set(GIT_TAG opencor-v3.2.1)
+set(GIT_TAG opencor_r502.1)
 
 # Specify where our local package will be installed
 
@@ -67,24 +67,24 @@ if(USE_PREBUILT_PYTHONQT_PACKAGE)
     if(WIN32)
         if(RELEASE_MODE)
             retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
-                                  ${RELATIVE_PROJECT_SOURCE_DIR} b1598259fcd2de1901c6d840b38c36e570668bc8
+                                  ${RELATIVE_PROJECT_SOURCE_DIR} f34cc0b62f6278b6d868a1b58ba047cb383425ce
                                   RELEASE_TAG ${RELEASE_TAG}
                                   SHA1_FILES ${SHA1_FILES}
-                                  SHA1_VALUES bcae917b414bbfe2ae4bfa0641e241586d87b281
-                                              ffed9bec762dc7f7ab1de5ba22f62d928609e106)
+                                  SHA1_VALUES 842bf2909de590a095dd6a22599e40902b2cc10d
+                                              4da8ffd18a26e5b52cfe0ac5f8054617e2aa9386)
         endif()
     elseif(APPLE)
         retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
-                              ${RELATIVE_PROJECT_SOURCE_DIR} 529f53cee8c34a408bf81dcdb5271ea181632c63
+                              ${RELATIVE_PROJECT_SOURCE_DIR} c4b6ebbb49cfe100f3417ed825d62800283dcd47
                               RELEASE_TAG ${RELEASE_TAG}
                               SHA1_FILES ${SHA1_FILES}
-                              SHA1_VALUES 6ca3e2a7e30a627ae93acc3e8518a5aa783c0de5)
+                              SHA1_VALUES db5365de3f4927cbf4ce516a1002840c42a99363)
     else()
         retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
-                              ${RELATIVE_PROJECT_SOURCE_DIR} 67a7e1d9930f8ada3a968da87bbff3dff5f4f00c
+                              ${RELATIVE_PROJECT_SOURCE_DIR} 0909c215c1fc19a40ffe47741f3d9ac592c6051a
                               RELEASE_TAG ${RELEASE_TAG}
                               SHA1_FILES ${SHA1_FILES}
-                              SHA1_VALUES a7ff6adb4eb122914bb2d265e3f96221ba6ebdaa)
+                              SHA1_VALUES de354e780acce6d43719e45ca13f213d40e2f780)
     endif()
 else()
     # Set platform specific configuration options and tool names
