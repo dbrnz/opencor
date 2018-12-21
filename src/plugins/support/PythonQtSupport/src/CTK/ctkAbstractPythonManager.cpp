@@ -27,10 +27,7 @@
 
 // PythonQT includes
 #include <PythonQt/PythonQt.h>
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-  #include <PythonQt/PythonQt_QtAll.h>
-#endif
+#include <PythonQt/PythonQt_QtAll.h>
 
 // STD includes
 #include <csignal>
@@ -85,11 +82,11 @@ ctkAbstractPythonManager::ctkAbstractPythonManager(QObject* _parent) : Superclas
 //-----------------------------------------------------------------------------
 ctkAbstractPythonManager::~ctkAbstractPythonManager()
 {
-  PythonQt::cleanup();
   if (Py_IsInitialized())
     {
     Py_Finalize();
     }
+  PythonQt::cleanup();
 }
 
 //-----------------------------------------------------------------------------
@@ -154,9 +151,8 @@ void ctkAbstractPythonManager::initPythonQt(int flags)
   this->connect(PythonQt::self(), SIGNAL(pythonStdErr(QString)),
                 SLOT(printStderr(QString)));
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+  // Enable the Qt bindings for Python
   PythonQt_QtAll::init();
-#endif
 
   QStringList initCode;
 
@@ -309,24 +305,27 @@ void ctkAbstractPythonManager::executeFile(const QString& filename)
   if (main)
     {
     QString path = QFileInfo(filename).absolutePath();
+    #if PY_MAJOR_VERSION >= 3
+      QString raiseWithTraceback("      raise(_ctk_executeFile_exc_info[1](None)).with_traceback()");
+    #else
+      QString raiseWithTraceback("      raise _ctk_executeFile_exc_info[1], None, _ctk_executeFile_exc_info[2]");
+    #endif
     // See http://nedbatchelder.com/blog/200711/rethrowing_exceptions_in_python.html
     QStringList code = QStringList()
-        <<         "import sys"
+        << "import sys"
         << QString("sys.path.insert(0, '%1')").arg(path)
-        <<         "_updated_globals = globals()"
+        << "_updated_globals = globals()"
         << QString("_updated_globals['__file__'] = '%1'").arg(filename)
-        <<         "_ctk_executeFile_exc_info = None"
-        <<         "try:"
-        << QString("    with open('%1') as f:").arg(filename)
-        << QString("        code = compile(f.read(), '%1', 'exec')").arg(filename)
-        <<         "        exec(code, _updated_globals)"
-        <<         "except Exception as exc:"
-        <<         "    _ctk_executeFile_exc_info = exc"
-        <<         "finally:"
-        <<         "    del _updated_globals"
+        << "_ctk_executeFile_exc_info = None"
+        << "try:"
+        << QString("    execfile('%1', _updated_globals)").arg(filename)
+        << "except Exception as e:"
+        << "    _ctk_executeFile_exc_info = sys.exc_info()"
+        << "finally:"
+        << "    del _updated_globals"
         << QString("    if sys.path[0] == '%1': sys.path.pop(0)").arg(path)
-        <<         "    if _ctk_executeFile_exc_info:"
-        <<         "        raise(_ctk_executeFile_exc_info)";
+        << "    if _ctk_executeFile_exc_info:"
+        << raiseWithTraceback;
     this->executeString(code.join("\n"));
     //PythonQt::self()->handleError(); // Clear errorOccured flag
     }
@@ -337,6 +336,93 @@ void ctkAbstractPythonManager::setInitializationFunction(void (*initFunction)())
 {
   Q_D(ctkAbstractPythonManager);
   d->InitFunction = initFunction;
+}
+
+//-----------------------------------------------------------------------------
+QStringList ctkAbstractPythonManager::dir_object(PyObject* object,
+                                                 bool appendParenthesis)
+{
+  QStringList results;
+  if (!object)
+    {
+    return results;
+    }
+  PyObject* keys = PyObject_Dir(object);
+  if (keys)
+    {
+    PyObject* key;
+    PyObject* value;
+    int nKeys = PyList_Size(keys);
+    for (int i = 0; i < nKeys; ++i)
+      {
+      key = PyList_GetItem(keys, i);
+      value = PyObject_GetAttr(object, key);
+      if (!value)
+        {
+        continue;
+        }
+      QString key_str(PyBytes_AsString(key));
+      // Append "()" if the associated object is a function
+      if (appendParenthesis && PyCallable_Check(value))
+        {
+        key_str.append("()");
+        }
+      results << key_str;
+      Py_DECREF(value);
+      }
+    Py_DECREF(keys);
+    }
+  return results;
+}
+
+//----------------------------------------------------------------------------
+QStringList ctkAbstractPythonManager::splitByDotOutsideParenthesis(const QString& pythonVariableName)
+{
+  QStringList tmpNames;
+  int last_pos_dot = pythonVariableName.length();
+  int numberOfParenthesisClosed = 0;
+  bool betweenSingleQuotes = false;
+  bool betweenDoubleQuotes = false;
+  for (int i = pythonVariableName.length()-1; i >= 0; --i)
+    {
+    QChar c = pythonVariableName.at(i);
+    if (c == '\'' && !betweenDoubleQuotes)
+      {
+      betweenSingleQuotes = !betweenSingleQuotes;
+      }
+    if (c == '"' && !betweenSingleQuotes)
+      {
+      betweenDoubleQuotes = !betweenDoubleQuotes;
+      }
+    // note that we must not count parenthesis if they are between quote...
+    if (!betweenSingleQuotes && !betweenDoubleQuotes)
+      {
+      if (c == '(')
+        {
+        if (numberOfParenthesisClosed>0)
+          {
+          numberOfParenthesisClosed--;
+          }
+        }
+      if (c == ')')
+        {
+        numberOfParenthesisClosed++;
+        }
+      }
+    // if we are outside parenthesis and we find a dot, then split
+    if ((c == '.' && numberOfParenthesisClosed<=0)
+        || i == 0)
+      {
+      if (i == 0) {i--;} // last case where we have to split the begging this time
+      QString textToSplit = pythonVariableName.mid(i+1,last_pos_dot-(i+1));
+      if (!textToSplit.isEmpty())
+        {
+        tmpNames.push_front(textToSplit);
+        }
+      last_pos_dot =i;
+      }
+    }
+  return tmpNames;
 }
 
 //----------------------------------------------------------------------------
@@ -352,9 +438,10 @@ QStringList ctkAbstractPythonManager::pythonAttributes(const QString& pythonVari
   PyObject* object = ctkAbstractPythonManager::pythonModule(precedingModule);
   PyObject* prevObject = 0;
   QStringList moduleList = module.split(".", QString::SkipEmptyParts);
+
   foreach(const QString& module, moduleList)
     {
-    object = PyDict_GetItemString(dict, module.toLatin1().data());
+    object = PyDict_GetItemString(dict, module.toUtf8().data());
     if (prevObject) { Py_DECREF(prevObject); }
     if (!object)
       {
@@ -369,64 +456,102 @@ QStringList ctkAbstractPythonManager::pythonAttributes(const QString& pythonVari
     return QStringList();
     }
 
-//  PyObject* object = PyDict_GetItemString(dict, module.toLatin1().data());
+//  PyObject* object = PyDict_GetItemString(dict, module.toUtf8().data());
 //  if (!object)
 //    {
 //    return QStringList();
 //    }
 //  Py_INCREF(object);
 
+  PyObject* main_object = object; // save the module object (usually __main__ or __main__.__builtins__)
+  QString instantiated_class_name = "_ctkAbstractPythonManager_autocomplete_tmp";
+  QStringList results; // the list of attributes to return
+  QString line_code="";
+
   if (!pythonVariableName.isEmpty())
     {
-    QStringList tmpNames = pythonVariableName.split('.');
+    // Split the pythonVariableName at every dot
+    // /!\ // CAREFUL to don't take dot which are between parenthesis
+    // To avoid the problem: split by dots in a smarter way!
+    QStringList tmpNames = splitByDotOutsideParenthesis(pythonVariableName);
+
     for (int i = 0; i < tmpNames.size() && object; ++i)
       {
-      QByteArray tmpName = tmpNames.at(i).toLatin1();
-      PyObject* prevObj = object;
-      if (PyDict_Check(object))
+      // fill the line step by step
+      // For example: pythonVariableName = d.foo_class().instantiate_bar().
+      // line_code will be filled first by 'd.' and then, line_code = 'd.foo_class().', etc
+      line_code.append(tmpNames[i]);
+      line_code.append(".");
+
+      QByteArray tmpName = tmpNames.at(i).toUtf8();
+      if (tmpName.contains('(') && tmpName.contains(')'))
         {
-        object = PyDict_GetItemString(object, tmpName.data());
-        Py_XINCREF(object);
+        tmpNames[i] = tmpNames[i].left(tmpName.indexOf('('));
+        tmpName = tmpNames.at(i).toUtf8();
+
+        // Attempt to instantiate the associated python class
+        PyObject* classToInstantiate;
+        if (PyDict_Check(dict))
+          classToInstantiate = PyDict_GetItemString(dict, tmpName.data());
+        else
+          classToInstantiate = PyObject_GetAttrString(object, tmpName.data());
+
+        if (classToInstantiate)
+          {
+          QString code = " = ";
+          code.prepend(instantiated_class_name);
+          line_code.remove(line_code.size()-1,1); // remove the last char which is a dot
+          code.append(line_code);
+          // create a temporary attribute which will instantiate the class
+          // For example: code = '_ctkAbstractPythonManager_autocomplete_tmp = d.foo_class()'
+          PyRun_SimpleString(code.toUtf8().data());
+          line_code.append('.'); // add the point again in case we need to continue to fill line_code
+          object = PyObject_GetAttrString(main_object,instantiated_class_name.toUtf8().data());
+
+          dict = object;
+          results = ctkAbstractPythonManager::dir_object(object,appendParenthesis);
+          }
         }
       else
         {
-        object = PyObject_GetAttrString(object, tmpName.data());
+        PyObject* prevObj = object;
+        if (PyDict_Check(object))
+          {
+          object = PyDict_GetItemString(object, tmpName.data());
+          Py_XINCREF(object);
+          }
+        else
+          {
+          object = PyObject_GetAttrString(object, tmpName.data());
+          dict = object;
+          }
+        Py_DECREF(prevObj);
+
+        if (object)
+          {
+          results = ctkAbstractPythonManager::dir_object(object,appendParenthesis);
+          }
         }
-      Py_DECREF(prevObj);
       }
     PyErr_Clear();
     }
+  // By default if pythonVariable is empty, return the attributes of the module
+  else
+    {
+    results = ctkAbstractPythonManager::dir_object(object,appendParenthesis);
+    }
 
-  QStringList results;
   if (object)
     {
-    PyObject* keys = PyObject_Dir(object);
-    if (keys)
-      {
-      PyObject* key;
-      PyObject* value;
-      int nKeys = PyList_Size(keys);
-      for (int i = 0; i < nKeys; ++i)
-        {
-        key = PyList_GetItem(keys, i);
-        value = PyObject_GetAttr(object, key);
-        if (!value)
-          {
-          continue;
-          }
-        QString key_str(PyString_AsString(key));
-        // Append "()" if the associated object is a function
-        if (appendParenthesis && PyCallable_Check(value))
-          {
-          key_str.append("()");
-          }
-        results << key_str;
-        Py_DECREF(value);
-        }
-      Py_DECREF(keys);
-      }
     Py_DECREF(object);
     }
+
+  // remove the temporary attribute (created to instantiate a class) from the module object
+  if (PyObject_HasAttrString(main_object,instantiated_class_name.toUtf8().data()))
+    {
+    PyObject_DelAttrString(main_object,instantiated_class_name.toUtf8().data());
+    }
+
   return results;
 }
 
@@ -451,7 +576,7 @@ PyObject* ctkAbstractPythonManager::pythonObject(const QString& variableNameAndF
     QStringList tmpNames = pythonVariableName.split('.');
     for (int i = 0; i < tmpNames.size() && object; ++i)
       {
-      QByteArray tmpName = tmpNames.at(i).toLatin1();
+      QByteArray tmpName = tmpNames.at(i).toUtf8();
       PyObject* prevObj = object;
       if (PyDict_Check(object))
         {
@@ -482,8 +607,8 @@ PyObject* ctkAbstractPythonManager::pythonObject(const QString& variableNameAndF
           {
           continue;
           }
-        QString keyStr = PyString_AsString(key);
-        if (keyStr == compareFunction)
+        QString keyStr(PyBytes_AsString(key));
+        if (keyStr.operator ==(compareFunction.toUtf8()))
           {
           finalPythonObject = value;
           break;
@@ -510,7 +635,7 @@ PyObject* ctkAbstractPythonManager::pythonModule(const QString& module)
     }
   foreach(const QString& module, moduleList)
     {
-    object = PyDict_GetItemString(dict, module.toUtf8().constData());
+    object = PyDict_GetItemString(dict, module.toUtf8().data());
     if (prevObject)
       {
       Py_DECREF(prevObject);

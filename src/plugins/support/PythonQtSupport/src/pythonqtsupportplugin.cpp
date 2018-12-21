@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //==============================================================================
 
 #include <PythonQt/PythonQt.h>
-#include <PythonQt/PythonQt_QtAll.h>
 
 //==============================================================================
 
@@ -90,10 +89,6 @@ void PythonQtSupportPlugin::initializePlugin()
     // This also initialises Python Qt
 
     mPythonManager->initialize();
-
-    // Enable the Qt bindings for Python
-
-    PythonQt_QtAll::init();
 
     // Create a Python module to access OpenCOR's objects
 
