@@ -164,11 +164,11 @@ if(USE_PREBUILT_PYTHON_PACKAGE)
         endif()
     elseif(APPLE)
         retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
-                              ${RELATIVE_PROJECT_SOURCE_DIR} 1bba7e90b9a4ef224f847a59ade5e022954a3e33
+                              ${RELATIVE_PROJECT_SOURCE_DIR} c05166858719a4a5891d42ac6a4aed253e536a49
                               RELEASE_TAG ${RELEASE_TAG}
                               SHA1_FILES ${SHA1_FILES}
-                              SHA1_VALUES ea1289b99f582deaa168d3bdd5acf1e6d2f6d05c
-                                          12200def60253ee3ce887e89644582acbeb69e41
+                              SHA1_VALUES 22a5e7087d17df17f92853b742a11e91a61dba7c
+                                          05067a048077659acc495ec20c7485eeac45b6e4
                                           61d98076e7104c3c103993d8f8415677e511d601)
     else()
         retrieve_package_file(${PACKAGE_NAME} ${PACKAGE_VERSION}
@@ -331,7 +331,6 @@ else()
             -DENABLE_CURSES_PANEL=OFF
             -DENABLE_DBM=OFF
             -DENABLE_GDBM=OFF
-            -DENABLE_IPV6=OFF
             -DENABLE_TESTCAPI=OFF
             -DENABLE_TKINTER=OFF
 
